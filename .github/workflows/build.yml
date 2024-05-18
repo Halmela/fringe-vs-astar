@@ -48,6 +48,11 @@ jobs:
         with:
           command: test
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
 
   lints:
     name: Lints
@@ -87,3 +92,5 @@ jobs:
         with:
           command: doc
           args: --workspace --all-features --no-deps --document-private-items
+
+          
