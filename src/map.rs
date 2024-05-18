@@ -1,8 +1,9 @@
+use std::fmt;
 /// Simplifies lines to a boolean vector
 /// '.' and 'G' are traversable, others are not
 /// Some maps have Swamps, I have to think about that
 
-fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
+pub fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
     lines
         .iter()
         .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')).collect())
@@ -11,12 +12,12 @@ fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
 
 pub trait Map {
     fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> impl Map;
-    fn get_cell(&self, x: usize, y: usize) -> Option<bool>; // Is the node passable?
+    fn get_cell(&self, x: usize, y: usize) -> Option<bool>;
     fn get_height(&self) -> usize;
     fn get_width(&self) -> usize;
 }
 
-struct GridMap {
+pub struct GridMap {
     height: usize,
     width: usize,
     grid: Vec<Vec<bool>>,
@@ -48,7 +49,24 @@ impl Map for GridMap {
     }
 }
 
-struct ArrayMap {
+impl fmt::Display for GridMap {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut result = String::new();
+        for y in 0..self.get_height() {
+            for x in 0..self.get_width() {
+                if let Some(true) = self.get_cell(x, y) {
+                    result.push_str("□");
+                } else {
+                    result.push_str("■");
+                }
+            }
+            result.push_str("\n");
+        }
+        writeln!(f, "{}", result)
+    }
+}
+
+pub struct ArrayMap {
     height: usize,
     width: usize,
     array: Vec<bool>,
@@ -77,6 +95,23 @@ impl Map for ArrayMap {
 
     fn get_width(&self) -> usize {
         self.width
+    }
+}
+
+impl fmt::Display for ArrayMap {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut result = String::new();
+        for y in 0..self.get_height() {
+            for x in 0..self.get_width() {
+                if let Some(true) = self.get_cell(x, y) {
+                    result.push_str("□");
+                } else {
+                    result.push_str("■");
+                }
+            }
+            result.push_str("\n");
+        }
+        writeln!(f, "{}", result)
     }
 }
 
