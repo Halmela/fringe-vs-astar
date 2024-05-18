@@ -1,14 +1,9 @@
 /// Simplifies lines to a boolean vector
 
 fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
-    let to_bool = |c: char| match c {
-        '.' | 'G' => true,
-        _ => false,
-    };
-
     lines
         .iter()
-        .map(|s| s.chars().map(|c| to_bool(c)).collect())
+        .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')).collect())
         .collect()
 }
 
