@@ -55,12 +55,12 @@ impl fmt::Display for GridMap {
         for y in 0..self.get_height() {
             for x in 0..self.get_width() {
                 if let Some(true) = self.get_cell(x, y) {
-                    result.push_str("□");
+                    result.push('□');
                 } else {
-                    result.push_str("■");
+                    result.push('■');
                 }
             }
-            result.push_str("\n");
+            result.push('\n');
         }
         writeln!(f, "{}", result)
     }
@@ -104,12 +104,12 @@ impl fmt::Display for ArrayMap {
         for y in 0..self.get_height() {
             for x in 0..self.get_width() {
                 if let Some(true) = self.get_cell(x, y) {
-                    result.push_str("□");
+                    result.push('□');
                 } else {
-                    result.push_str("■");
+                    result.push('■');
                 }
             }
-            result.push_str("\n");
+            result.push('\n');
         }
         writeln!(f, "{}", result)
     }
