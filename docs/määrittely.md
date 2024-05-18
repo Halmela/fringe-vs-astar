@@ -8,26 +8,27 @@ Reitinhaku toteutetaan 8-suuntaisesti ruudukossa, jossa osa ruuduista on kuljett
 ## Kielet
 Ohjelma kirjoitetaan Rust-ohjelmointikielellä.
 Luon sen sisäisillä työkaluilla mahdollisimman suuren osan dokumentaatiosta ja testauksista.
-Kattavuuden seurantaan käytän [cargo-llvm-cov](https://lib.rs/crates/cargo-llvm-cov)-työkalua.
 
-Dokumentaation kirjoitan suomeksi.
+Työhöni liittyvät dokumentit kirjoitan suomeksi, ohjelman sisäisen dokumentaation kirjoitan englanniksi.
 
-Voin vertaisarvioida suomeksi tai englanniksi kirjoitettua dokumentaatiota.
+Voin vertaisarvioida suomeksi tai englanniksi kirjoitettuja töitä.
 Osaan Rustia, Haskellia, JavaScriptia ja Pythonia.
 Ymmärrän C++:aa, mutten sujuvasti.
 En halua koskea Javaan.
 
 
 ## Algoritmit
-Käytän molemmissa algoritmeissa heuristiikkana diagonaalietäisyyttä[^1].
-Koska kulmien yli mennessä matka on √2, kyseessä on tarkemmin oktiilietäisyys.
+- A*
+- Fringe search
 
 
-### A*
-
-### Fringe search
-[Fringe searchin esittely](https://webdocs.cs.ualberta.ca/~holte/Publications/fringe.pdf)
-
+## Ohjelma
+Ohjelma kykenee 
+- lukemaan `.map`-tiedoston ja luomaan sen pohjalta verkon
+- lukemaan `.map.scen`-tiedoston ja luomaan sen pohjalta sarjan testejä
+- esittämään kartan ja reitin (sekä reitin löytämiseen tarvitut ruudut), mikäli se on tarpeeksi pieni 
+- esittämään ja vertailemaan kahden eri algoritmin tuloksia
+- ajamaan parametrien perusteella joko kokonaisen testipatterin, tietyn "ämpärin" testejä tai tietyn numeron
 
 ## Testisyötteet
 Ohjelman testaukseen käytän syötteenä [erinäisiä karttoja Shortest Paths Labilta](https://bitbucket.org/shortestpathlab/benchmarks/src/master/grid-maps/).
@@ -40,4 +41,3 @@ loppuvaiheessa algoritmien tehokkuuden vertailuun aion käyttää Iron Harvest -
 ## Opinto-ohjelma
 Tämä on osa tietojenkäsittelytieteen kandidaattiopintoja.
 
-[^1]: (https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#diagonal-distance)
