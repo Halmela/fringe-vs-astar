@@ -11,7 +11,7 @@ pub fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
 }
 
 pub trait Map {
-    fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> impl Map;
+    fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> Self;
     fn get_cell(&self, x: usize, y: usize) -> Option<bool>;
     fn get_height(&self) -> usize;
     fn get_width(&self) -> usize;
