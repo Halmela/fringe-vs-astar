@@ -1,5 +1,4 @@
-/// Modules needed for creating, running and comparing
-/// A* and Fringe Search
+//! A* and Fringe Search comparison program
 
 /// Graph trait and its implementations
 pub mod graph;
