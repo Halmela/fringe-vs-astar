@@ -1,10 +1,16 @@
 use crate::map::*;
 
+/// Representation of terrain map as a graph
 pub trait Graph {
+    /// Constructor
     fn new<M: Map>(map: M) -> impl Graph;
-    fn neighbors(&self, node: usize) -> &Vec<(usize, f32)>; // (node, weight)
+    /// Get neighbors of a node.
+    /// Making it a `usize` is something I have to consider again.
+    /// Returns a vector of nodes with their weight
+    fn neighbors(&self, node: usize) -> &Vec<(usize, f32)>;
 }
 
+/// Graph where each node has its neighbors as a vector
 struct AdjacencyListedGraph {
     adjacency_list: Vec<Vec<(usize, f32)>>,
 }

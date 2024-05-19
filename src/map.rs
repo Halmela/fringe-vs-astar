@@ -1,8 +1,7 @@
 use std::fmt;
-/// Simplifies lines to a boolean vector
-/// '.' and 'G' are traversable, others are not
+/// Simplifies lines to a boolean vector.
+/// '.' and 'G' are traversable, others are not.
 /// Some maps have Swamps, I have to think about that
-
 pub fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
     lines
         .iter()
@@ -10,13 +9,19 @@ pub fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
         .collect()
 }
 
+/// Representation of the underlying terrain map
 pub trait Map {
+    /// Constructor
     fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> Self;
+    /// Provide a cell of the grid if it exists
     fn get_cell(&self, x: usize, y: usize) -> Option<bool>;
+    /// Get width
     fn get_height(&self) -> usize;
+    /// Get height
     fn get_width(&self) -> usize;
 }
 
+/// Terrainmap stored as `grid[y][x]`
 pub struct GridMap {
     height: usize,
     width: usize,
@@ -66,6 +71,7 @@ impl fmt::Display for GridMap {
     }
 }
 
+/// Terrainmap stored as a continuous `array[x + y*width]`
 pub struct ArrayMap {
     height: usize,
     width: usize,
