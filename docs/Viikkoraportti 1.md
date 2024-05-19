@@ -33,5 +33,18 @@ Olen hieman koodaillut yksinkertaisia palasia ohjelmalle.
 Rust on tuttu kieli, mutta hieman täytyy taas palauttaa muistiin.
 Muistinhallinta on rankkaa.
 
+Olen myös leikitellyt ajatuksella algoritmien säikeistämisestä.
+A*:ta on yritetty säikeistää vaihtelevin tuloksin, mutta Fringen kanssa tilanne voi olla eri.
+Hilbertin käyrän käyttäminen ainakin helpottaisi tilannetta, koska sen lohkominen on helppoa.
+
+## Ajatuksia projektin tilanteesta:
+- Hyppäsin ehkä turhan nopeasti määrittelemään traiteja.
+Yleensä ensin tehdään implementaatio ja sitten eristetään sen toiminnallisuus traitiksi.
+- Tiedoston voi lukea tavuina Stringin sijaan. 
+Se voisi tuoda vähän nopeutta, mutta tiedoston luku ei ole kuuma reitti, joten en välitä hirveästi tässä vaiheessa.
+- Tiedoston luvun virheenhallinta ei ole hyvässä jamassa, siellä on useampi `.unwrap()`.
+- Olen hieman rönsyillyt eri keskittymiskohteiden suhteen
+- Ihan ok alku tho
+
 [^1](https://webdocs.cs.ualberta.ca/~holte/Publications/fringe.pdf)
 [^2](https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#diagonal-distance)
