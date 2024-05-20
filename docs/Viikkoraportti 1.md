@@ -37,6 +37,9 @@ Olen myös leikitellyt ajatuksella algoritmien säikeistämisestä.
 A*:ta on yritetty säikeistää vaihtelevin tuloksin, mutta Fringen kanssa tilanne voi olla eri.
 Hilbertin käyrän käyttäminen ainakin helpottaisi tilannetta, koska sen lohkominen on helppoa.
 
+Alkuviikon tutkin Brodal- ja Fibonacci-jonoja.
+Haluaisin kokeilla niiden käytön vaikutuksia A*:han, mutta en pidä tätä prioriteettina.
+
 ## Ajatuksia projektin tilanteesta:
 - Hyppäsin ehkä turhan nopeasti määrittelemään traiteja.
 Yleensä ensin tehdään implementaatio ja sitten eristetään sen toiminnallisuus traitiksi.
