@@ -1,81 +1,68 @@
-name: Build
+name: CI # Continuous Integration
+
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2.7.3
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1.0.1
-        with:
-          command: check
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install stable toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --features complete --workspace
 
-      - uses: Swatinem/rust-cache@v2.7.3
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1.0.1
-        with:
-          command: test
-
-
-  lints:
-    name: Lints
+  rustfmt:
+    name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Install stable toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --all -- --check
 
-      - uses: Swatinem/rust-cache@v2.7.3
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1.0.1
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          command: fmt
-          args: --all -- --check
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Clippy check
+        run: cargo clippy --all-targets --features complete --workspace -- -D warnings
 
-      - name: Run cargo clippy
-        uses: actions-rs/cargo@v1.0.1
-        with:
-          command: clippy
-          args: -- -D warnings
-
-      - name: Run rustdoc lints
-        uses: actions-rs/cargo@v1.0.1
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Check documentation
         env:
-          RUSTDOCFLAGS: "-D missing_docs"
-        with:
-          command: doc
-          args: --workspace --all-features --no-deps --document-private-items
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc
 
   coverage:
     name: Coverage
@@ -91,7 +78,7 @@ jobs:
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: lcov.info
