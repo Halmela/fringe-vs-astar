@@ -1,18 +1,63 @@
 use std::fmt;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
+
 /// Simplifies lines to a boolean vector.
 /// '.' and 'G' are traversable, others are not.
 /// Some maps have Swamps, I have to think about that
-pub fn simplify_map(lines: Vec<String>) -> Vec<Vec<bool>> {
-    lines
-        .iter()
+fn simplify_map(map: Vec<String>) -> Vec<Vec<bool>> {
+    map.iter()
         .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')).collect())
         .collect()
 }
 
+/// Read a map from file
+fn read_map(file_path: &str) -> anyhow::Result<(usize, usize, Vec<String>)> {
+    let f = File::open(file_path)?;
+    let mut contents = BufReader::new(f).lines();
+
+    contents.next(); // octiles
+
+    let height = contents
+        .next()
+        .unwrap()?
+        .strip_prefix("height ")
+        .unwrap()
+        .parse()?;
+    let width = contents
+        .next()
+        .unwrap()?
+        .strip_prefix("width ")
+        .unwrap()
+        .parse()?;
+    contents.next();
+
+    let map = contents.map(|s| s.unwrap()).collect();
+
+    Ok((height, width, map))
+}
+
+/// Enum for different map types.
+/// These can be used to distinguish what map is wanted in MapBuilder
+pub enum MapType {
+    GridMap,
+    ArrayMap,
+}
+
+pub fn map_builder(file_path: &str, map_type: MapType) -> anyhow::Result<Box<dyn Map>> {
+    let (height, width, map) = read_map(file_path)?;
+    let map = simplify_map(map);
+
+    match map_type {
+        MapType::GridMap => Ok(Box::new(GridMap::new(height, width, map))),
+        MapType::ArrayMap => Ok(Box::new(ArrayMap::new(height, width, map))),
+    }
+}
+
 /// Representation of the underlying terrain map
-pub trait Map {
+pub trait Map: fmt::Display {
     /// Constructor
-    fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> Self;
     /// Provide a cell of the grid if it exists
     fn get_cell(&self, x: usize, y: usize) -> Option<bool>;
     /// Get width
@@ -28,15 +73,18 @@ pub struct GridMap {
     grid: Vec<Vec<bool>>,
 }
 
-impl Map for GridMap {
-    fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> GridMap {
+impl GridMap {
+    /// Constructor
+    pub fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> GridMap {
         GridMap {
             height,
             width,
             grid: map,
         }
     }
+}
 
+impl Map for GridMap {
     fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
             Some(self.grid[y][x])
@@ -60,9 +108,9 @@ impl fmt::Display for GridMap {
         for y in 0..self.get_height() {
             for x in 0..self.get_width() {
                 if let Some(true) = self.get_cell(x, y) {
-                    result.push('□');
+                    result.push('⬛');
                 } else {
-                    result.push('■');
+                    result.push('⬜');
                 }
             }
             result.push('\n');
@@ -78,15 +126,18 @@ pub struct ArrayMap {
     array: Vec<bool>,
 }
 
-impl Map for ArrayMap {
-    fn new(height: usize, width: usize, mut map: Vec<Vec<bool>>) -> ArrayMap {
+impl ArrayMap {
+    /// Constructor
+    pub fn new(height: usize, width: usize, mut map: Vec<Vec<bool>>) -> ArrayMap {
         ArrayMap {
             height,
             width,
             array: map.drain(..).flatten().collect(),
         }
     }
+}
 
+impl Map for ArrayMap {
     fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
             Some(self.array[x + y * self.width])
