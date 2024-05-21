@@ -1,10 +1,11 @@
 use crate::map::*;
 use std::collections::HashMap;
+use std::fmt;
 
 /// Representation of terrain map as a graph
 pub trait Graph {
     /// Constructor
-    fn new<M: Map>(map: M) -> impl Graph;
+    fn new(map: Box<dyn Map>) -> Self;
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
@@ -12,12 +13,13 @@ pub trait Graph {
 }
 
 /// Graph represented as a HashMap with key `(x,y)`
-struct AdjacencyMapGraph {
+#[derive(Debug)]
+pub struct AdjacencyMapGraph {
     adjacency_map: HashMap<(usize, usize), Vec<((usize, usize), f32)>>,
 }
 
 impl Graph for AdjacencyMapGraph {
-    fn new<M: Map>(map: M) -> AdjacencyMapGraph {
+    fn new(map: Box<dyn Map>) -> AdjacencyMapGraph {
         let diagonal_cost = 2.0_f32.sqrt();
 
         let mut adjacency_map = HashMap::new();
@@ -26,22 +28,26 @@ impl Graph for AdjacencyMapGraph {
 
         let neighbors = |x: usize, y: usize| {
             vec![
-                //(x - 1, y - 1),
+                // (x-1, y-1)
                 some_tuple(x.checked_sub(1), y.checked_sub(1)).map(|i| (i, diagonal_cost)),
-                // (x, y - 1),
+                // (x, y-1)
                 some_tuple(Some(x), y.checked_sub(1)).map(|i| (i, 1.0)),
-                // (x + 1, y - 1),
+                // (x+1, y-1)
                 some_tuple(Some(x + 1), y.checked_sub(1)).map(|i| (i, diagonal_cost)),
-                // (x - 1, y),
-                some_tuple(x.checked_sub(1), Some(y)).map(|i| (i, 1.0)),
+                // (x+1, y)
                 Some(((x + 1, y), 1.0)),
-                //(x - 1, y + 1),
-                some_tuple(x.checked_sub(1), Some(y + 1)).map(|i| (i, diagonal_cost)),
-                Some(((x, y + 1), 1.0)),
+                // (x+1, y+1)
                 Some(((x + 1, y + 1), diagonal_cost)),
+                // (x, y+1)
+                Some(((x, y + 1), 1.0)),
+                // (x-1, y+1),
+                some_tuple(x.checked_sub(1), Some(y + 1)).map(|i| (i, diagonal_cost)),
+                // (x-1, y),
+                some_tuple(x.checked_sub(1), Some(y)).map(|i| (i, 1.0)),
             ]
             .drain(..)
             .flatten()
+            .filter(|((x, y), _)| matches!(map.get_cell(*x, *y), Some(true)))
             .collect()
         };
 
@@ -58,6 +64,16 @@ impl Graph for AdjacencyMapGraph {
 
     fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f32)>> {
         self.adjacency_map.get(&(x, y))
+    }
+}
+
+impl fmt::Display for AdjacencyMapGraph {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut result = String::new();
+        for (cell, neighbors) in &self.adjacency_map {
+            result.push_str(&format!("{:?} {:?}\n", cell, neighbors));
+        }
+        write!(f, "{}", result)
     }
 }
 
