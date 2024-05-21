@@ -26,7 +26,7 @@ impl Graph for AdjacencyMapGraph {
 
         let some_tuple = |x: Option<usize>, y: Option<usize>| x.and_then(|x1| y.map(|y1| (x1, y1)));
 
-        let neighbors = |x: usize, y: usize| {
+        /* let neighbors = |x: usize, y: usize| {
             vec![
                 // (x-1, y-1)
                 some_tuple(x.checked_sub(1), y.checked_sub(1)).map(|i| (i, diagonal_cost)),
@@ -49,6 +49,72 @@ impl Graph for AdjacencyMapGraph {
             .flatten()
             .filter(|((x, y), _)| matches!(map.get_cell(*x, *y), Some(true)))
             .collect()
+        }; */
+
+        let neighbors = |x: usize, y: usize| {
+            // (x, y-1)
+            let north = y.checked_sub(1).map(|y1| (map.get_cell(x, y1), (x, y1)));
+            // (x+1, y)
+            let east = Some((map.get_cell(x + 1, y), (x + 1, y)));
+            // (x, y+1)
+            let south = Some((map.get_cell(x, y + 1), (x, y + 1)));
+            // (x-1, y)
+            let west = x.checked_sub(1).map(|x1| (map.get_cell(x1, y), (x1, y)));
+
+            // (x+1, y-1)
+            let mut north_east = y
+                .checked_sub(1)
+                .map(|y1| (map.get_cell(x + 1, y1), (x + 1, y1)));
+            // (x+1, y+1)
+            let mut south_east = Some((map.get_cell(x + 1, y + 1), (x + 1, y + 1)));
+            // (x-1, y+1)
+            let mut south_west = x
+                .checked_sub(1)
+                .map(|x1| (map.get_cell(x1, y + 1), (x1, y + 1)));
+            // (x-1, y-1)
+            let mut north_west = x
+                .checked_sub(1)
+                .map(|x1| y.checked_sub(1).map(|y1| (map.get_cell(x1, y1), (x1, y1))))
+                .flatten();
+
+            match (north, east, north_east) {
+                (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
+                _ => {
+                    north_east = None;
+                }
+            }
+            match (south, east, south_east) {
+                (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
+                _ => {
+                    south_east = None;
+                }
+            }
+            match (south, west, south_west) {
+                (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
+                _ => {
+                    south_west = None;
+                }
+            }
+            match (north, west, north_west) {
+                (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
+                _ => {
+                    north_west = None;
+                }
+            }
+
+            vec![north, east, south, west]
+                .drain(..)
+                .flatten()
+                .map(|(b, xy)| (b, xy, 1.0))
+                .chain(
+                    vec![north_east, south_east, south_west, north_west]
+                        .drain(..)
+                        .flatten()
+                        .map(|(b, xy)| (b, xy, diagonal_cost)),
+                )
+                .filter(|(b, _, _)| b.is_some_and(|b1| b1))
+                .map(|(_, xy, w)| (xy, w))
+                .collect::<Vec<((usize, usize), f32)>>()
         };
 
         for y in 0..map.get_height() {
