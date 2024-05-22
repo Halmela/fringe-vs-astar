@@ -1,6 +1,6 @@
 use crate::graph::*;
-use std::cmp::{Ordering, Reverse};
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
 
 /// Diagonal octile distance from current node to goal.
 /// This is a grid specific method.
@@ -38,6 +38,8 @@ impl PartialEq for WeightedCell {
 
 impl Eq for WeightedCell {}
 
+/// We want binary heap to be minimum heap,
+/// so we order these in "reverse" order
 impl Ord for WeightedCell {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.weight > other.weight {
@@ -56,30 +58,6 @@ impl PartialOrd for WeightedCell {
     }
 }
 
-// struct Min_heap {
-//     heap: BinaryHeap<WeightedCell>,
-// }
-
-// impl Min_heap {
-//     fn new() -> Min_heap {
-//         Min_heap {
-//             heap: BinaryHeap::new(),
-//         }
-//     }
-
-//     fn push(&mut self, x: usize, y: usize, weight: f32) {
-//         self.heap.push(WeightedCell { x,y , weight  });
-//     }
-
-//     fn pop(&mut self) -> Option<((usize, usize), f32)> {
-//         if let Some((weight, (x, y))) = self.heap.pop() {
-//             return Some(((x, y), Reverse(weight)));
-//         } else {
-//             return None;
-//         }
-//     }
-// }
-
 pub fn a_star_simple(
     start_x: usize,
     start_y: usize,
@@ -89,46 +67,71 @@ pub fn a_star_simple(
 ) -> Option<Vec<(usize, usize)>> {
     let h = |x: usize, y: usize| heuristic(x, y, goal_x, goal_y);
 
-    let mut open_set: BinaryHeap<WeightedCell> =
+    let mut frontier: BinaryHeap<WeightedCell> =
         BinaryHeap::from([WeightedCell::new(start_x, start_y, 0.0)]);
     let mut came_from: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
     let mut cost_so_far = HashMap::new();
     cost_so_far.insert((start_x, start_y), 0.0);
 
-    while let Some(WeightedCell { x, y, weight }) = open_set.pop() {
+    let mut history: Vec<Vec<(Option<(usize, usize)>, Option<f32>)>> = vec![];
+    for y in 0..graph.get_height() {
+        history.push(vec![]);
+        for _ in 0..graph.get_width() {
+            history[y].push((None, None));
+        }
+    }
+    history[0][0] = (None, Some(0.0));
+
+    while let Some(WeightedCell { x, y, weight }) = frontier.pop() {
         if x == goal_x && y == goal_y {
             break;
         }
-        println!("{} {} {}", x, y, weight);
+        //println!("{} {} {}", x, y, weight);
+        //let current_cost = *cost_so_far.get(&(x, y)).unwrap();
+        //println!("{x} {y} {:?}", history[y][x]);
+        let current_cost = history[y][x].1.unwrap();
 
         for ((x1, y1), w1) in graph.neighbors(x, y).unwrap() {
-            print!("\t{} {} {:<11}", x1, y1, w1);
+            //print!("\t{} {} {:<11}", x1, y1, w1);
             // We can unwrap this since current node always has a cost value
-            let new_cost = cost_so_far.get(&(x, y)).unwrap() + w1;
-            match cost_so_far.get(&(*x1, *y1)) {
-                Some(cost) if new_cost > *cost => {
-                    println!("using old cost: {}", cost);
+            let new_cost = current_cost + w1;
+            let old_cost = history[*y1][*x1].1;
+            match old_cost {
+                Some(cost) if new_cost > cost => {
+                    //println!("using old cost: {}", cost);
                 }
                 _ => {
-                    cost_so_far.insert((*x1, *y1), new_cost);
+                    //cost_so_far.insert((*x1, *y1), new_cost);
                     let priority = new_cost + h(*x1, *y1);
-                    println!("using new cost: {:<11} priority: {priority}", new_cost);
-                    open_set.push(WeightedCell::new(*x1, *y1, priority));
-                    came_from.insert((*x1, *y1), (x, y));
+                    //println!("using new cost: {:<11} priority: {priority}", new_cost);
+                    frontier.push(WeightedCell::new(*x1, *y1, priority));
+                    //came_from.insert((*x1, *y1), (x, y));
+                    history[*y1][*x1] = (Some((x, y)), Some(new_cost));
                 }
             };
         }
-        println!("{:?}\n", &open_set);
     }
 
     // println!("{:?}", came_from);
     // println!("{:?}", cost_so_far);
-    let path = reconstruct_path((start_x, start_y), (goal_x, goal_y), came_from);
+    let mut path = vec![(goal_x, goal_y)];
+    loop {
+        let (x, y) = path[path.len() - 1];
+        let new = history[y][x].0.unwrap();
+        path.push(new);
 
-    println!("");
-    for i in &path {
-        println!("{:?} {}", i, cost_so_far.get(i).unwrap());
+        if (new) == (start_x, start_y) {
+            break;
+        }
     }
+    path.reverse();
+
+    //let path = reconstruct_path((start_x, start_y), (goal_x, goal_y), came_from);
+
+    // println!("");
+    // for i in &path {
+    //     println!("{:?} {}", i, cost_so_far.get(i).unwrap());
+    // }
 
     if path.is_empty() {
         return None;
