@@ -96,7 +96,7 @@ impl Graph for AdjacencyGridGraph {
         AdjacencyGridGraph {
             adjacency_grid,
             height: map.get_height(),
-            width: map.get_height(),
+            width: map.get_width(),
         }
     }
 
