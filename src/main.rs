@@ -4,16 +4,16 @@ use fringe_vs_astar::pathfinder::*;
 use std::collections::HashSet;
 
 fn main() -> anyhow::Result<()> {
-    let map = "benchmarks/dia10x10.map";
+    let map = "benchmarks/adaptive-depth-1.map";
     let grid = map_builder(map, MapType::GridMap)?;
     let grid_lol = map_builder(map, MapType::GridMap)?;
     println!("{}", grid);
 
-    let graph = AdjacencyMapGraph::new(grid);
+    //let graph = AdjacencyMapGraph::new(grid);
+    let graph = AdjacencyGridGraph::new(grid);
 
-    println!("{}", graph);
-
-    let path: HashSet<(usize, usize)> = a_star_simple(0, 0, 9, 9, graph)
+    println!("expected: 121.811182141304");
+    let path: HashSet<(usize, usize)> = a_star_simple(79, 18, 38, 78, graph)
         .unwrap()
         .drain(..)
         .collect();
