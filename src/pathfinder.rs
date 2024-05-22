@@ -17,6 +17,7 @@ fn heuristic(current_x: usize, current_y: usize, goal_x: usize, goal_y: usize) -
 
 /// Cell with a weight. IMPORTANT: lower weights are ordered as greater.
 /// This allows us to use binary heap
+#[derive(Debug)]
 struct WeightedCell {
     x: usize,
     y: usize,
@@ -40,11 +41,11 @@ impl Eq for WeightedCell {}
 impl Ord for WeightedCell {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.weight > other.weight {
-            Ordering::Equal
-        } else if self.weight < other.weight {
             Ordering::Less
-        } else {
+        } else if self.weight < other.weight {
             Ordering::Greater
+        } else {
+            Ordering::Equal
         }
     }
 }
@@ -92,35 +93,43 @@ pub fn a_star_simple(
         BinaryHeap::from([WeightedCell::new(start_x, start_y, 0.0)]);
     let mut came_from: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
     let mut cost_so_far = HashMap::new();
-    cost_so_far.insert(
-        (start_x, start_y),
-        heuristic(start_x, start_y, goal_x, goal_y),
-    );
+    cost_so_far.insert((start_x, start_y), 0.0);
 
-    while let Some(WeightedCell { x, y, .. }) = open_set.pop() {
+    while let Some(WeightedCell { x, y, weight }) = open_set.pop() {
         if x == goal_x && y == goal_y {
             break;
         }
-        println!("{} {} {:?}", x, y, graph.neighbors(x, y));
+        println!("{} {} {}", x, y, weight);
 
         for ((x1, y1), w1) in graph.neighbors(x, y).unwrap() {
+            print!("\t{} {} {:<11}", x1, y1, w1);
             // We can unwrap this since current node always has a cost value
             let new_cost = cost_so_far.get(&(x, y)).unwrap() + w1;
             match cost_so_far.get(&(*x1, *y1)) {
-                Some(cost) if new_cost > *cost => {}
+                Some(cost) if new_cost > *cost => {
+                    println!("using old cost: {}", cost);
+                }
                 _ => {
                     cost_so_far.insert((*x1, *y1), new_cost);
                     let priority = new_cost + h(*x1, *y1);
+                    println!("using new cost: {:<11} priority: {priority}", new_cost);
                     open_set.push(WeightedCell::new(*x1, *y1, priority));
                     came_from.insert((*x1, *y1), (x, y));
                 }
             };
         }
+        println!("{:?}\n", &open_set);
     }
 
-    println!("{:?}", came_from);
-    println!("{:?}", cost_so_far);
+    // println!("{:?}", came_from);
+    // println!("{:?}", cost_so_far);
     let path = reconstruct_path((start_x, start_y), (goal_x, goal_y), came_from);
+
+    println!("");
+    for i in &path {
+        println!("{:?} {}", i, cost_so_far.get(i).unwrap());
+    }
+
     if path.is_empty() {
         return None;
     } else {
