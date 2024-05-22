@@ -86,7 +86,7 @@ pub fn a_star_simple(
             history[x].push((None, None, None));
         }
     }
-    println!("{} {}", history.len(), history[0].len());
+
     history[start_x][start_y] = (None, Some(0.0), Some(0.0));
 
     while let Some(WeightedCell { x, y, .. }) = frontier.pop() {
@@ -110,8 +110,8 @@ pub fn a_star_simple(
                         Some(_) => {
                             // println!("\nchange {x1} {y1}");
                             history[*x1][*y1] = (Some((x, y)), Some(new_cost), Some(priority));
-                            frontier = delete_from_heap((x1, y1), frontier);
-                            frontier.push(WeightedCell::new(*x1, *y1, priority));
+                            frontier = modify_heap((*x1, *y1), priority, frontier);
+                            //frontier.push(WeightedCell::new(*x1, *y1, priority));
                         }
                         None => {
                             frontier.push(WeightedCell::new(*x1, *y1, priority));
@@ -150,55 +150,20 @@ pub fn a_star_simple(
     }
 }
 
-fn delete_from_heap(
-    xy: (&usize, &usize),
+fn modify_heap(
+    xy: (usize, usize),
+    value: f32,
     mut heap: BinaryHeap<WeightedCell>,
 ) -> BinaryHeap<WeightedCell> {
     heap.drain()
-        .filter(|WeightedCell { x, y, .. }| (x, y) != xy)
+        .map(|WeightedCell { x, y, weight }| {
+            if (x, y) == xy {
+                WeightedCell::new(x, y, value)
+            } else {
+                WeightedCell::new(x, y, weight)
+            }
+        })
         .collect()
-}
-
-/*
-def reconstruct_path(came_from: dict[Location, Location],
-                     start: Location, goal: Location) -> list[Location]:
-
-    current: Location = goal
-    path: list[Location] = []
-    if goal not in came_from: # no path was found
-        return []
-    while current != start:
-        path.append(current)
-        current = came_from[current]
-    path.append(start) # optional
-    path.reverse() # optional
-    return path
-*/
-
-fn _reconstruct_path(
-    start: (usize, usize),
-    goal: (usize, usize),
-    came_from: HashMap<(usize, usize), (usize, usize)>,
-) -> Vec<(usize, usize)> {
-    let mut current = goal;
-    let mut path: Vec<(usize, usize)> = vec![];
-
-    if !came_from.contains_key(&goal) {
-        return path;
-    }
-
-    while current != start {
-        path.push(current);
-        if let Some(next) = came_from.get(&current) {
-            current = *next;
-        } else {
-            return vec![];
-        }
-    }
-    path.push(start);
-    path.reverse();
-
-    path
 }
 
 #[cfg(test)]
