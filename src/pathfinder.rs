@@ -1,18 +1,24 @@
-use crate::graph::*;
+use crate::graph::{self, *};
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::BinaryHeap;
 use std::fmt;
 
 /// Diagonal octile distance from current node to goal.
 /// This is a grid specific method.
-fn heuristic(current_x: usize, current_y: usize, goal_x: usize, goal_y: usize) -> f32 {
-    let x_distance: f32 = ((current_x as f32) - (goal_x as f32)).abs();
-    let y_distance: f32 = ((current_y as f32) - (goal_y as f32)).abs();
+fn heuristic(
+    current_x: usize,
+    current_y: usize,
+    goal_x: usize,
+    goal_y: usize,
+    diagonal_cost: f64,
+) -> f64 {
+    let x_distance: f64 = ((current_x as f64) - (goal_x as f64)).abs();
+    let y_distance: f64 = ((current_y as f64) - (goal_y as f64)).abs();
 
     if x_distance > y_distance {
-        return (x_distance - y_distance) + 2.0_f32.sqrt() * y_distance;
+        return (x_distance - y_distance) + diagonal_cost * y_distance;
     } else {
-        return (y_distance - x_distance) + 2.0_f32.sqrt() * x_distance;
+        return (y_distance - x_distance) + diagonal_cost * x_distance;
     }
 }
 
@@ -22,12 +28,24 @@ fn heuristic(current_x: usize, current_y: usize, goal_x: usize, goal_y: usize) -
 struct WeightedCell {
     x: usize,
     y: usize,
-    weight: f32,
+    weight: f64,
 }
 
 impl WeightedCell {
-    fn new(x: usize, y: usize, weight: f32) -> WeightedCell {
+    fn new(x: usize, y: usize, weight: f64) -> WeightedCell {
         WeightedCell { x, y, weight }
+    }
+
+    fn get_xy(&self) -> (usize, usize) {
+        (self.x, self.y)
+    }
+
+    fn get_weight(&self) -> f64 {
+        self.weight
+    }
+
+    fn change_weight(&mut self, weight: f64) {
+        self.weight = weight;
     }
 }
 
@@ -65,103 +83,163 @@ impl PartialOrd for WeightedCell {
     }
 }
 
-pub fn a_star_simple(
+pub struct AStar<G: Graph> {
+    frontier: Frontier,
+    history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>>,
     start_x: usize,
     start_y: usize,
     goal_x: usize,
     goal_y: usize,
-    graph: impl Graph,
-) -> Option<Vec<(usize, usize)>> {
-    let h = |x: usize, y: usize| heuristic(x, y, goal_x, goal_y);
+    graph: G,
+}
 
-    let mut frontier: BinaryHeap<WeightedCell> =
-        BinaryHeap::with_capacity(graph.get_height() * graph.get_width());
-    frontier.push(WeightedCell::new(start_x, start_y, 0.0));
+impl<G: Graph> AStar<G> {
+    pub fn new(start_x: usize, start_y: usize, goal_x: usize, goal_y: usize, graph: G) -> Self {
+        let frontier = Frontier::new(start_x, start_y, graph.get_width(), graph.get_height());
+        /*
+        let mut frontier: BinaryHeap<WeightedCell> =
+            BinaryHeap::with_capacity(graph.get_height() * graph.get_width());
+        frontier.push(WeightedCell::new(start_x, start_y, 0.0));
+        */
 
-    // (previous_xy, current_cost, lowest_prority)
-    let mut history: Vec<Vec<(Option<(usize, usize)>, Option<f32>, Option<f32>)>> = vec![];
-    for x in 0..graph.get_width() {
-        history.push(vec![]);
-        for _ in 0..graph.get_height() {
-            history[x].push((None, None, None));
-        }
-    }
+        // (previous xy, current cost, current prority)
 
-    history[start_x][start_y] = (None, Some(0.0), Some(0.0));
-
-    while let Some(WeightedCell { x, y, .. }) = frontier.pop() {
-        //println!("{x} {y}");
-        //println!("{:?}", graph.neighbors(x, y).unwrap());
-        if x == goal_x && y == goal_y {
-            break;
-        }
-        let current_cost = history[x][y].1.unwrap();
-
-        for ((x1, y1), w1) in graph.neighbors(x, y).unwrap() {
-            let new_cost = current_cost + w1;
-            //println!("\t{x1} {y1}");
-            let old_cost = history[*x1][*y1].1;
-            match old_cost {
-                Some(cost) if new_cost > cost => {}
-                _ => {
-                    let priority = new_cost + h(*x1, *y1);
-                    match history[*x1][*y1].2 {
-                        Some(p) if p < priority => {}
-                        Some(_) => {
-                            // println!("\nchange {x1} {y1}");
-                            history[*x1][*y1] = (Some((x, y)), Some(new_cost), Some(priority));
-                            frontier = modify_heap((*x1, *y1), priority, frontier);
-                            //frontier.push(WeightedCell::new(*x1, *y1, priority));
-                        }
-                        None => {
-                            frontier.push(WeightedCell::new(*x1, *y1, priority));
-                            history[*x1][*y1] = (Some((x, y)), Some(new_cost), Some(priority));
-                        }
-                    }
-                }
-            };
-            /*
-            println!("[");
-            for w in &frontier {
-                print!("{w}, ");
+        let mut history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>> = vec![];
+        for x in 0..graph.get_width() {
+            history.push(vec![]);
+            for _ in 0..graph.get_height() {
+                history[x].push((None, None));
             }
-            println!("\n]");
-            */
+        }
+
+        history[start_x][start_y] = (None, Some(0.0));
+
+        AStar {
+            frontier,
+            history,
+            start_x,
+            start_y,
+            goal_x,
+            goal_y,
+            graph,
         }
     }
 
-    let mut path = vec![(goal_x, goal_y)];
-    loop {
-        let (x, y) = path[path.len() - 1];
-        let new = history[x][y].0.unwrap();
-        path.push(new);
+    pub fn solve(mut self) -> Option<Vec<(usize, usize)>> {
+        let d_c = 2.0_f64.sqrt();
+        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y, d_c);
 
-        if (new) == (start_x, start_y) {
-            break;
+        while let Some((x, y)) = self.frontier.pop() {
+            if x == self.goal_x && y == self.goal_y {
+                return Some(self.construct_path());
+            }
+
+            let current_cost = self.history[x][y].1.unwrap();
+
+            for ((x1, y1), w1) in self.graph.neighbors(x, y).unwrap() {
+                let new_cost = current_cost + w1;
+                let priority = new_cost + h(*x1, *y1);
+                if self.frontier.push(*x1, *y1, priority) {
+                    self.history[*x1][*y1] = (Some((x, y)), Some(new_cost));
+                }
+            }
+        }
+        // If frontier is empty, no path can be found
+        None
+    }
+
+    fn construct_path(&self) -> Vec<(usize, usize)> {
+        let mut path = vec![(self.goal_x, self.goal_y)];
+        loop {
+            let (x, y) = path[path.len() - 1];
+            let new = self.history[x][y].0.unwrap();
+            path.push(new);
+
+            if (new) == (self.start_x, self.start_y) {
+                break;
+            }
+        }
+        path.reverse();
+
+        println!("{}", self.history[self.goal_x][self.goal_y].1.unwrap());
+        path
+    }
+}
+
+struct Frontier {
+    heap: BinaryHeap<WeightedCell>,
+    smallest_found: Vec<Vec<Option<f64>>>,
+}
+
+impl Frontier {
+    pub fn new(start_x: usize, start_y: usize, width: usize, height: usize) -> Frontier {
+        let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(height * width);
+        heap.push(WeightedCell::new(start_x, start_y, 0.0));
+
+        let mut smallest_found: Vec<Vec<Option<f64>>> = vec![];
+        for x in 0..width {
+            smallest_found.push(vec![]);
+            for _ in 0..height {
+                smallest_found[x].push(None);
+            }
+        }
+
+        smallest_found[start_x][start_y] = Some(0.0);
+        Frontier {
+            heap,
+            smallest_found,
         }
     }
-    path.reverse();
 
-    if path.is_empty() {
-        return None;
-    } else {
-        println!("{}", history[goal_x][goal_y].1.unwrap());
-        return Some(path);
+    pub fn push(&mut self, x: usize, y: usize, weight: f64) -> bool {
+        match self.smallest_found[x][y] {
+            Some(w) if w < weight => false,
+            Some(_) => {
+                self.smallest_found[x][y] = Some(weight);
+                self.replace((x, y), weight);
+                true
+            }
+            None => {
+                self.heap.push(WeightedCell::new(x, y, weight));
+                self.smallest_found[x][y] = Some(weight);
+                true
+            }
+        }
+    }
+
+    pub fn pop(&mut self) -> Option<(usize, usize)> {
+        if let Some(WeightedCell { x, y, .. }) = self.heap.pop() {
+            Some((x, y))
+        } else {
+            None
+        }
+    }
+
+    fn replace(&mut self, xy: (usize, usize), value: f64) {
+        self.heap = self
+            .heap
+            .drain()
+            .map(|mut wc| {
+                if wc.get_xy() == xy {
+                    wc.change_weight(value)
+                }
+                wc
+            })
+            .collect()
     }
 }
 
 fn modify_heap(
     xy: (usize, usize),
-    value: f32,
+    value: f64,
     mut heap: BinaryHeap<WeightedCell>,
 ) -> BinaryHeap<WeightedCell> {
     heap.drain()
-        .map(|WeightedCell { x, y, weight }| {
-            if (x, y) == xy {
-                WeightedCell::new(x, y, value)
-            } else {
-                WeightedCell::new(x, y, weight)
+        .map(|mut wc| {
+            if wc.get_xy() == xy {
+                wc.change_weight(value)
             }
+            wc
         })
         .collect()
 }
@@ -172,14 +250,14 @@ mod tests {
 
     #[test]
     fn heuristic_works_diagonally() {
-        let result = heuristic(0, 0, 1, 1);
-        let expected: f32 = 2.0_f32.sqrt();
-        assert_eq!(expected, result);
+        let diagonal_cost = 2.0_f64.sqrt();
+        let result = heuristic(0, 0, 1, 1, diagonal_cost);
+        assert_eq!(diagonal_cost, result);
     }
     #[test]
     fn heuristic_works_downwards() {
-        let result = heuristic(0, 0, 0, 1);
-        let expected: f32 = 1.0_f32;
-        assert_eq!(expected, result);
+        let diagonal_cost = 2.0_f64.sqrt();
+        let result = heuristic(0, 0, 0, 1, diagonal_cost);
+        assert_eq!(diagonal_cost, result);
     }
 }
