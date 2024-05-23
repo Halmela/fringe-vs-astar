@@ -1,18 +1,24 @@
 use crate::algorithms::heuristic;
 use crate::structures::{Frontier, Graph};
 
-pub struct AStar<G: Graph> {
+pub struct AStar<'a> {
     frontier: Frontier,
     history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>>,
     start_x: usize,
     start_y: usize,
     goal_x: usize,
     goal_y: usize,
-    graph: G,
+    graph: &'a Box<dyn Graph>,
 }
 
-impl<G: Graph> AStar<G> {
-    pub fn new(start_x: usize, start_y: usize, goal_x: usize, goal_y: usize, graph: G) -> Self {
+impl<'a> AStar<'a> {
+    pub fn new(
+        start_x: usize,
+        start_y: usize,
+        goal_x: usize,
+        goal_y: usize,
+        graph: &'a Box<dyn Graph>,
+    ) -> Self {
         let frontier = Frontier::new(start_x, start_y, graph.get_width(), graph.get_height());
         /*
         let mut frontier: BinaryHeap<WeightedCell> =
@@ -79,7 +85,10 @@ impl<G: Graph> AStar<G> {
         }
         path.reverse();
 
-        println!("{}", self.history[self.goal_x][self.goal_y].1.unwrap());
+        println!(
+            "Result:\n\t{}",
+            self.history[self.goal_x][self.goal_y].1.unwrap()
+        );
         path
     }
 }

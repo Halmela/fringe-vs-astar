@@ -2,10 +2,20 @@ use crate::structures::map::*;
 use std::collections::HashMap;
 use std::fmt;
 
+pub enum GraphType {
+    AdjacencyMapGraph,
+    AdjacencyGridGraph,
+}
+
+pub fn graph_builder(map: &Box<dyn Map>, graph_type: GraphType) -> Box<dyn Graph> {
+    match graph_type {
+        GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
+        GraphType::AdjacencyGridGraph => Box::new(AdjacencyGridGraph::new(map)),
+    }
+}
+
 /// Representation of terrain map as a graph
 pub trait Graph {
-    /// Constructor
-    fn new(map: Box<dyn Map>) -> Self;
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
@@ -24,8 +34,9 @@ pub struct AdjacencyMapGraph {
     width: usize,
 }
 
-impl Graph for AdjacencyMapGraph {
-    fn new(map: Box<dyn Map>) -> AdjacencyMapGraph {
+impl AdjacencyMapGraph {
+    /// Constructor
+    pub fn new(map: &Box<dyn Map>) -> AdjacencyMapGraph {
         let diagonal_cost = 2.0_f64.sqrt();
 
         let mut adjacency_map = HashMap::new();
@@ -33,7 +44,7 @@ impl Graph for AdjacencyMapGraph {
         for y in 0..map.get_height() {
             for x in 0..map.get_width() {
                 if let Some(true) = map.get_cell(x, y) {
-                    adjacency_map.insert((x, y), generate_neighbors(x, y, &map, diagonal_cost));
+                    adjacency_map.insert((x, y), generate_neighbors(x, y, map, diagonal_cost));
                 }
             }
         }
@@ -44,7 +55,9 @@ impl Graph for AdjacencyMapGraph {
             width: map.get_width(),
         }
     }
+}
 
+impl Graph for AdjacencyMapGraph {
     fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
         self.adjacency_map.get(&(x, y))
     }
@@ -75,8 +88,9 @@ pub struct AdjacencyGridGraph {
     width: usize,
 }
 
-impl Graph for AdjacencyGridGraph {
-    fn new(map: Box<dyn Map>) -> AdjacencyGridGraph {
+impl AdjacencyGridGraph {
+    /// Constructor
+    fn new(map: &Box<dyn Map>) -> AdjacencyGridGraph {
         // So that the value is same for everyone
         let diagonal_cost = 2.0_f64.sqrt();
 
@@ -88,7 +102,7 @@ impl Graph for AdjacencyGridGraph {
             for x in 0..map.get_width() {
                 adjacency_grid[y].push(vec![]);
                 if let Some(true) = map.get_cell(x, y) {
-                    adjacency_grid[y][x] = generate_neighbors(x, y, &map, diagonal_cost);
+                    adjacency_grid[y][x] = generate_neighbors(x, y, map, diagonal_cost);
                 }
             }
         }
@@ -99,7 +113,9 @@ impl Graph for AdjacencyGridGraph {
             width: map.get_width(),
         }
     }
+}
 
+impl Graph for AdjacencyGridGraph {
     fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
         Some(&self.adjacency_grid[y][x])
     }
@@ -156,8 +172,7 @@ fn generate_neighbors(
     // (x-1, y-1)
     let mut north_west = x
         .checked_sub(1)
-        .map(|x1| y.checked_sub(1).map(|y1| (map.get_cell(x1, y1), (x1, y1))))
-        .flatten();
+        .and_then(|x1| y.checked_sub(1).map(|y1| (map.get_cell(x1, y1), (x1, y1))));
 
     match (north, east, north_east) {
         (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
@@ -198,64 +213,3 @@ fn generate_neighbors(
         .map(|(_, xy, w)| (xy, w))
         .collect::<Vec<((usize, usize), f64)>>()
 }
-
-/*
-/// Graph where each node has its neighbors as a vector
-struct AdjacencyListedGraph {
-    adjacency_list: Vec<Vec<(usize, f64)>>,
-    width: usize,
-}
-
-
-impl Graph for AdjacencyListedGraph {
-    fn new<M: Map>(map: M) -> AdjacencyListedGraph {
-        let diagonal_cost = 2.0_f64.sqrt();
-
-        let mut adjacency_list: Vec<Vec<(usize, f64)>> =
-            vec![vec!(); map.get_height() * map.get_width()];
-
-        let to_index = |x: usize, y: usize| y * map.get_width() + x;
-
-        let some_to_index =
-            |x: Option<usize>, y: Option<usize>| x.and_then(|x1| y.map(|y1| to_index(x1, y1)));
-
-        let neighbors = |x: usize, y: usize| {
-            vec![
-                //(x - 1, y - 1),
-                some_to_index(x.checked_sub(1), y.checked_sub(1)).map(|i| (i, diagonal_cost)),
-                // (x, y - 1),
-                some_to_index(Some(x), y.checked_sub(1)).map(|i| (i, 1.0)),
-                // (x + 1, y - 1),
-                some_to_index(Some(x + 1), y.checked_sub(1)).map(|i| (i, diagonal_cost)),
-                // (x - 1, y),
-                some_to_index(x.checked_sub(1), Some(y)).map(|i| (i, 1.0)),
-                Some((to_index(x + 1, y), 1.0)),
-                //(x - 1, y + 1),
-                some_to_index(x.checked_sub(1), Some(y + 1)).map(|i| (i, diagonal_cost)),
-                Some((to_index(x, y + 1), 1.0)),
-                Some((to_index(x + 1, y + 1), diagonal_cost)),
-            ]
-            .drain(..)
-            .flatten()
-            .collect()
-        };
-
-        for y in 0..map.get_height() {
-            for x in 0..map.get_width() {
-                if let Some(true) = map.get_cell(x, y) {
-                    adjacency_list.push(neighbors(x, y));
-                }
-            }
-        }
-
-        AdjacencyListedGraph {
-            adjacency_list,
-            width: map.get_width(),
-        }
-    }
-
-    fn neighbors(&self, x: usize, y: usize) -> &Vec<((usize, usize), f64)> {
-        &self.adjacency_list[self.index(x, y)]
-    }
-}
-*/

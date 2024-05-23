@@ -1,41 +1,16 @@
-use fringe_vs_astar::algorithms::AStar;
-use fringe_vs_astar::structures::graph::*;
-use fringe_vs_astar::structures::map::{map_builder, MapType};
-use std::collections::HashSet;
+use fringe_vs_astar::structures::graph::GraphType;
+use fringe_vs_astar::structures::map::MapType;
+
+use fringe_vs_astar::context::Context;
 
 fn main() -> anyhow::Result<()> {
-    let map = "benchmarks/scene_sp_sax_04.map";
-    let grid = map_builder(map, MapType::GridMap)?;
-    let grid_lol = map_builder(map, MapType::GridMap)?;
-    //println!("{}", grid);
-
-    /* let graph = AdjacencyGridGraph::new(grid);
-
-    println!("expected: 7712.59278044");
-    let astar = AStar::new(3411, 4166, 3381, 533, graph);
-    */
-
-    /* let map = "benchmarks/Berlin_1_256.map";
-    let grid = map_builder(map, MapType::GridMap)?;
-    let grid_lol = map_builder(map, MapType::GridMap)?;
-    println!("{}", grid);
-
-    let graph = AdjacencyGridGraph::new(grid);
-
-    println!("expected: 361.98989868");
-    let astar = AStar::new(16, 3, 236, 223, graph); */
-
-    let map = "benchmarks/Berlin_0_1024.map";
-    let grid = map_builder(map, MapType::GridMap)?;
-    let grid_lol = map_builder(map, MapType::GridMap)?;
-    //println!("{}", grid);
-
-    let graph = AdjacencyGridGraph::new(grid);
-
-    println!("expected: 1539.80230712");
-    let astar = AStar::new(19, 3, 1005, 1002, graph);
-
-    let path: HashSet<(usize, usize)> = astar.solve().unwrap().drain(..).collect();
+    let mut context = Context::new(
+        "benchmarks/Berlin_1_256.map",
+        MapType::GridMap,
+        GraphType::AdjacencyGridGraph,
+    );
+    context.read_problem_from_file("benchmarks/Berlin_1_256.map.scen", 910)?;
+    context.solve();
 
     /* let mut result = String::new();
     for y in 0..grid_lol.get_height() {
@@ -54,8 +29,3 @@ fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-/*
-.map -> Map -> Graph -> Pathfinder -> Presenter
-.scen -> [Scenario] -->^
-*/
