@@ -1,4 +1,4 @@
-use crate::map::*;
+use crate::structures::map::*;
 use std::collections::HashMap;
 use std::fmt;
 

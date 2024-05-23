@@ -1,6 +1,6 @@
-use fringe_vs_astar::graph::*;
-use fringe_vs_astar::map::*;
-use fringe_vs_astar::pathfinder::*;
+use fringe_vs_astar::algorithms::AStar;
+use fringe_vs_astar::structures::graph::*;
+use fringe_vs_astar::structures::map::{map_builder, MapType};
 use std::collections::HashSet;
 
 fn main() -> anyhow::Result<()> {
@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
     let map = "benchmarks/Berlin_0_1024.map";
     let grid = map_builder(map, MapType::GridMap)?;
     let grid_lol = map_builder(map, MapType::GridMap)?;
-    println!("{}", grid);
+    //println!("{}", grid);
 
     let graph = AdjacencyGridGraph::new(grid);
 
