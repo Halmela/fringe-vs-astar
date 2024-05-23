@@ -9,7 +9,7 @@ pub trait Graph {
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f32)>>;
+    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>>;
     /// Map height
     fn get_height(&self) -> usize;
     /// Map width
@@ -19,14 +19,14 @@ pub trait Graph {
 /// Graph represented as a HashMap with key `(x,y)`
 #[derive(Debug)]
 pub struct AdjacencyMapGraph {
-    adjacency_map: HashMap<(usize, usize), Vec<((usize, usize), f32)>>,
+    adjacency_map: HashMap<(usize, usize), Vec<((usize, usize), f64)>>,
     height: usize,
     width: usize,
 }
 
 impl Graph for AdjacencyMapGraph {
     fn new(map: Box<dyn Map>) -> AdjacencyMapGraph {
-        let diagonal_cost = 2.0_f32.sqrt();
+        let diagonal_cost = 2.0_f64.sqrt();
 
         let mut adjacency_map = HashMap::new();
 
@@ -45,7 +45,7 @@ impl Graph for AdjacencyMapGraph {
         }
     }
 
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f32)>> {
+    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
         self.adjacency_map.get(&(x, y))
     }
 
@@ -70,7 +70,7 @@ impl fmt::Display for AdjacencyMapGraph {
 /// Graph represented as a 3D matrix that can be keyed with x,y
 #[derive(Debug)]
 pub struct AdjacencyGridGraph {
-    adjacency_grid: Vec<Vec<Vec<((usize, usize), f32)>>>,
+    adjacency_grid: Vec<Vec<Vec<((usize, usize), f64)>>>,
     height: usize,
     width: usize,
 }
@@ -78,9 +78,9 @@ pub struct AdjacencyGridGraph {
 impl Graph for AdjacencyGridGraph {
     fn new(map: Box<dyn Map>) -> AdjacencyGridGraph {
         // So that the value is same for everyone
-        let diagonal_cost = 2.0_f32.sqrt();
+        let diagonal_cost = 2.0_f64.sqrt();
 
-        let mut adjacency_grid: Vec<Vec<Vec<((usize, usize), f32)>>> =
+        let mut adjacency_grid: Vec<Vec<Vec<((usize, usize), f64)>>> =
             Vec::with_capacity(map.get_height());
 
         for y in 0..map.get_height() {
@@ -100,7 +100,7 @@ impl Graph for AdjacencyGridGraph {
         }
     }
 
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f32)>> {
+    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
         Some(&self.adjacency_grid[y][x])
     }
     fn get_height(&self) -> usize {
@@ -129,8 +129,8 @@ fn generate_neighbors(
     x: usize,
     y: usize,
     map: &Box<dyn Map>,
-    diagonal_cost: f32,
-) -> Vec<((usize, usize), f32)> {
+    diagonal_cost: f64,
+) -> Vec<((usize, usize), f64)> {
     // We are dealing with usize here, so x-1 will always be checked to avoid underflow errors.
     // Side-effects of this are that the coordinates will be correct and this can be harder to read.
 
@@ -196,22 +196,22 @@ fn generate_neighbors(
         )
         .filter(|(b, _, _)| b.is_some_and(|b1| b1))
         .map(|(_, xy, w)| (xy, w))
-        .collect::<Vec<((usize, usize), f32)>>()
+        .collect::<Vec<((usize, usize), f64)>>()
 }
 
 /*
 /// Graph where each node has its neighbors as a vector
 struct AdjacencyListedGraph {
-    adjacency_list: Vec<Vec<(usize, f32)>>,
+    adjacency_list: Vec<Vec<(usize, f64)>>,
     width: usize,
 }
 
 
 impl Graph for AdjacencyListedGraph {
     fn new<M: Map>(map: M) -> AdjacencyListedGraph {
-        let diagonal_cost = 2.0_f32.sqrt();
+        let diagonal_cost = 2.0_f64.sqrt();
 
-        let mut adjacency_list: Vec<Vec<(usize, f32)>> =
+        let mut adjacency_list: Vec<Vec<(usize, f64)>> =
             vec![vec!(); map.get_height() * map.get_width()];
 
         let to_index = |x: usize, y: usize| y * map.get_width() + x;
@@ -254,7 +254,7 @@ impl Graph for AdjacencyListedGraph {
         }
     }
 
-    fn neighbors(&self, x: usize, y: usize) -> &Vec<((usize, usize), f32)> {
+    fn neighbors(&self, x: usize, y: usize) -> &Vec<((usize, usize), f64)> {
         &self.adjacency_list[self.index(x, y)]
     }
 }
