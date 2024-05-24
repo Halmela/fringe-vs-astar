@@ -104,6 +104,7 @@ mod tests {
     fn heuristic_works_downwards() {
         let diagonal_cost = 2.0_f64.sqrt();
         let result = heuristic(0, 0, 0, 1, diagonal_cost);
-        assert_eq!(diagonal_cost, result);
+        let expected = 1.0;
+        assert_eq!(expected, result);
     }
 }
