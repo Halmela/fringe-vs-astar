@@ -20,14 +20,8 @@ impl<'a> AStar<'a> {
         graph: &'a Box<dyn Graph>,
     ) -> Self {
         let frontier = Frontier::new(start_x, start_y, graph.get_width(), graph.get_height());
-        /*
-        let mut frontier: BinaryHeap<WeightedCell> =
-            BinaryHeap::with_capacity(graph.get_height() * graph.get_width());
-        frontier.push(WeightedCell::new(start_x, start_y, 0.0));
-        */
 
         // (previous xy, current cost, current prority)
-
         let mut history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>> = vec![];
         for x in 0..graph.get_width() {
             history.push(vec![]);

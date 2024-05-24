@@ -2,6 +2,7 @@ use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 /// Simplifies lines to a boolean vector.
 /// '.' and 'G' are traversable, others are not.
@@ -13,7 +14,7 @@ fn simplify_map(map: Vec<String>) -> Vec<Vec<bool>> {
 }
 
 /// Read a map from file
-fn read_map(file_path: &str) -> anyhow::Result<(usize, usize, Vec<String>)> {
+fn read_map(file_path: PathBuf) -> anyhow::Result<(usize, usize, Vec<String>)> {
     let f = File::open(file_path)?;
     let mut contents = BufReader::new(f).lines();
 
@@ -45,7 +46,7 @@ pub enum MapType {
     ArrayMap,
 }
 
-pub fn map_builder(file_path: &str, map_type: MapType) -> anyhow::Result<Box<dyn Map>> {
+pub fn map_builder(file_path: PathBuf, map_type: MapType) -> anyhow::Result<Box<dyn Map>> {
     let (height, width, map) = read_map(file_path)?;
     let map = simplify_map(map);
 

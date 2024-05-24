@@ -1,4 +1,5 @@
 use crate::algorithms::*;
+use crate::cli::*;
 use crate::problem::Problem;
 use crate::structures::map::map_builder;
 use crate::structures::{
@@ -9,6 +10,7 @@ use crate::structures::{
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 
 pub struct Context {
     map: Box<dyn Map>,
@@ -17,14 +19,76 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(file_path: &str, map_type: MapType, graph_type: GraphType) -> Self {
-        let map = map_builder(file_path, map_type).unwrap();
+    pub fn new(file_path: PathBuf, map_type: MapType, graph_type: GraphType) -> Self {
+        let map = map_builder(file_path, map_type).expect("invalid map");
         let graph = graph_builder(&map, graph_type);
 
         Context {
             map,
             graph,
             problem: None,
+        }
+    }
+
+    pub fn run(cli: Cli) {
+        // default for now
+        let map_type = MapType::GridMap;
+        let graph_type = GraphType::AdjacencyGridGraph;
+
+        println!("Loading map {}", cli.map_file.to_str().unwrap());
+        let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
+
+        println!("Map loaded, creating graph");
+        let graph = graph_builder(&map, graph_type);
+
+        let mut context = Context {
+            map,
+            graph,
+            problem: None,
+        };
+
+        let mut problem_file = Default::default();
+        if let Some(problem) = cli.problem_file {
+            problem_file = problem;
+        } else {
+            problem_file = cli.map_file;
+            problem_file.set_extension("map.scenario");
+            if !problem_file.as_path().try_exists().is_ok_and(|b| b) {
+                problem_file.set_extension("scen");
+                if !problem_file.as_path().try_exists().is_ok_and(|b| b) {
+                    println!("Could not find a default problem file for map with extensions .scenario and .scen");
+                    return;
+                }
+            }
+        }
+
+        if let Some(n) = cli.problem_number {
+            context
+                .read_problem_from_file(&problem_file, n)
+                .expect("Could not find a problem with supplied number");
+        }
+
+        match cli.mode {
+            Mode::Print => {
+                if context.problem.is_some() {
+                    if cli.silent {
+                        println!("{}", context.problem.as_ref().unwrap());
+                    } else {
+                        context.print_problem();
+                    }
+                } else {
+                    println!("{}", context.map);
+                }
+            }
+            Mode::Solve => {
+                if context.problem.is_some() {
+                    context.solve(!cli.silent);
+                } else {
+                    context
+                        .run_full_file(problem_file, !cli.silent)
+                        .expect("something went wrong running the file");
+                }
+            }
         }
     }
 
@@ -35,17 +99,17 @@ impl Context {
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
     pub fn read_problem_from_file(
         &mut self,
-        file_path: &str,
+        problem_file: &PathBuf,
         problem: usize,
     ) -> anyhow::Result<()> {
-        let f = File::open(file_path)?;
+        let f = File::open(problem_file)?;
         let mut content = BufReader::new(f).lines();
         self.set_problem(Problem::parse_problem(content.nth(problem).unwrap()?)?);
 
         Ok(())
     }
 
-    pub fn run_full_file(&mut self, file_path: &str, print: bool) -> anyhow::Result<()> {
+    pub fn run_full_file(&mut self, file_path: PathBuf, print: bool) -> anyhow::Result<()> {
         let f = File::open(file_path)?;
         let mut content = BufReader::new(f).lines();
         content.next();
@@ -111,8 +175,11 @@ impl Context {
                     result.push('\n');
                 }
                 println!("{}", result);
-                println!("{}\n", self.problem.as_ref().unwrap());
+                println!("{}", self.problem.as_ref().unwrap());
                 println!("Result:\n\t{}", path_length);
+                if let Some(l) = length {
+                    println!("Difference:\n\t{}", path_length - l);
+                }
             } else {
                 println!("Result:\n\t{}", path_length);
                 if let Some(l) = length {
