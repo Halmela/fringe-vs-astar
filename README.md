@@ -5,7 +5,7 @@ Fringe-haun ja A*-haun toteuttaminen ja vertailu; HY TKT algoritmi-harjoitustyö
 
 ## Asennus
 Kloonaa repositorio ja aja sen juuressa `cargo build --release`.
-Tämä luo binäärin `target/release/fringe-vs-astar` jonka voi siirtää minne haluaa ajaa sieltä.
+Tämä luo binäärin `target/release/fringe-vs-astar` jonka voi siirtää minne haluaa.
 
 ## Käyttö
 ```bash
