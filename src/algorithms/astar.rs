@@ -49,13 +49,16 @@ impl<'a> AStar<'a> {
         }
     }
 
-    pub fn solve(mut self) -> Option<Vec<(usize, usize)>> {
+    pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
         let d_c = 2.0_f64.sqrt();
         let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y, d_c);
 
         while let Some((x, y)) = self.frontier.pop() {
             if x == self.goal_x && y == self.goal_y {
-                return Some(self.construct_path());
+                return Some((
+                    self.construct_path(),
+                    self.history[self.goal_x][self.goal_y].1.unwrap(),
+                ));
             }
 
             let current_cost = self.history[x][y].1.unwrap();
@@ -85,10 +88,6 @@ impl<'a> AStar<'a> {
         }
         path.reverse();
 
-        println!(
-            "Result:\n\t{}",
-            self.history[self.goal_x][self.goal_y].1.unwrap()
-        );
         path
     }
 }
