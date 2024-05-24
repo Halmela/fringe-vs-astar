@@ -1,6 +1,7 @@
 use crate::algorithms::heuristic;
 use crate::structures::{Frontier, Graph};
 
+/// A* pathfinder
 pub struct AStar<'a> {
     frontier: Frontier,
     history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>>,
@@ -12,6 +13,7 @@ pub struct AStar<'a> {
 }
 
 impl<'a> AStar<'a> {
+    /// Create solver of a problem for a graph
     pub fn new(
         start_x: usize,
         start_y: usize,
@@ -43,6 +45,7 @@ impl<'a> AStar<'a> {
         }
     }
 
+    /// Try to solve the problem
     pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
         let d_c = 2.0_f64.sqrt();
         let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y, d_c);
@@ -69,6 +72,7 @@ impl<'a> AStar<'a> {
         None
     }
 
+    /// Reconstruct path that was found
     fn construct_path(&self) -> Vec<(usize, usize)> {
         let mut path = vec![(self.goal_x, self.goal_y)];
         loop {

@@ -2,11 +2,13 @@ use crate::structures::map::*;
 use std::collections::HashMap;
 use std::fmt;
 
+/// Enum for specifying different types of graphs
 pub enum GraphType {
     AdjacencyMapGraph,
     AdjacencyGridGraph,
 }
 
+/// Build new graph from a map, as specified by [GraphType]
 pub fn graph_builder(map: &Box<dyn Map>, graph_type: GraphType) -> Box<dyn Graph> {
     match graph_type {
         GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),

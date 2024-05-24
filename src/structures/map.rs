@@ -46,6 +46,7 @@ pub enum MapType {
     ArrayMap,
 }
 
+/// Read and build a map from a file and specify the type with [MapType]
 pub fn map_builder(file_path: PathBuf, map_type: MapType) -> anyhow::Result<Box<dyn Map>> {
     let (height, width, map) = read_map(file_path)?;
     let map = simplify_map(map);

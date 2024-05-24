@@ -11,14 +11,17 @@ pub struct WeightedCell {
 }
 
 impl WeightedCell {
+    /// Create a new cell
     pub fn new(x: usize, y: usize, weight: f64) -> WeightedCell {
         WeightedCell { x, y, weight }
     }
 
+    /// Get `(x, y)`
     pub fn get_xy(&self) -> (usize, usize) {
         (self.x, self.y)
     }
 
+    /// Change own priority
     pub fn change_weight(&mut self, weight: f64) {
         self.weight = weight;
     }

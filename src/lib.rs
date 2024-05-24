@@ -6,6 +6,11 @@ pub mod algorithms;
 /// Data structures used by algorithms
 pub mod structures;
 
+/// Command Line Interface
 pub mod cli;
+
+/// Holder of all relevant information regarding problem solving
 pub mod context;
+
+/// Instance of a problem
 pub mod problem;

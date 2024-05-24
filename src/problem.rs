@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// Problem to be solved. Length is optional, because it might not always be present
 pub struct Problem {
     pub start_x: usize,
     pub start_y: usize,
@@ -9,6 +10,7 @@ pub struct Problem {
 }
 
 impl Problem {
+    /// Create problem
     pub fn new(
         start_x: usize,
         start_y: usize,
@@ -25,6 +27,7 @@ impl Problem {
         }
     }
 
+    /// Parse `.scenario` row as a problem
     pub fn parse_problem(value: String) -> anyhow::Result<Problem> {
         let fields: Vec<&str> = value.split_ascii_whitespace().collect();
         let wanted = fields.split_at(fields.len() - 5).1;

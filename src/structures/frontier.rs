@@ -1,12 +1,14 @@
 use super::WeightedCell;
 use std::collections::BinaryHeap;
 
+/// BinaryHeap augmented with key update for a node
 pub struct Frontier {
     heap: BinaryHeap<WeightedCell>,
     smallest_found: Vec<Vec<Option<f64>>>,
 }
 
 impl Frontier {
+    /// Create a heap and "memory" that could contain the whole graph and initialize it with starting node
     pub fn new(start_x: usize, start_y: usize, width: usize, height: usize) -> Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(height * width);
         heap.push(WeightedCell::new(start_x, start_y, 0.0));
@@ -26,6 +28,7 @@ impl Frontier {
         }
     }
 
+    /// Push a value to the heap, if it was not already there or if new priority is higher than the old
     pub fn push(&mut self, x: usize, y: usize, weight: f64) -> bool {
         match self.smallest_found[x][y] {
             Some(w) if w < weight => false,
@@ -42,6 +45,7 @@ impl Frontier {
         }
     }
 
+    // Provide node with the highest priority
     pub fn pop(&mut self) -> Option<(usize, usize)> {
         if let Some(WeightedCell { x, y, .. }) = self.heap.pop() {
             Some((x, y))
@@ -50,6 +54,7 @@ impl Frontier {
         }
     }
 
+    // Replace old value in heap with the new one
     fn replace(&mut self, xy: (usize, usize), value: f64) {
         self.heap = self
             .heap

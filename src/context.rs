@@ -12,6 +12,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
+/// Holds all relevant information of map and problems and handles pathfinders
 pub struct Context {
     map: Box<dyn Map>,
     graph: Box<dyn Graph>,
@@ -19,17 +20,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(file_path: PathBuf, map_type: MapType, graph_type: GraphType) -> Self {
-        let map = map_builder(file_path, map_type).expect("invalid map");
-        let graph = graph_builder(&map, graph_type);
-
-        Context {
-            map,
-            graph,
-            problem: None,
-        }
-    }
-
+    /// Create self from CLI and run commands as specified.
     pub fn run(cli: Cli) {
         // default for now
         let map_type = MapType::GridMap;
@@ -92,6 +83,7 @@ impl Context {
         }
     }
 
+    /// Set problem
     pub fn set_problem(&mut self, problem: Problem) {
         self.problem = Some(problem);
     }
@@ -109,6 +101,7 @@ impl Context {
         Ok(())
     }
 
+    /// Read a problem file and run everyone. `print` handles if results should be printed with a map
     pub fn run_full_file(&mut self, file_path: PathBuf, print: bool) -> anyhow::Result<()> {
         let f = File::open(file_path)?;
         let mut content = BufReader::new(f).lines();
@@ -127,6 +120,7 @@ impl Context {
         Ok(())
     }
 
+    /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
     pub fn solve(&self, full_print: bool) {
         if let Some(Problem {
             start_x,
@@ -146,6 +140,7 @@ impl Context {
         }
     }
 
+    /// Print solution, `full` specifies if map is printed
     fn print_solution(&self, mut path: Vec<(usize, usize)>, path_length: f64, full: bool) {
         if let Some(Problem {
             start_x,
@@ -191,6 +186,7 @@ impl Context {
         }
     }
 
+    /// Print a problem as a map
     pub fn print_problem(&self) {
         if let Some(Problem {
             start_x,

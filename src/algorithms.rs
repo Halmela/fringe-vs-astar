@@ -1,3 +1,4 @@
+/// A* path finder
 pub mod astar;
 pub use crate::algorithms::astar::AStar;
 
@@ -20,6 +21,7 @@ fn heuristic(
     }
 }
 
+/// Stub structure for selecting different algorithms
 pub enum PathFinder {
     AStar,
 }

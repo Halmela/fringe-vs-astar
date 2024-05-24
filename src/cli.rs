@@ -1,32 +1,38 @@
 use clap::{Parser, ValueEnum};
 use std::path::{Path, PathBuf};
 
-/// Simple program to greet a person
+/// Pathfinder comparison. Currently only A* is supported
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
     #[arg(value_enum)]
     pub mode: Mode,
 
+    /// Path to a file that contains a map
     #[arg(value_name = "MAP FILE", value_parser = map_exists)]
     pub map_file: PathBuf,
 
+    /// Path to a file that contains a set of problems. Default is MAP FILE.scen(ario)
     #[arg(short, long, value_name = "PROBLEM FILE", value_parser = problem_exists)]
     pub problem_file: Option<PathBuf>,
 
+    /// 1 indexed indentifier for a problem
     #[arg(short = 'n', long, value_name = "PROBLEM NUMBER")]
     pub problem_number: Option<usize>,
 
+    /// Suppress drawing of maps. Suggested for large maps.
     #[arg(short, long, default_value_t = false)]
     pub silent: bool,
 }
 
+/// Different modes for executing the program
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum Mode {
     Print,
     Solve,
 }
 
+/// Make sure that map-file exists
 fn map_exists(s: &str) -> Result<PathBuf, String> {
     if let Ok(true) = Path::new(s).try_exists() {
         Ok(Path::new(s).to_path_buf())
@@ -35,6 +41,7 @@ fn map_exists(s: &str) -> Result<PathBuf, String> {
     }
 }
 
+/// Make sure that specified scenario-file exists
 fn problem_exists(s: &str) -> Result<PathBuf, String> {
     if let Ok(true) = Path::new(s).try_exists() {
         Ok(Path::new(s).to_path_buf())
