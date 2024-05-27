@@ -1,6 +1,5 @@
 use crate::algorithms::*;
 use crate::cli::*;
-use crate::context::fringe::fringe_simple;
 use crate::problem::Problem;
 use crate::structures::map::map_builder;
 use crate::structures::{
@@ -149,7 +148,9 @@ impl Context {
                     solution = astar.solve();
                 }
                 PathFinder::Fringe => {
-                    solution = fringe_simple(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
+                    let fringe =
+                        FringeSearch::new(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
+                    solution = fringe.solve();
                 }
             }
 

@@ -13,3 +13,6 @@ pub use crate::structures::graph::{AdjacencyGridGraph, Graph};
 /// Representation of a file as boolean structure
 pub mod map;
 //pub use crate::structures::map::*;
+
+pub mod fringe;
+pub use crate::structures::fringe::Fringe;
