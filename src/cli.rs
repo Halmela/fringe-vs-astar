@@ -8,6 +8,9 @@ pub struct Cli {
     #[arg(value_enum)]
     pub mode: Mode,
 
+    #[arg(value_enum)]
+    pub pathfinder: PathFinder,
+
     /// Path to a file that contains a map
     #[arg(value_name = "MAP FILE", value_parser = map_exists)]
     pub map_file: PathBuf,
@@ -30,6 +33,13 @@ pub struct Cli {
 pub enum Mode {
     Print,
     Solve,
+}
+
+/// Algorithm to use
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum PathFinder {
+    AStar,
+    Fringe,
 }
 
 /// Make sure that map-file exists

@@ -1,5 +1,6 @@
 use crate::algorithms::*;
 use crate::cli::*;
+use crate::context::fringe::fringe_simple;
 use crate::problem::Problem;
 use crate::structures::map::map_builder;
 use crate::structures::{
@@ -17,6 +18,7 @@ pub struct Context {
     map: Box<dyn Map>,
     graph: Box<dyn Graph>,
     problem: Option<Problem>,
+    pathfinder: PathFinder,
 }
 
 impl Context {
@@ -36,6 +38,7 @@ impl Context {
             map,
             graph,
             problem: None,
+            pathfinder: cli.pathfinder,
         };
 
         let mut problem_file = Default::default();
@@ -72,6 +75,14 @@ impl Context {
                 }
             }
             Mode::Solve => {
+                match cli.pathfinder {
+                    PathFinder::AStar => {
+                        println!("Solving using A*");
+                    }
+                    PathFinder::Fringe => {
+                        println!("Solving using Fringe");
+                    }
+                }
                 if context.problem.is_some() {
                     context.solve(!cli.silent);
                 } else {
@@ -131,8 +142,18 @@ impl Context {
         }) = self.problem.as_ref()
         {
             println!("{}", self.problem.as_ref().unwrap());
-            let astar = AStar::new(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
-            if let Some((path, length)) = astar.solve() {
+            let mut solution = None;
+            match self.pathfinder {
+                PathFinder::AStar => {
+                    let astar = AStar::new(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
+                    solution = astar.solve();
+                }
+                PathFinder::Fringe => {
+                    solution = fringe_simple(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
+                }
+            }
+
+            if let Some((path, length)) = solution {
                 self.print_solution(path, length, full_print);
             } else {
                 println!("No path found");

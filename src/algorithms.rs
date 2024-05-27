@@ -2,6 +2,9 @@
 pub mod astar;
 pub use crate::algorithms::astar::AStar;
 
+pub mod fringe;
+pub use crate::algorithms::fringe::FringeSearch;
+
 /// Diagonal octile distance from current node to goal.
 /// This is a grid specific method.
 fn heuristic(
@@ -19,9 +22,4 @@ fn heuristic(
     } else {
         (y_distance - x_distance) + diagonal_cost * x_distance
     }
-}
-
-/// Stub structure for selecting different algorithms
-pub enum PathFinder {
-    AStar,
 }
