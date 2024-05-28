@@ -17,7 +17,7 @@ pub struct Context {
     map: Box<dyn Map>,
     graph: Box<dyn Graph>,
     problem: Option<Problem>,
-    pathfinder: PathFinder,
+    mode: Mode,
     print_level: u8,
 }
 
@@ -42,7 +42,7 @@ impl Context {
             map,
             graph,
             problem: None,
-            pathfinder: cli.pathfinder,
+            mode: cli.mode,
             print_level: cli.silent,
         };
 
@@ -73,7 +73,7 @@ impl Context {
                 .expect("Could not find a problem with supplied number");
         }
 
-        match cli.mode {
+        match context.mode {
             Mode::Print => match (context.print_level, context.problem.as_ref()) {
                 (0, Some(_)) => {
                     context.print_problem();
@@ -94,16 +94,21 @@ impl Context {
                 _ => {}
             },
 
-            Mode::Solve => {
+            Mode::AStar => {
                 if context.print_level <= 2 {
-                    match cli.pathfinder {
-                        PathFinder::AStar => {
-                            println!("Solving using A*");
-                        }
-                        PathFinder::Fringe => {
-                            println!("Solving using Fringe");
-                        }
-                    }
+                    println!("Solving using A*");
+                }
+                if context.problem.is_some() {
+                    context.solve();
+                } else {
+                    context
+                        .run_full_file(problem_file)
+                        .expect("something went wrong running the file");
+                }
+            }
+            Mode::Fringe => {
+                if context.print_level <= 2 {
+                    println!("Solving using Fringe search");
                 }
                 if context.problem.is_some() {
                     context.solve();
@@ -181,15 +186,19 @@ impl Context {
                 println!("{}", self.problem.as_ref().unwrap());
             }
             let mut solution = None;
-            match self.pathfinder {
-                PathFinder::AStar => {
+            match self.mode {
+                Mode::AStar => {
                     let astar = AStar::new(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
                     solution = astar.solve();
                 }
-                PathFinder::Fringe => {
+                Mode::Fringe => {
                     let fringe =
                         FringeSearch::new(*start_x, *start_y, *goal_x, *goal_y, &self.graph);
                     solution = fringe.solve();
+                }
+                _ => {
+                    println!("We can't solve in print mode");
+                    return None;
                 }
             }
 
