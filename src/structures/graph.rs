@@ -1,4 +1,5 @@
 use crate::structures::map::*;
+use crate::DIAGONAL_COST;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -39,14 +40,12 @@ pub struct AdjacencyMapGraph {
 impl AdjacencyMapGraph {
     /// Constructor
     pub fn new(map: &Box<dyn Map>) -> AdjacencyMapGraph {
-        let diagonal_cost = 2.0_f64.sqrt();
-
         let mut adjacency_map = HashMap::new();
 
         for y in 0..map.get_height() {
             for x in 0..map.get_width() {
                 if let Some(true) = map.get_cell(x, y) {
-                    adjacency_map.insert((x, y), generate_neighbors(x, y, map, diagonal_cost));
+                    adjacency_map.insert((x, y), generate_neighbors(x, y, map));
                 }
             }
         }
@@ -93,9 +92,6 @@ pub struct AdjacencyGridGraph {
 impl AdjacencyGridGraph {
     /// Constructor
     fn new(map: &Box<dyn Map>) -> AdjacencyGridGraph {
-        // So that the value is same for everyone
-        let diagonal_cost = 2.0_f64.sqrt();
-
         let mut adjacency_grid: Vec<Vec<Vec<((usize, usize), f64)>>> =
             Vec::with_capacity(map.get_height());
 
@@ -104,7 +100,7 @@ impl AdjacencyGridGraph {
             for x in 0..map.get_width() {
                 adjacency_grid[y].push(vec![]);
                 if let Some(true) = map.get_cell(x, y) {
-                    adjacency_grid[y][x] = generate_neighbors(x, y, map, diagonal_cost);
+                    adjacency_grid[y][x] = generate_neighbors(x, y, map);
                 }
             }
         }
@@ -143,12 +139,7 @@ impl fmt::Display for AdjacencyGridGraph {
 
 /// Provide a list of neighbors for given cell in a grid.
 /// Makes sure that path does not cut through corners of unpassable cells.
-fn generate_neighbors(
-    x: usize,
-    y: usize,
-    map: &Box<dyn Map>,
-    diagonal_cost: f64,
-) -> Vec<((usize, usize), f64)> {
+fn generate_neighbors(x: usize, y: usize, map: &Box<dyn Map>) -> Vec<((usize, usize), f64)> {
     // We are dealing with usize here, so x-1 will always be checked to avoid underflow errors.
     // Side-effects of this are that the coordinates will be correct and this can be harder to read.
 
@@ -209,7 +200,7 @@ fn generate_neighbors(
             vec![north_east, south_east, south_west, north_west]
                 .drain(..)
                 .flatten()
-                .map(|(b, xy)| (b, xy, diagonal_cost)),
+                .map(|(b, xy)| (b, xy, DIAGONAL_COST)),
         )
         .filter(|(b, _, _)| b.is_some_and(|b1| b1))
         .map(|(_, xy, w)| (xy, w))

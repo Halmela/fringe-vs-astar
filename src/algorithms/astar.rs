@@ -47,8 +47,7 @@ impl<'a> AStar<'a> {
 
     /// Try to solve the problem
     pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
-        let d_c = 2.0_f64.sqrt();
-        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y, d_c);
+        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
 
         while let Some((x, y)) = self.frontier.pop() {
             if x == self.goal_x && y == self.goal_y {
@@ -92,18 +91,18 @@ impl<'a> AStar<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::DIAGONAL_COST;
+
     use super::*;
 
     #[test]
     fn heuristic_works_diagonally() {
-        let diagonal_cost = 2.0_f64.sqrt();
-        let result = heuristic(0, 0, 1, 1, diagonal_cost);
-        assert_eq!(diagonal_cost, result);
+        let result = heuristic(0, 0, 1, 1);
+        assert_eq!(DIAGONAL_COST, result);
     }
     #[test]
     fn heuristic_works_downwards() {
-        let diagonal_cost = 2.0_f64.sqrt();
-        let result = heuristic(0, 0, 0, 1, diagonal_cost);
+        let result = heuristic(0, 0, 0, 1);
         let expected = 1.0;
         assert_eq!(expected, result);
     }

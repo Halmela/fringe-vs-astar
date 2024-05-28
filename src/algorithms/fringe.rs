@@ -43,8 +43,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
-        let diagonal_cost = 2.0_f64.sqrt();
-        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y, diagonal_cost);
+        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
 
         let mut f_limit = h(self.start_x, self.start_y);
         let mut found = false;

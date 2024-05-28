@@ -14,3 +14,5 @@ pub mod context;
 
 /// Instance of a problem
 pub mod problem;
+
+pub const DIAGONAL_COST: f64 = 1.414213562373095;

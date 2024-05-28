@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
+    /// How program is executed. print only prints the map and possible problem, a-star solves using A*, fringe solves using Fringe Search
     #[arg(value_enum)]
     pub mode: Mode,
 
