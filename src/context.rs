@@ -18,6 +18,7 @@ pub struct Context {
     graph: Box<dyn Graph>,
     problem: Option<Problem>,
     pathfinder: PathFinder,
+    print_level: u8,
 }
 
 impl Context {
@@ -27,10 +28,14 @@ impl Context {
         let map_type = MapType::GridMap;
         let graph_type = GraphType::AdjacencyGridGraph;
 
-        println!("Loading map {}", cli.map_file.to_str().unwrap());
+        if cli.silent <= 2 {
+            println!("Loading map {}", cli.map_file.to_str().unwrap());
+        }
         let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
 
-        println!("Map loaded, creating graph");
+        if cli.silent <= 2 {
+            println!("Map loaded, creating graph");
+        }
         let graph = graph_builder(&map, graph_type);
 
         let mut context = Context {
@@ -38,6 +43,7 @@ impl Context {
             graph,
             problem: None,
             pathfinder: cli.pathfinder,
+            print_level: cli.silent,
         };
 
         let mut problem_file = Default::default();
@@ -54,39 +60,56 @@ impl Context {
                 }
             }
         }
+        if context.print_level <= 2 {
+            if let Some(s) = problem_file.to_str() {
+                println!("Using scenario file {s}");
+            }
+        }
 
         if let Some(n) = cli.problem_number {
+            println!("Loading problem number {n}");
             context
                 .read_problem_from_file(&problem_file, n)
                 .expect("Could not find a problem with supplied number");
         }
 
         match cli.mode {
-            Mode::Print => {
-                if context.problem.is_some() {
-                    if cli.silent {
-                        println!("{}", context.problem.as_ref().unwrap());
-                    } else {
-                        context.print_problem();
-                    }
-                } else {
+            Mode::Print => match (context.print_level, context.problem.as_ref()) {
+                (0, Some(_)) => {
+                    context.print_problem();
+                }
+                (0, None) => {
                     println!("{}", context.map);
                 }
-            }
+                (1, Some(_)) => {
+                    println!("{}", context.problem.as_ref().unwrap());
+                }
+                (1, None) => {
+                    println!(
+                        "Map width: {}\n    height: {}",
+                        context.map.get_width(),
+                        context.map.get_height()
+                    );
+                }
+                _ => {}
+            },
+
             Mode::Solve => {
-                match cli.pathfinder {
-                    PathFinder::AStar => {
-                        println!("Solving using A*");
-                    }
-                    PathFinder::Fringe => {
-                        println!("Solving using Fringe");
+                if context.print_level <= 2 {
+                    match cli.pathfinder {
+                        PathFinder::AStar => {
+                            println!("Solving using A*");
+                        }
+                        PathFinder::Fringe => {
+                            println!("Solving using Fringe");
+                        }
                     }
                 }
                 if context.problem.is_some() {
-                    context.solve(!cli.silent);
+                    context.solve();
                 } else {
                     context
-                        .run_full_file(problem_file, !cli.silent)
+                        .run_full_file(problem_file)
                         .expect("something went wrong running the file");
                 }
             }
@@ -112,7 +135,7 @@ impl Context {
     }
 
     /// Read a problem file and run everyone. `print` handles if results should be printed with a map
-    pub fn run_full_file(&mut self, file_path: PathBuf, print: bool) -> anyhow::Result<()> {
+    pub fn run_full_file(&mut self, file_path: PathBuf) -> anyhow::Result<()> {
         let f = File::open(file_path)?;
         let mut content = BufReader::new(f).lines();
         content.next();
@@ -121,17 +144,31 @@ impl Context {
             .flatten() // haha lets just get rid of the errors
             .collect();
 
+        let mut error = 0.0;
+        let mut len = 0.0;
+
+        if self.print_level <= 2 {
+            println!("Solving {} problems...", problems.len());
+        }
+
         for problem in problems {
+            let expected = problem.length;
+            len += expected.map_or_else(|| 0.0, |_| 1.0);
             self.set_problem(problem);
-            self.solve(print);
-            println!("");
+
+            if let Some(result) = self.solve() {
+                error += (result - expected.unwrap_or_else(|| f64::MAX)).abs();
+            }
+        }
+        if self.print_level <= 2 {
+            println!("Average error: {}", error / len);
         }
 
         Ok(())
     }
 
     /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
-    pub fn solve(&self, full_print: bool) {
+    pub fn solve(&self) -> Option<f64> {
         if let Some(Problem {
             start_x,
             start_y,
@@ -140,7 +177,9 @@ impl Context {
             ..
         }) = self.problem.as_ref()
         {
-            println!("{}", self.problem.as_ref().unwrap());
+            if self.print_level <= 1 {
+                println!("{}", self.problem.as_ref().unwrap());
+            }
             let mut solution = None;
             match self.pathfinder {
                 PathFinder::AStar => {
@@ -155,15 +194,18 @@ impl Context {
             }
 
             if let Some((path, length)) = solution {
-                self.print_solution(path, length, full_print);
+                self.print_solution(path, length);
+                return Some(length);
             } else {
                 println!("No path found");
+                return None;
             }
         }
+        None
     }
 
     /// Print solution, `full` specifies if map is printed
-    fn print_solution(&self, mut path: Vec<(usize, usize)>, path_length: f64, full: bool) {
+    fn print_solution(&self, mut path: Vec<(usize, usize)>, path_length: f64) {
         if let Some(Problem {
             start_x,
             start_y,
@@ -172,7 +214,7 @@ impl Context {
             length,
         }) = self.problem.as_ref()
         {
-            if full {
+            if self.print_level == 0 {
                 let path: HashSet<(usize, usize)> = path.drain(..).collect();
                 let mut result = String::new();
                 for y in 0..self.map.get_height() {
@@ -195,12 +237,12 @@ impl Context {
                 println!("{}", self.problem.as_ref().unwrap());
                 println!("Result:\n\t{}", path_length);
                 if let Some(l) = length {
-                    println!("Difference:\n\t{}", path_length - l);
+                    println!("Difference:\n\t{}\n", path_length - l);
                 }
-            } else {
+            } else if self.print_level == 1 {
                 println!("Result:\n\t{}", path_length);
                 if let Some(l) = length {
-                    println!("Difference:\n\t{}", path_length - l);
+                    println!("Difference:\n\t{}\n", path_length - l);
                 }
             }
         } else {

@@ -23,9 +23,9 @@ pub struct Cli {
     #[arg(short = 'n', long, value_name = "PROBLEM NUMBER")]
     pub problem_number: Option<usize>,
 
-    /// Suppress drawing of maps. Suggested for large maps.
-    #[arg(short, long, default_value_t = false)]
-    pub silent: bool,
+    /// Suppress output. First removes printing of maps, second removes printing of problems, third removes printing of everything.
+    #[arg(short, long, default_value_t = 0, action = clap::ArgAction::Count)]
+    pub silent: u8,
 }
 
 /// Different modes for executing the program
