@@ -42,8 +42,8 @@ impl Context {
         }
 
         // default for now
-        let map_type = MapType::GridMap;
-        let graph_type = GraphType::AdjacencyGridGraph;
+        let map_type = MapType::ArrayMap;
+        let graph_type = GraphType::AdjacencyListGraph;
 
         if cli.silent <= 2 {
             println!("Loading map {}", cli.map_file.to_str().unwrap());

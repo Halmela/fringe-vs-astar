@@ -24,7 +24,7 @@ pub trait Graph {
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
-    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)>;
+    fn neighbors(&self, i: usize) -> Vec<(usize, f64)>;
     /// Map height
     fn get_height(&self) -> usize;
     /// Map width
@@ -61,8 +61,14 @@ impl AdjacencyMapGraph {
 }
 
 impl Graph for AdjacencyMapGraph {
-    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
-        self.adjacency_map.get(&(x, y)).cloned().unwrap_or_default()
+    fn neighbors(&self, i: usize) -> Vec<(usize, f64)> {
+        self.adjacency_map
+            .get(&index_to_xy(i, self.width))
+            .cloned()
+            .unwrap_or_default()
+            .drain(..)
+            .map(|((x, y), f)| (xy_to_index(x, y, self.width), f))
+            .collect()
     }
 
     fn get_height(&self) -> usize {
@@ -116,8 +122,13 @@ impl AdjacencyGridGraph {
 }
 
 impl Graph for AdjacencyGridGraph {
-    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
-        self.adjacency_grid[y][x].to_owned()
+    fn neighbors(&self, i: usize) -> Vec<(usize, f64)> {
+        let (x, y) = index_to_xy(i, self.width);
+        self.adjacency_grid[y][x]
+            .to_owned()
+            .drain(..)
+            .map(|((x1, y1), f)| (xy_to_index(x1, y1, self.width), f))
+            .collect()
     }
     fn get_height(&self) -> usize {
         self.height
@@ -172,11 +183,8 @@ impl AdjacencyListGraph {
 }
 
 impl Graph for AdjacencyListGraph {
-    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
-        self.adjacency_list[xy_to_index(x, y, self.width)]
-            .iter()
-            .map(|(i, f)| (index_to_xy(*i, self.width), *f))
-            .collect()
+    fn neighbors(&self, i: usize) -> Vec<(usize, f64)> {
+        self.adjacency_list[i].to_owned()
     }
 
     fn get_height(&self) -> usize {

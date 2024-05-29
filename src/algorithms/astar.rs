@@ -1,5 +1,6 @@
 use crate::algorithms::heuristic;
 use crate::structures::{Frontier, Graph};
+use crate::{index_to_xy, xy_to_index};
 
 /// A* pathfinder
 pub struct AStar<'a> {
@@ -47,6 +48,8 @@ impl<'a> AStar<'a> {
 
     /// Try to solve the problem
     pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
+        let xyi = |x: usize, y: usize| xy_to_index(x, y, self.graph.get_width());
+        let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
         let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
 
         while let Some((x, y)) = self.frontier.pop() {
@@ -59,7 +62,12 @@ impl<'a> AStar<'a> {
 
             let current_cost = self.history[x][y].1.unwrap();
 
-            for ((x1, y1), w1) in self.graph.neighbors(x, y) {
+            for ((x1, y1), w1) in self
+                .graph
+                .neighbors(xyi(x, y))
+                .iter()
+                .map(|(i, f)| (ixy(*i), f))
+            {
                 let new_cost = current_cost + w1;
                 let priority = new_cost + h(x1, y1);
                 if self.frontier.push(x1, y1, priority) {

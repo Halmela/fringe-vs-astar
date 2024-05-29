@@ -1,6 +1,6 @@
 use crate::algorithms::heuristic;
 use crate::structures::{Fringe, Graph};
-use std::collections::VecDeque;
+use crate::{index_to_xy, xy_to_index};
 
 pub struct FringeSearch<'a> {
     fringe: Fringe,
@@ -43,6 +43,8 @@ impl<'a> FringeSearch<'a> {
     }
 
     pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
+        let xyi = |x: usize, y: usize| xy_to_index(x, y, self.graph.get_width());
+        let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
         let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
 
         let mut f_limit = h(self.start_x, self.start_y);
@@ -67,8 +69,13 @@ impl<'a> FringeSearch<'a> {
                     break;
                 }
 
-                for ((x1, y1), cost) in self.graph.neighbors(x, y) {
-                    let g_new = g + cost;
+                for ((x1, y1), w1) in self
+                    .graph
+                    .neighbors(xyi(x, y))
+                    .iter()
+                    .map(|(i, f)| (ixy(*i), f))
+                {
+                    let g_new = g + w1;
                     if g_new >= self.cache[x1][y1].0 {
                         continue;
                     }
