@@ -6,6 +6,7 @@ use crate::structures::{
     graph::{graph_builder, Graph, GraphType},
     map::{Map, MapType},
 };
+use crate::{index_to_xy, xy_to_index};
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -173,12 +174,14 @@ impl Context {
             goal_y,
             ..
         } = self.problems[problem];
+        let start = xy_to_index(start_x, start_y, self.graph.get_width());
+        let goal = xy_to_index(goal_x, goal_y, self.graph.get_width());
 
         match self.mode {
             Mode::AStar => {
                 let now = Instant::now();
 
-                let astar = AStar::new(start_x, start_y, goal_x, goal_y, &self.graph);
+                let astar = AStar::new(start, goal, &self.graph);
                 let solution = astar.solve();
 
                 let done = Instant::now();
@@ -191,7 +194,13 @@ impl Context {
                     }
                 }
                 if let Some((path, length)) = solution {
-                    self.print_solution(path, length, problem);
+                    self.print_solution(
+                        path.iter()
+                            .map(|i| index_to_xy(*i, self.graph.get_width()))
+                            .collect(),
+                        length,
+                        problem,
+                    );
                     return Some(length);
                 } else {
                     println!("No path found");
@@ -200,7 +209,7 @@ impl Context {
             }
             Mode::Fringe => {
                 let now = Instant::now();
-                let fringe = FringeSearch::new(start_x, start_y, goal_x, goal_y, &self.graph);
+                let fringe = FringeSearch::new(start, goal, &self.graph);
                 let solution = fringe.solve();
 
                 let done = Instant::now();
@@ -213,7 +222,13 @@ impl Context {
                     }
                 }
                 if let Some((path, length)) = solution {
-                    self.print_solution(path, length, problem);
+                    self.print_solution(
+                        path.iter()
+                            .map(|i| index_to_xy(*i, self.graph.get_width()))
+                            .collect(),
+                        length,
+                        problem,
+                    );
                     return Some(length);
                 } else {
                     println!("No path found");
@@ -224,7 +239,7 @@ impl Context {
                 println!("Solving using A*");
                 let a_now = Instant::now();
 
-                let astar = AStar::new(start_x, start_y, goal_x, goal_y, &self.graph);
+                let astar = AStar::new(start, goal, &self.graph);
                 let a_solution = astar.solve();
 
                 let a_done = Instant::now();
@@ -240,7 +255,7 @@ impl Context {
                 println!("Solving using Fringe search");
 
                 let f_now = Instant::now();
-                let fringe = FringeSearch::new(start_x, start_y, goal_x, goal_y, &self.graph);
+                let fringe = FringeSearch::new(start, goal, &self.graph);
                 let f_solution = fringe.solve();
 
                 let f_done = Instant::now();

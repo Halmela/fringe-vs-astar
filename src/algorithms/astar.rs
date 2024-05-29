@@ -5,73 +5,56 @@ use crate::{index_to_xy, xy_to_index};
 /// A* pathfinder
 pub struct AStar<'a> {
     frontier: Frontier,
-    history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>>,
-    start_x: usize,
-    start_y: usize,
-    goal_x: usize,
-    goal_y: usize,
+    history: Vec<(usize, f64)>,
+    start: usize,
+    goal: usize,
     graph: &'a Box<dyn Graph>,
 }
 
 impl<'a> AStar<'a> {
     /// Create solver of a problem for a graph
-    pub fn new(
-        start_x: usize,
-        start_y: usize,
-        goal_x: usize,
-        goal_y: usize,
-        graph: &'a Box<dyn Graph>,
-    ) -> Self {
-        let frontier = Frontier::new(start_x, start_y, graph.get_width(), graph.get_height());
+    pub fn new(start: usize, goal: usize, graph: &'a Box<dyn Graph>) -> Self {
+        let size = graph.get_width() * graph.get_height();
+        let frontier = Frontier::new(start, size);
 
         // (previous xy, current cost, current prority)
-        let mut history: Vec<Vec<(Option<(usize, usize)>, Option<f64>)>> = vec![];
-        for x in 0..graph.get_width() {
-            history.push(vec![]);
-            for _ in 0..graph.get_height() {
-                history[x].push((None, None));
-            }
+        let mut history: Vec<(usize, f64)> = vec![];
+        for i in 0..size {
+            history.push((i, f64::MAX));
         }
 
-        history[start_x][start_y] = (None, Some(0.0));
+        history[start] = (start, 0.0);
 
         AStar {
             frontier,
             history,
-            start_x,
-            start_y,
-            goal_x,
-            goal_y,
+            start,
+            goal,
             graph,
         }
     }
 
     /// Try to solve the problem
-    pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
-        let xyi = |x: usize, y: usize| xy_to_index(x, y, self.graph.get_width());
+    pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
         let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
-        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
+        let (goal_x, goal_y) = ixy(self.goal);
+        let h = |i: usize| {
+            let (x, y) = ixy(i);
+            heuristic(x, y, goal_x, goal_y)
+        };
 
-        while let Some((x, y)) = self.frontier.pop() {
-            if x == self.goal_x && y == self.goal_y {
-                return Some((
-                    self.construct_path(),
-                    self.history[self.goal_x][self.goal_y].1.unwrap(),
-                ));
+        while let Some(i) = self.frontier.pop() {
+            if i == self.goal {
+                return Some((self.construct_path(), self.history[self.goal].1));
             }
 
-            let current_cost = self.history[x][y].1.unwrap();
+            let current_cost = self.history[i].1;
 
-            for ((x1, y1), w1) in self
-                .graph
-                .neighbors(xyi(x, y))
-                .iter()
-                .map(|(i, f)| (ixy(*i), f))
-            {
+            for (n, w1) in self.graph.neighbors(i) {
                 let new_cost = current_cost + w1;
-                let priority = new_cost + h(x1, y1);
-                if self.frontier.push(x1, y1, priority) {
-                    self.history[x1][y1] = (Some((x, y)), Some(new_cost));
+                let priority = new_cost + h(n);
+                if self.frontier.push(n, priority) {
+                    self.history[n] = (i, new_cost);
                 }
             }
         }
@@ -80,14 +63,14 @@ impl<'a> AStar<'a> {
     }
 
     /// Reconstruct path that was found
-    fn construct_path(&self) -> Vec<(usize, usize)> {
-        let mut path = vec![(self.goal_x, self.goal_y)];
+    fn construct_path(&self) -> Vec<usize> {
+        let mut path = vec![self.goal];
         loop {
-            let (x, y) = path[path.len() - 1];
-            let new = self.history[x][y].0.unwrap();
+            let i = path[path.len() - 1];
+            let new = self.history[i].0;
             path.push(new);
 
-            if (new) == (self.start_x, self.start_y) {
+            if new == self.start {
                 break;
             }
         }

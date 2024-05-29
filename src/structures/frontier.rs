@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 /// BinaryHeap augmented with key update for a node
 pub struct Frontier {
     heap: BinaryHeap<WeightedCell>,
-    smallest_found: Vec<f64>,
+    smallest_found: Vec<Option<f64>>,
 }
 
 impl Frontier {
@@ -13,12 +13,12 @@ impl Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
-        let mut smallest_found: Vec<f64> = vec![];
+        let mut smallest_found: Vec<Option<f64>> = vec![];
         for _ in 0..size {
-            smallest_found.push(f64::MAX);
+            smallest_found.push(None);
         }
 
-        smallest_found[start] = 0.0;
+        smallest_found[start] = Some(0.0);
         Frontier {
             heap,
             smallest_found,
@@ -27,16 +27,19 @@ impl Frontier {
 
     /// Push a value to the heap, if it was not already there or if new priority is higher than the old
     pub fn push(&mut self, i: usize, weight: f64) -> bool {
-        if self.smallest_found[i] < weight {
-            return false;
+        match self.smallest_found[i] {
+            Some(w) if w < weight => {
+                return false;
+            }
+            Some(_) => {
+                self.replace(i, weight);
+            }
+            None => {
+                self.heap.push(WeightedCell::new(i, weight));
+            }
         }
 
-        if self.smallest_found[i] < f64::MAX {
-            self.heap.push(WeightedCell::new(i, weight));
-        } else {
-            self.replace(i, weight);
-        }
-        self.smallest_found[i] = weight;
+        self.smallest_found[i] = Some(weight);
         return true;
     }
 
