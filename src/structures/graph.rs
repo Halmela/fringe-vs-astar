@@ -1,5 +1,5 @@
 use crate::structures::map::*;
-use crate::DIAGONAL_COST;
+use crate::{index_to_xy, xy_to_index, DIAGONAL_COST};
 use std::collections::HashMap;
 use std::fmt;
 
@@ -7,6 +7,7 @@ use std::fmt;
 pub enum GraphType {
     AdjacencyMapGraph,
     AdjacencyGridGraph,
+    AdjacencyListGraph,
 }
 
 /// Build new graph from a map, as specified by [GraphType]
@@ -14,6 +15,7 @@ pub fn graph_builder(map: &Box<dyn Map>, graph_type: GraphType) -> Box<dyn Graph
     match graph_type {
         GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
         GraphType::AdjacencyGridGraph => Box::new(AdjacencyGridGraph::new(map)),
+        GraphType::AdjacencyListGraph => Box::new(AdjacencyListGraph::new(map)),
     }
 }
 
@@ -22,7 +24,7 @@ pub trait Graph {
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>>;
+    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)>;
     /// Map height
     fn get_height(&self) -> usize;
     /// Map width
@@ -59,8 +61,8 @@ impl AdjacencyMapGraph {
 }
 
 impl Graph for AdjacencyMapGraph {
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
-        self.adjacency_map.get(&(x, y))
+    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
+        self.adjacency_map.get(&(x, y)).cloned().unwrap_or_default()
     }
 
     fn get_height(&self) -> usize {
@@ -114,8 +116,8 @@ impl AdjacencyGridGraph {
 }
 
 impl Graph for AdjacencyGridGraph {
-    fn neighbors(&self, x: usize, y: usize) -> Option<&Vec<((usize, usize), f64)>> {
-        Some(&self.adjacency_grid[y][x])
+    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
+        self.adjacency_grid[y][x].to_owned()
     }
     fn get_height(&self) -> usize {
         self.height
@@ -134,6 +136,54 @@ impl fmt::Display for AdjacencyGridGraph {
             }
         }
         write!(f, "{}", result)
+    }
+}
+
+pub struct AdjacencyListGraph {
+    adjacency_list: Vec<Vec<(usize, f64)>>,
+    height: usize,
+    width: usize,
+}
+impl AdjacencyListGraph {
+    /// Constructor
+    fn new(map: &Box<dyn Map>) -> AdjacencyListGraph {
+        let mut adjacency_list: Vec<Vec<(usize, f64)>> =
+            Vec::with_capacity(map.get_height() * map.get_width());
+
+        for y in 0..map.get_height() {
+            for x in 0..map.get_width() {
+                adjacency_list.push(vec![]);
+                let i = xy_to_index(x, y, map.get_width());
+                if let Some(true) = map.get_cell(x, y) {
+                    adjacency_list[i] = generate_neighbors(x, y, map)
+                        .drain(..)
+                        .map(|((x1, y1), f)| (xy_to_index(x1, y1, map.get_width()), f))
+                        .collect();
+                }
+            }
+        }
+
+        AdjacencyListGraph {
+            adjacency_list,
+            height: map.get_height(),
+            width: map.get_width(),
+        }
+    }
+}
+
+impl Graph for AdjacencyListGraph {
+    fn neighbors(&self, x: usize, y: usize) -> Vec<((usize, usize), f64)> {
+        self.adjacency_list[xy_to_index(x, y, self.width)]
+            .iter()
+            .map(|(i, f)| (index_to_xy(*i, self.width), *f))
+            .collect()
+    }
+
+    fn get_height(&self) -> usize {
+        self.height
+    }
+    fn get_width(&self) -> usize {
+        self.width
     }
 }
 

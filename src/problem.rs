@@ -52,11 +52,8 @@ impl fmt::Display for Problem {
         result.push_str(&format!("Problem {}:\n", self.number));
         result.push_str(&format!("\t({}, {}) -> ", self.start_x, self.start_y));
         result.push_str(&format!("({}, {})", self.goal_x, self.goal_y));
-        result.push_str("\nExpected cost:\n");
         if let Some(l) = self.length {
             result.push_str(&format!("\t{l}"));
-        } else {
-            result.push_str("\tNot submitted");
         }
         write!(f, "{}", result)
     }

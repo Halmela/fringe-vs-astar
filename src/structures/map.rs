@@ -1,3 +1,4 @@
+use crate::xy_to_index;
 use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
@@ -142,7 +143,7 @@ impl ArrayMap {
 impl Map for ArrayMap {
     fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
-            Some(self.array[x + y * self.width])
+            Some(self.array[xy_to_index(x, y, self.width)])
         } else {
             None
         }

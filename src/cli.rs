@@ -32,6 +32,7 @@ pub enum Mode {
     Print,
     AStar,
     Fringe,
+    Compare,
 }
 
 /// Make sure that map-file exists

@@ -67,13 +67,13 @@ impl<'a> FringeSearch<'a> {
                     break;
                 }
 
-                for ((x1, y1), cost) in self.graph.neighbors(x, y).unwrap() {
+                for ((x1, y1), cost) in self.graph.neighbors(x, y) {
                     let g_new = g + cost;
-                    if g_new >= self.cache[*x1][*y1].0 {
+                    if g_new >= self.cache[x1][y1].0 {
                         continue;
                     }
-                    self.fringe.push_now(*x1, *y1);
-                    self.cache[*x1][*y1] = (g_new, (x, y));
+                    self.fringe.push_now(x1, y1);
+                    self.cache[x1][y1] = (g_new, (x, y));
                 }
             }
             f_limit = f_min;

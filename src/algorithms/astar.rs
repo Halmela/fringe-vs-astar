@@ -59,11 +59,11 @@ impl<'a> AStar<'a> {
 
             let current_cost = self.history[x][y].1.unwrap();
 
-            for ((x1, y1), w1) in self.graph.neighbors(x, y).unwrap() {
+            for ((x1, y1), w1) in self.graph.neighbors(x, y) {
                 let new_cost = current_cost + w1;
-                let priority = new_cost + h(*x1, *y1);
-                if self.frontier.push(*x1, *y1, priority) {
-                    self.history[*x1][*y1] = (Some((x, y)), Some(new_cost));
+                let priority = new_cost + h(x1, y1);
+                if self.frontier.push(x1, y1, priority) {
+                    self.history[x1][y1] = (Some((x, y)), Some(new_cost));
                 }
             }
         }
