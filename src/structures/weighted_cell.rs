@@ -5,20 +5,19 @@ use std::fmt;
 /// This allows us to use binary heap
 #[derive(Debug)]
 pub struct WeightedCell {
-    pub x: usize,
-    pub y: usize,
+    pub i: usize,
     weight: f64,
 }
 
 impl WeightedCell {
     /// Create a new cell
-    pub fn new(x: usize, y: usize, weight: f64) -> WeightedCell {
-        WeightedCell { x, y, weight }
+    pub fn new(i: usize, weight: f64) -> WeightedCell {
+        WeightedCell { i, weight }
     }
 
-    /// Get `(x, y)`
-    pub fn get_xy(&self) -> (usize, usize) {
-        (self.x, self.y)
+    /// Get `i`
+    pub fn get_i(&self) -> usize {
+        self.i
     }
 
     /// Change own priority
@@ -29,13 +28,13 @@ impl WeightedCell {
 
 impl fmt::Display for WeightedCell {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "W(({}, {}), {})", self.x, self.y, self.weight)
+        write!(f, "W({}, {})", self.i, self.weight)
     }
 }
 
 impl PartialEq for WeightedCell {
     fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y && self.weight == other.weight
+        self.i == other.i && self.weight == other.weight
     }
 }
 
