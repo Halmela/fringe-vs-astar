@@ -1,86 +1,74 @@
 use crate::algorithms::heuristic;
-use crate::structures::{Fringe, Graph};
+use crate::structures::{graph, Fringe, Graph};
 use crate::{index_to_xy, xy_to_index};
 
 pub struct FringeSearch<'a> {
     fringe: Fringe,
-    cache: Vec<Vec<(f64, (usize, usize))>>,
-    start_x: usize,
-    start_y: usize,
-    goal_x: usize,
-    goal_y: usize,
+    cache: Vec<(f64, usize)>,
+    start: usize,
+    goal: usize,
     graph: &'a Box<dyn Graph>,
 }
 
 impl<'a> FringeSearch<'a> {
-    pub fn new(
-        start_x: usize,
-        start_y: usize,
-        goal_x: usize,
-        goal_y: usize,
-        graph: &'a Box<dyn Graph>,
-    ) -> Self {
-        let fringe = Fringe::new(start_x, start_y, graph.get_width(), graph.get_height());
+    pub fn new(start: usize, goal: usize, graph: &'a Box<dyn Graph>) -> Self {
+        let fringe = Fringe::new(start, graph.get_width() * graph.get_height());
 
-        let mut cache: Vec<Vec<(f64, (usize, usize))>> = vec![];
+        let mut cache: Vec<(f64, usize)> = vec![];
         for x in 0..graph.get_width() {
-            cache.push(vec![]);
             for y in 0..graph.get_height() {
-                cache[x].push((f64::MAX, (x, y)));
+                let i = xy_to_index(x, y, graph.get_width());
+                cache.push((f64::MAX, i));
             }
         }
-        cache[start_x][start_y].0 = 0.0;
+        cache[start].0 = 0.0;
 
         FringeSearch {
             fringe,
             cache,
-            start_x,
-            start_y,
-            goal_x,
-            goal_y,
+            start,
+            goal,
             graph,
         }
     }
 
-    pub fn solve(mut self) -> Option<(Vec<(usize, usize)>, f64)> {
-        let xyi = |x: usize, y: usize| xy_to_index(x, y, self.graph.get_width());
+    pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
         let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
-        let h = |x: usize, y: usize| heuristic(x, y, self.goal_x, self.goal_y);
+        let (goal_x, goal_y) = ixy(self.goal);
+        let h = |i: usize| {
+            let (x, y) = ixy(i);
+            heuristic(x, y, goal_x, goal_y)
+        };
 
-        let mut f_limit = h(self.start_x, self.start_y);
+        let mut f_limit = h(self.start);
         let mut found = false;
 
         while !(found || self.fringe.now_is_empty()) {
             let mut f_min = f64::MAX;
-            while let Some((x, y)) = self.fringe.pop_now() {
-                let g = self.cache[x][y].0;
-                let f = g + h(x, y);
+            while let Some(i) = self.fringe.pop_now() {
+                let g = self.cache[i].0;
+                let f = g + h(i);
 
                 if f > f_limit {
                     if f < f_min {
                         f_min = f;
                     }
-                    self.fringe.push_later(x, y);
+                    self.fringe.push_later(i);
                     continue;
                 }
 
-                if (x, y) == (self.goal_x, self.goal_y) {
+                if i == self.goal {
                     found = true;
                     break;
                 }
 
-                for ((x1, y1), w1) in self
-                    .graph
-                    .neighbors(xyi(x, y))
-                    .iter()
-                    .map(|(i, f)| (ixy(*i), f))
-                {
+                for (n, w1) in self.graph.neighbors(i) {
                     let g_new = g + w1;
-                    if g_new >= self.cache[x1][y1].0 {
+                    if g_new >= self.cache[n].0 {
                         continue;
                     }
-                    self.fringe.push_now(x1, y1);
-                    self.cache[x1][y1] = (g_new, (x, y));
+                    self.fringe.push_now(n);
+                    self.cache[n] = (g_new, i);
                 }
             }
             f_limit = f_min;
@@ -88,37 +76,22 @@ impl<'a> FringeSearch<'a> {
         }
 
         if found {
-            let cost = self.cache[self.goal_x][self.goal_y].0;
-            return Some((
-                construct_path(
-                    self.start_x,
-                    self.start_y,
-                    self.goal_x,
-                    self.goal_y,
-                    self.cache,
-                ),
-                cost,
-            ));
+            let cost = self.cache[self.goal].0;
+            return Some((construct_path(self.start, self.goal, self.cache), cost));
         }
         None
     }
 }
 
 /// Reconstruct path that was found
-fn construct_path(
-    start_x: usize,
-    start_y: usize,
-    goal_x: usize,
-    goal_y: usize,
-    cache: Vec<Vec<(f64, (usize, usize))>>,
-) -> Vec<(usize, usize)> {
-    let mut path = vec![(goal_x, goal_y)];
+fn construct_path(start: usize, goal: usize, cache: Vec<(f64, usize)>) -> Vec<usize> {
+    let mut path = vec![(goal)];
     loop {
-        let (x, y) = path[path.len() - 1];
-        let new = cache[x][y].1;
+        let i = path[path.len() - 1];
+        let new = cache[i].1;
         path.push(new);
 
-        if (new) == (start_x, start_y) {
+        if new == start {
             break;
         }
     }

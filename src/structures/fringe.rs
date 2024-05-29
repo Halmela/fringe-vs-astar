@@ -14,8 +14,8 @@ impl Fringe {
 
         let mut in_fringe: Vec<(bool, bool)> = vec![];
 
-        for i in 0..size {
-            in_fringe[i] = (false, false);
+        for _ in 0..size {
+            in_fringe.push((false, false));
         }
         in_fringe[start].0 = true;
 
