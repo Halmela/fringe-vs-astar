@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 pub struct Fringe {
     now: VecDeque<usize>,
     later: VecDeque<usize>,
-    in_fringe: Vec<(bool, bool)>,
+    in_fringe: Vec<bool>,
 }
 
 impl Fringe {
@@ -12,12 +12,12 @@ impl Fringe {
         now.push_front(start);
         let later = VecDeque::with_capacity(size / 2);
 
-        let mut in_fringe: Vec<(bool, bool)> = vec![];
+        let mut in_fringe: Vec<bool> = vec![];
 
         for _ in 0..size {
-            in_fringe.push((false, false));
+            in_fringe.push(false);
         }
-        in_fringe[start].0 = true;
+        in_fringe[start] = true;
 
         Fringe {
             now,
@@ -27,27 +27,23 @@ impl Fringe {
     }
 
     pub fn push_now(&mut self, i: usize) {
-        let i_f = self.in_fringe[i];
-        if i_f.0 {
-            self.now = delete_from_fringe(&i, self.now.clone());
-        }
-        if i_f.1 {
-            self.later = delete_from_fringe(&i, self.later.clone());
-            self.in_fringe[i].1 = false;
-        }
         self.now.push_front(i);
-        self.in_fringe[i].0 = true;
+        self.in_fringe[i] = true;
     }
 
     pub fn push_later(&mut self, i: usize) {
-        self.in_fringe[i] = (false, true);
+        self.in_fringe[i] = true;
         self.later.push_back(i);
     }
 
     pub fn pop_now(&mut self) -> Option<usize> {
         if let Some(i) = self.now.pop_front() {
-            self.in_fringe[i].0 = false;
-            Some(i)
+            if self.in_fringe[i] {
+                self.in_fringe[i] = false;
+                Some(i)
+            } else {
+                self.pop_now()
+            }
         } else {
             None
         }
@@ -61,8 +57,4 @@ impl Fringe {
     pub fn now_is_empty(&self) -> bool {
         self.now.is_empty()
     }
-}
-
-fn delete_from_fringe(i: &usize, mut fringe: VecDeque<usize>) -> VecDeque<usize> {
-    fringe.drain(..).filter(|j| j != i).collect()
 }
