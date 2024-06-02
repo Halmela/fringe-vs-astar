@@ -64,7 +64,7 @@ impl Context {
         )
         .expect("Error loading problems");
 
-        let mut context = Context {
+        let context = Context {
             map,
             graph,
             problems,
@@ -137,7 +137,6 @@ impl Context {
     }
 
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
-
     pub fn solve_full(&mut self) {
         let mut error = 0.0;
         let mut len = 0.0;
@@ -371,7 +370,7 @@ fn load_problems(
     problem_number: Option<usize>,
     print_level: usize,
 ) -> anyhow::Result<Vec<Problem>> {
-    let mut path = Default::default();
+    let mut path;
 
     if let Some(problem) = problem_file {
         path = problem;

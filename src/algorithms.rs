@@ -7,15 +7,33 @@ pub use crate::algorithms::fringe::FringeSearch;
 
 use crate::DIAGONAL_COST;
 
-/// Diagonal octile distance from current node to goal.
-/// This is a grid specific method.
-fn heuristic(current_x: usize, current_y: usize, goal_x: usize, goal_y: usize) -> f64 {
-    let x_distance: f64 = ((current_x as f64) - (goal_x as f64)).abs();
-    let y_distance: f64 = ((current_y as f64) - (goal_y as f64)).abs();
+/// Octile distance between two points
+pub fn heuristic(start: (usize, usize), goal: (usize, usize)) -> f64 {
+    let x_distance: f64 = ((start.0 as f64) - (goal.0 as f64)).abs();
+    let y_distance: f64 = ((start.1 as f64) - (goal.1 as f64)).abs();
 
     if x_distance > y_distance {
         (x_distance - y_distance) + DIAGONAL_COST * y_distance
     } else {
         (y_distance - x_distance) + DIAGONAL_COST * x_distance
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::DIAGONAL_COST;
+
+    use super::*;
+
+    #[test]
+    fn heuristic_works_diagonally() {
+        let result = heuristic((0, 0), (1, 1));
+        assert_eq!(DIAGONAL_COST, result);
+    }
+    #[test]
+    fn heuristic_works_downwards() {
+        let result = heuristic((0, 0), (0, 1));
+        let expected = 1.0;
+        assert_eq!(expected, result);
     }
 }

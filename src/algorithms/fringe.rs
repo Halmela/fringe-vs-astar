@@ -1,6 +1,7 @@
-use crate::algorithms::heuristic;
-use crate::structures::{graph, Fringe, Graph};
-use crate::{index_to_xy, xy_to_index};
+use crate::index_to_xy;
+use crate::structures::{Fringe, Graph};
+
+use super::heuristic;
 
 pub struct FringeSearch<'a> {
     fringe: Fringe,
@@ -12,15 +13,10 @@ pub struct FringeSearch<'a> {
 
 impl<'a> FringeSearch<'a> {
     pub fn new(start: usize, goal: usize, graph: &'a Box<dyn Graph>) -> Self {
-        let fringe = Fringe::new(start, graph.get_width() * graph.get_height());
+        let size = graph.get_width() * graph.get_height();
+        let fringe = Fringe::new(start, size);
 
-        let mut cache: Vec<(f64, usize)> = vec![];
-        for x in 0..graph.get_width() {
-            for y in 0..graph.get_height() {
-                let i = xy_to_index(x, y, graph.get_width());
-                cache.push((f64::MAX, i));
-            }
-        }
+        let mut cache: Vec<(f64, usize)> = std::iter::repeat((f64::MAX, 0)).take(size).collect();
         cache[start].0 = 0.0;
 
         FringeSearch {
@@ -34,45 +30,44 @@ impl<'a> FringeSearch<'a> {
 
     pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
         let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
-        let (goal_x, goal_y) = ixy(self.goal);
-        let h = |i: usize| {
-            let (x, y) = ixy(i);
-            heuristic(x, y, goal_x, goal_y)
-        };
+        let gxy = ixy(self.goal);
+        let h = |i: usize| heuristic(ixy(i), gxy);
 
         let mut f_limit = h(self.start);
         let mut found = false;
 
-        while !(found || self.fringe.now_is_empty()) {
+        while !(found || self.fringe.is_empty()) {
             let mut f_min = f64::MAX;
-            while let Some(i) = self.fringe.pop_now() {
-                let g = self.cache[i].0;
-                let f = g + h(i);
+            while let Some(node) = self.fringe.pop_now() {
+                let cost = self.cache[node].0;
+                let estimate = cost + h(node);
 
-                if f > f_limit {
-                    if f < f_min {
-                        f_min = f;
+                if estimate > f_limit {
+                    if estimate < f_min {
+                        f_min = estimate;
                     }
-                    self.fringe.push_later(i);
+                    self.fringe.push_later(node);
                     continue;
                 }
 
-                if i == self.goal {
+                if node == self.goal {
                     found = true;
                     break;
                 }
 
-                for (n, w1) in self.graph.neighbors(i) {
-                    let g_new = g + w1;
-                    if g_new >= self.cache[n].0 {
+                for (child, old_cost) in self.graph.neighbors(node) {
+                    let new_cost = cost + old_cost;
+                    if new_cost >= self.cache[child].0 {
                         continue;
                     }
-                    self.fringe.push_now(n);
-                    self.cache[n] = (g_new, i);
+                    self.fringe.push_now(child);
+                    self.cache[child].0 = new_cost;
+                    self.cache[child].1 = node;
                 }
+                // println!("");
             }
             f_limit = f_min;
-            self.fringe.later_to_now();
+            // println!("{}\n\n", f_limit);
         }
 
         if found {

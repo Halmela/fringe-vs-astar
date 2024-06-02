@@ -1,60 +1,74 @@
 use std::collections::VecDeque;
 
+#[derive(Debug)]
 pub struct Fringe {
-    now: VecDeque<usize>,
-    later: VecDeque<usize>,
-    in_fringe: Vec<bool>,
+    fringe: VecDeque<(usize, usize)>,            // (node_id, fringe_id)
+    marker: Vec<(Option<usize>, Option<usize>)>, // marker[node_id] = (f_id in now, f_id in later)
+    counter: usize,
+    last_rotation: usize,
 }
 
 impl Fringe {
     pub fn new(start: usize, size: usize) -> Self {
-        let mut now = VecDeque::with_capacity(size / 2); // Surely it won't be bigger
-        now.push_front(start);
-        let later = VecDeque::with_capacity(size / 2);
+        let mut fringe = VecDeque::with_capacity(size);
+        fringe.push_front((start, 0));
 
-        let mut in_fringe: Vec<bool> = vec![];
-
-        for _ in 0..size {
-            in_fringe.push(false);
-        }
-        in_fringe[start] = true;
+        let mut marker: Vec<(Option<usize>, Option<usize>)> =
+            std::iter::repeat((None, None)).take(size).collect();
+        marker[start].0 = Some(0);
 
         Fringe {
-            now,
-            later,
-            in_fringe,
+            fringe,
+            marker,
+            counter: 1,
+            last_rotation: 0,
         }
     }
 
     pub fn push_now(&mut self, i: usize) {
-        self.now.push_front(i);
-        self.in_fringe[i] = true;
+        self.fringe.push_front((i, self.counter));
+        self.marker[i].0 = Some(self.counter);
+        self.counter += 1;
     }
 
     pub fn push_later(&mut self, i: usize) {
-        self.in_fringe[i] = true;
-        self.later.push_back(i);
+        // println!("later {}: {:?}", i, self.in_fringe[i]);
+        self.fringe.push_back((i, self.counter));
+        self.marker[i].1 = Some(self.counter);
+        self.counter += 1;
     }
 
     pub fn pop_now(&mut self) -> Option<usize> {
-        if let Some(i) = self.now.pop_front() {
-            if self.in_fringe[i] {
-                self.in_fringe[i] = false;
-                Some(i)
-            } else {
-                self.pop_now()
+        loop {
+            // Try to take first element
+            if let Some((node, fringe_id)) = self.fringe.pop_front() {
+                match self.marker[node] {
+                    // Check if this is the correct Now-node
+                    (Some(id), _) if id == fringe_id => {
+                        self.marker[node].0 = None;
+                        return Some(node);
+                    }
+                    // Check if this is the correct node from last rotation
+                    (_, Some(id)) if id == fringe_id && id < self.last_rotation => {
+                        self.marker[node].1 = None;
+                        return Some(node);
+                    }
+                    // Push to front and refresh if it has been marked later this gen
+                    (_, Some(id)) if id == fringe_id => {
+                        self.last_rotation = self.counter;
+                        self.fringe.push_front((node, fringe_id));
+                        return None;
+                    }
+                    // Get a new node if the this is "old"
+                    _ => continue,
+                }
             }
-        } else {
-            None
+
+            return None;
         }
     }
 
-    pub fn later_to_now(&mut self) {
-        self.now = self.later.clone();
-        self.later = VecDeque::with_capacity(self.now.capacity());
-    }
-
-    pub fn now_is_empty(&self) -> bool {
-        self.now.is_empty()
+    pub fn is_empty(&self) -> bool {
+        self.fringe.is_empty()
     }
 }
