@@ -33,11 +33,13 @@ Options:
 
 
 ## Dokumentaatio
-**[Määrittelydokumentti](/docs/m%C3%A4%C3%A4rittely.md)**
+- [Määrittelydokumentti](/docs/m%C3%A4%C3%A4rittely.md)
+- [Testausdokumentti](/docs/testaus.md)
 
 ### Viikkoraportit
 - [Viikko 1](/docs/Viikkoraportti%201.md)
-- [Viikko 1](/docs/Viikkoraportti%202.md)
+- [Viikko 2](/docs/Viikkoraportti%202.md)
+- [Viikko 3](/docs/Viikkoraportti%203.md)
 
 ### Sisäinen dokumentaatio
 ```bash
