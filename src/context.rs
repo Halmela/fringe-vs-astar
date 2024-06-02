@@ -98,7 +98,7 @@ impl Context {
             }
         }
 
-        if self.problems.len() == 0 {
+        if self.problems.is_empty() {
             panic!("No problems to solve")
         } else if self.problems.len() == 1 {
             self.solve(0);
@@ -148,7 +148,7 @@ impl Context {
         for (i, problem) in self.problems.iter().enumerate() {
             let result = self
                 .solve(i)
-                .expect(&format!("Could not find solution for:\n{}", problem));
+                .unwrap_or_else(|| panic!("Could not find solution for:\n{}", problem));
             let expected = problem.length;
             len += expected.map_or_else(|| 0.0, |_| 1.0);
             if let Some(expected) = problem.length {
@@ -200,10 +200,10 @@ impl Context {
                         length,
                         problem,
                     );
-                    return Some(length);
+                    Some(length)
                 } else {
                     println!("No path found");
-                    return None;
+                    None
                 }
             }
             Mode::Fringe => {
@@ -228,10 +228,10 @@ impl Context {
                         length,
                         problem,
                     );
-                    return Some(length);
+                    Some(length)
                 } else {
                     println!("No path found");
-                    return None;
+                    None
                 }
             }
             Mode::Compare => {
@@ -411,10 +411,12 @@ fn read_full_problem_file(file_path: PathBuf) -> anyhow::Result<Vec<Problem>> {
     let mut content = BufReader::new(f).lines().enumerate();
     content.next();
     let problems: Vec<Problem> = content
-        .map(|(i, row)| {
-            Problem::parse_problem(row.expect(&format!("Error parsing problem {}", i)), i)
+        .flat_map(|(i, row)| {
+            Problem::parse_problem(
+                row.unwrap_or_else(|_| panic!("Error parsing problem {}", i)),
+                i,
+            )
         })
-        .flatten() // haha lets just get rid of the errors
         .collect();
     Ok(problems)
 }
