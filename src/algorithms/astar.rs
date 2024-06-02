@@ -1,11 +1,11 @@
 use crate::algorithms::heuristic;
+use crate::index_to_xy;
 use crate::structures::{Frontier, Graph};
-use crate::{index_to_xy, xy_to_index};
 
 /// A* pathfinder
 pub struct AStar<'a> {
     frontier: Frontier,
-    history: Vec<(usize, f64)>,
+    cache: Vec<(usize, f64)>,
     start: usize,
     goal: usize,
     graph: &'a Box<dyn Graph>,
@@ -17,17 +17,13 @@ impl<'a> AStar<'a> {
         let size = graph.get_width() * graph.get_height();
         let frontier = Frontier::new(start, size);
 
-        // (previous xy, current cost, current prority)
-        let mut history: Vec<(usize, f64)> = vec![];
-        for i in 0..size {
-            history.push((i, f64::MAX));
-        }
-
-        history[start] = (start, 0.0);
+        // (previous, current cost)
+        let mut cache: Vec<(usize, f64)> = std::iter::repeat((0, f64::MAX)).take(size).collect();
+        cache[start] = (start, 0.0);
 
         AStar {
             frontier,
-            history,
+            cache,
             start,
             goal,
             graph,
@@ -37,24 +33,21 @@ impl<'a> AStar<'a> {
     /// Try to solve the problem
     pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
         let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
-        let (goal_x, goal_y) = ixy(self.goal);
-        let h = |i: usize| {
-            let (x, y) = ixy(i);
-            heuristic(x, y, goal_x, goal_y)
-        };
+        let gxy = ixy(self.goal);
+        let h = |i: usize| heuristic(ixy(i), gxy);
 
         while let Some(i) = self.frontier.pop() {
             if i == self.goal {
-                return Some((self.construct_path(), self.history[self.goal].1));
+                return Some((self.construct_path(), self.cache[self.goal].1));
             }
 
-            let current_cost = self.history[i].1;
+            let current_cost = self.cache[i].1;
 
             for (n, w1) in self.graph.neighbors(i) {
                 let new_cost = current_cost + w1;
                 let priority = new_cost + h(n);
                 if self.frontier.push(n, priority) {
-                    self.history[n] = (i, new_cost);
+                    self.cache[n] = (i, new_cost);
                 }
             }
         }
@@ -67,7 +60,7 @@ impl<'a> AStar<'a> {
         let mut path = vec![self.goal];
         loop {
             let i = path[path.len() - 1];
-            let new = self.history[i].0;
+            let new = self.cache[i].0;
             path.push(new);
 
             if new == self.start {
@@ -77,24 +70,5 @@ impl<'a> AStar<'a> {
         path.reverse();
 
         path
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::DIAGONAL_COST;
-
-    use super::*;
-
-    #[test]
-    fn heuristic_works_diagonally() {
-        let result = heuristic(0, 0, 1, 1);
-        assert_eq!(DIAGONAL_COST, result);
-    }
-    #[test]
-    fn heuristic_works_downwards() {
-        let result = heuristic(0, 0, 0, 1);
-        let expected = 1.0;
-        assert_eq!(expected, result);
     }
 }
