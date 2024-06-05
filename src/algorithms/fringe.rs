@@ -5,7 +5,7 @@ use super::heuristic;
 
 pub struct FringeSearch<'a> {
     fringe: Fringe,
-    cache: Vec<(f64, usize, bool, Option<f64>)>,
+    cache: Vec<(f64, usize, Option<f64>)>,
     start: usize,
     goal: usize,
     graph: &'a Box<dyn Graph>,
@@ -16,12 +16,9 @@ impl<'a> FringeSearch<'a> {
         let size = graph.get_width() * graph.get_height();
         let fringe = Fringe::new(start, size);
 
-        let mut cache: Vec<(f64, usize, bool, Option<f64>)> =
-            std::iter::repeat((f64::MAX, 0, false, None))
-                .take(size)
-                .collect();
+        let mut cache: Vec<(f64, usize, Option<f64>)> =
+            std::iter::repeat((f64::MAX, 0, None)).take(size).collect();
         cache[start].0 = 0.0;
-        cache[start].2 = true;
 
         FringeSearch {
             fringe,
@@ -43,16 +40,13 @@ impl<'a> FringeSearch<'a> {
         while !(found || self.fringe.is_empty()) {
             let mut f_min = f64::MAX;
             while let Some(node) = self.fringe.pop_now() {
-                if !self.cache[node].2 {
-                    continue;
-                }
                 let cost = self.cache[node].0;
                 let to_goal: f64;
-                if let Some(tg) = self.cache[node].3 {
+                if let Some(tg) = self.cache[node].2 {
                     to_goal = tg;
                 } else {
                     to_goal = h(node);
-                    self.cache[node].3 = Some(to_goal);
+                    self.cache[node].2 = Some(to_goal);
                 }
                 let estimate = cost + to_goal;
 
@@ -77,9 +71,7 @@ impl<'a> FringeSearch<'a> {
                     self.fringe.push_now(*child);
                     self.cache[*child].0 = new_cost;
                     self.cache[*child].1 = node;
-                    self.cache[*child].2 = true;
                 }
-                self.cache[node].2 = false;
                 // println!("");
             }
             f_limit = f_min;
@@ -96,11 +88,7 @@ impl<'a> FringeSearch<'a> {
 }
 
 /// Reconstruct path that was found
-fn construct_path(
-    start: usize,
-    goal: usize,
-    cache: Vec<(f64, usize, bool, Option<f64>)>,
-) -> Vec<usize> {
+fn construct_path(start: usize, goal: usize, cache: Vec<(f64, usize, Option<f64>)>) -> Vec<usize> {
     let mut path = vec![(goal)];
     loop {
         let i = path[path.len() - 1];
