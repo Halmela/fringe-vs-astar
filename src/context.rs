@@ -24,6 +24,40 @@ pub struct Context {
 }
 
 impl Context {
+    /// This is mainly for testing purposes.
+    /// run() should be used usually.
+    /// These are the same, but this does nothing but build automatically
+    pub fn new(cli: Cli) -> Self {
+        let map_type = MapType::ArrayMap;
+        let graph_type = GraphType::AdjacencyListGraph;
+
+        if cli.silent <= 2 {
+            println!("Loading map {}", cli.map_file.to_str().unwrap());
+        }
+        let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
+
+        if cli.silent <= 2 {
+            println!("Map loaded, creating graph");
+        }
+        let graph = graph_builder(&map, graph_type);
+
+        let problems = load_problems(
+            cli.problem_file,
+            cli.map_file.clone(),
+            cli.problem_number,
+            cli.silent as usize,
+        )
+        .expect("Error loading problems");
+
+        Context {
+            map,
+            graph,
+            problems,
+            mode: cli.mode,
+            print_level: cli.silent as usize,
+        }
+    }
+
     /// Create self from CLI and run commands as specified.
     pub fn run(cli: Cli) {
         // Early exit
@@ -137,7 +171,7 @@ impl Context {
     }
 
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
-    pub fn solve_full(&mut self) {
+    pub fn solve_full(&mut self) -> f64 {
         let mut error = 0.0;
         let mut len = 0.0;
 
@@ -156,9 +190,11 @@ impl Context {
                 error += (result - expected).abs();
             }
         }
+        let average = error / len;
         if self.print_level <= 2 {
-            println!("Average error: {}", error / len);
+            println!("Average error: {}", average);
         }
+        average
     }
 
     /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
