@@ -11,5 +11,17 @@ clap = { version = "4.5.4", features = ["derive"] }
 criterion = "0.3"
 
 [[bench]]
-name = "pathfinding"
+name = "fringe_bench"
 harness = false
+
+[[bench]]
+name = "a_star_bench"
+harness = false
+
+[[bin]]
+name = "fringe-vs-astar"
+path = "src/main.rs"
+bench = false
+
+[lib]
+bench = false
