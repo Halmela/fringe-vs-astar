@@ -27,18 +27,13 @@ impl Context {
     /// This is mainly for testing purposes.
     /// run() should be used usually.
     /// These are the same, but this does nothing but build automatically
+    /// Will not print, but can panic for malformed files
     pub fn new(cli: Cli) -> Self {
         let map_type = MapType::ArrayMap;
         let graph_type = GraphType::AdjacencyListGraph;
 
-        if cli.silent <= 2 {
-            println!("Loading map {}", cli.map_file.to_str().unwrap());
-        }
         let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
 
-        if cli.silent <= 2 {
-            println!("Map loaded, creating graph");
-        }
         let graph = graph_builder(&map, graph_type);
 
         let problems = load_problems(
