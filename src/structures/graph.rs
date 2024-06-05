@@ -13,9 +13,10 @@ pub enum GraphType {
 /// Build new graph from a map, as specified by [GraphType]
 pub fn graph_builder(map: &Box<dyn Map>, graph_type: GraphType) -> Box<dyn Graph> {
     match graph_type {
-        GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
+        /* GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
         GraphType::AdjacencyGridGraph => Box::new(AdjacencyGridGraph::new(map)),
-        GraphType::AdjacencyListGraph => Box::new(AdjacencyListGraph::new(map)),
+        GraphType::AdjacencyListGraph => Box::new(AdjacencyListGraph::new(map)), */
+        _ => Box::new(AdjacencyListGraph::new(map)),
     }
 }
 
@@ -24,14 +25,14 @@ pub trait Graph {
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
-    fn neighbors(&self, i: usize) -> Vec<(usize, f64)>;
+    fn neighbors(&self, i: usize) -> &Vec<(usize, f64)>;
     /// Map height
     fn get_height(&self) -> usize;
     /// Map width
     fn get_width(&self) -> usize;
 }
 
-/// Graph represented as a HashMap with key `(x,y)`
+/* /// Graph represented as a HashMap with key `(x,y)`
 #[derive(Debug)]
 pub struct AdjacencyMapGraph {
     adjacency_map: HashMap<(usize, usize), Vec<((usize, usize), f64)>>,
@@ -61,7 +62,7 @@ impl AdjacencyMapGraph {
 }
 
 impl Graph for AdjacencyMapGraph {
-    fn neighbors(&self, i: usize) -> Vec<(usize, f64)> {
+    fn neighbors(&self, i: usize) -> &Vec<(usize, f64)> {
         self.adjacency_map
             .get(&index_to_xy(i, self.width))
             .cloned()
@@ -148,7 +149,7 @@ impl fmt::Display for AdjacencyGridGraph {
         }
         write!(f, "{}", result)
     }
-}
+} */
 
 pub struct AdjacencyListGraph {
     adjacency_list: Vec<Vec<(usize, f64)>>,
@@ -183,8 +184,8 @@ impl AdjacencyListGraph {
 }
 
 impl Graph for AdjacencyListGraph {
-    fn neighbors(&self, i: usize) -> Vec<(usize, f64)> {
-        self.adjacency_list[i].to_owned()
+    fn neighbors(&self, i: usize) -> &Vec<(usize, f64)> {
+        &self.adjacency_list[i]
     }
 
     fn get_height(&self) -> usize {

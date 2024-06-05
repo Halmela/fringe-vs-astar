@@ -8,7 +8,7 @@ use crate::structures::weighted_cell::*;
 
 /// Representation of map that provides access to neighbors of a node
 pub mod graph;
-pub use crate::structures::graph::{AdjacencyGridGraph, Graph};
+pub use crate::structures::graph::{AdjacencyListGraph, Graph};
 
 /// Representation of a file as boolean structure
 pub mod map;

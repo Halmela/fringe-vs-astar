@@ -8,7 +8,7 @@ anyhow = "1.0.86"
 clap = { version = "4.5.4", features = ["derive"] }
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = { version ="0.3", features =["html_reports"] }
 
 [[bench]]
 name = "fringe_bench"

@@ -36,18 +36,18 @@ impl<'a> AStar<'a> {
         let gxy = ixy(self.goal);
         let h = |i: usize| heuristic(ixy(i), gxy);
 
-        while let Some(i) = self.frontier.pop() {
-            if i == self.goal {
+        while let Some(node) = self.frontier.pop() {
+            if node == self.goal {
                 return Some((self.construct_path(), self.cache[self.goal].1));
             }
 
-            let current_cost = self.cache[i].1;
+            let current_cost = self.cache[node].1;
 
-            for (n, w1) in self.graph.neighbors(i) {
+            for (child, w1) in self.graph.neighbors(node) {
                 let new_cost = current_cost + w1;
-                let priority = new_cost + h(n);
-                if self.frontier.push(n, priority) {
-                    self.cache[n] = (i, new_cost);
+                let priority = new_cost + h(*child);
+                if self.frontier.push(*child, priority) {
+                    self.cache[*child] = (node, new_cost);
                 }
             }
         }
