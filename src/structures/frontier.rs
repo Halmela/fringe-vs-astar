@@ -13,10 +13,7 @@ impl Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
-        let mut smallest_found: Vec<Option<f64>> = Vec::with_capacity(size);
-        for _ in 0..size {
-            smallest_found.push(None);
-        }
+        let mut smallest_found: Vec<Option<f64>> = std::iter::repeat(None).take(size).collect();
 
         smallest_found[start] = Some(0.0);
         Frontier {
@@ -31,10 +28,7 @@ impl Frontier {
             Some(w) if w <= weight => {
                 return false;
             }
-            Some(_) => {
-                self.replace(i, weight);
-            }
-            None => {
+            _ => {
                 self.heap.push(WeightedCell::new(i, weight));
             }
         }
@@ -45,24 +39,16 @@ impl Frontier {
 
     // Provide node with the highest priority
     pub fn pop(&mut self) -> Option<usize> {
-        if let Some(WeightedCell { i, .. }) = self.heap.pop() {
-            Some(i)
-        } else {
-            None
-        }
-    }
-
-    // Replace old value in heap with the new one
-    fn replace(&mut self, i: usize, weight: f64) {
-        self.heap = self
-            .heap
-            .drain()
-            .map(|mut wc| {
-                if wc.get_i() == i {
-                    wc.change_weight(weight)
+        loop {
+            if let Some(WeightedCell { i, weight }) = self.heap.pop() {
+                if self.smallest_found[i].is_some_and(|w| w == weight) {
+                    return Some(i);
+                } else {
+                    continue;
                 }
-                wc
-            })
-            .collect()
+            } else {
+                return None;
+            }
+        }
     }
 }
