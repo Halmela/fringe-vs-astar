@@ -1,6 +1,6 @@
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
-use crate::structures::{Frontier, Graph};
+use crate::structures::{AdjacencyListGraph, Frontier};
 
 /// A* pathfinder
 pub struct AStar<'a> {
@@ -8,12 +8,12 @@ pub struct AStar<'a> {
     cache: Vec<(usize, f64)>,
     start: usize,
     goal: usize,
-    graph: &'a Box<dyn Graph>,
+    graph: &'a AdjacencyListGraph,
 }
 
 impl<'a> AStar<'a> {
     /// Create solver of a problem for a graph
-    pub fn new(start: usize, goal: usize, graph: &'a Box<dyn Graph>) -> Self {
+    pub fn new(start: usize, goal: usize, graph: &'a AdjacencyListGraph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let frontier = Frontier::new(start, size);
 

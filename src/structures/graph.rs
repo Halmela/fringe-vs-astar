@@ -11,17 +11,17 @@ pub enum GraphType {
 }
 
 /// Build new graph from a map, as specified by [GraphType]
-pub fn graph_builder(map: &Box<dyn Map>, graph_type: GraphType) -> Box<dyn Graph> {
+pub fn graph_builder(map: &ArrayMap, graph_type: GraphType) -> AdjacencyListGraph {
     match graph_type {
         /* GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
         GraphType::AdjacencyGridGraph => Box::new(AdjacencyGridGraph::new(map)),
         GraphType::AdjacencyListGraph => Box::new(AdjacencyListGraph::new(map)), */
-        _ => Box::new(AdjacencyListGraph::new(map)),
+        _ => AdjacencyListGraph::new(map),
     }
 }
 
 /// Representation of terrain map as a graph
-pub trait Graph {
+/* pub trait Graph {
     /// Get neighbors of a node.
     /// Making it a `usize` is something I have to consider again.
     /// Returns a vector of nodes with their weight
@@ -30,7 +30,7 @@ pub trait Graph {
     fn get_height(&self) -> usize;
     /// Map width
     fn get_width(&self) -> usize;
-}
+} */
 
 /* /// Graph represented as a HashMap with key `(x,y)`
 #[derive(Debug)]
@@ -158,7 +158,7 @@ pub struct AdjacencyListGraph {
 }
 impl AdjacencyListGraph {
     /// Constructor
-    fn new(map: &Box<dyn Map>) -> AdjacencyListGraph {
+    fn new(map: &ArrayMap) -> AdjacencyListGraph {
         let mut adjacency_list: Vec<Vec<(usize, f64)>> =
             Vec::with_capacity(map.get_height() * map.get_width());
 
@@ -181,24 +181,21 @@ impl AdjacencyListGraph {
             width: map.get_width(),
         }
     }
-}
-
-impl Graph for AdjacencyListGraph {
-    fn neighbors(&self, i: usize) -> &Vec<(usize, f64)> {
+    pub fn neighbors(&self, i: usize) -> &Vec<(usize, f64)> {
         &self.adjacency_list[i]
     }
 
-    fn get_height(&self) -> usize {
+    pub fn get_height(&self) -> usize {
         self.height
     }
-    fn get_width(&self) -> usize {
+    pub fn get_width(&self) -> usize {
         self.width
     }
 }
 
 /// Provide a list of neighbors for given cell in a grid.
 /// Makes sure that path does not cut through corners of unpassable cells.
-fn generate_neighbors(x: usize, y: usize, map: &Box<dyn Map>) -> Vec<((usize, usize), f64)> {
+fn generate_neighbors(x: usize, y: usize, map: &ArrayMap) -> Vec<((usize, usize), f64)> {
     // We are dealing with usize here, so x-1 will always be checked to avoid underflow errors.
     // Side-effects of this are that the coordinates will be correct and this can be harder to read.
 

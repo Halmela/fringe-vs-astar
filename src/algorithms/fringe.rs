@@ -1,18 +1,18 @@
 use crate::index_to_xy;
-use crate::structures::{Fringe, Graph};
+use crate::structures::{AdjacencyListGraph, Fringe};
 
 use super::heuristic;
 
 pub struct FringeSearch<'a> {
     fringe: Fringe,
-    cache: Vec<(f64, usize, Option<f64>)>,
+    cache: Vec<(f64, usize, Option<f64>)>, // (cost,parent,heuristic,in_fringe)
     start: usize,
     goal: usize,
-    graph: &'a Box<dyn Graph>,
+    graph: &'a AdjacencyListGraph,
 }
 
 impl<'a> FringeSearch<'a> {
-    pub fn new(start: usize, goal: usize, graph: &'a Box<dyn Graph>) -> Self {
+    pub fn new(start: usize, goal: usize, graph: &'a AdjacencyListGraph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let fringe = Fringe::new(start, size);
 
@@ -63,19 +63,26 @@ impl<'a> FringeSearch<'a> {
                     break;
                 }
 
-                for (child, old_cost) in self.graph.neighbors(node) {
-                    let new_cost = cost + old_cost;
-                    if new_cost >= self.cache[*child].0 {
-                        continue;
-                    }
+                let children: Vec<(&usize, f64)> = self
+                    .graph
+                    .neighbors(node)
+                    .iter()
+                    .map(|(i, c)| (i, cost + c))
+                    .filter(|(i, new)| *new < self.cache[**i].0)
+                    .collect();
+
+                for (child, new_cost) in children {
                     self.fringe.push_now(*child);
                     self.cache[*child].0 = new_cost;
                     self.cache[*child].1 = node;
                 }
+
                 // println!("");
             }
             f_limit = f_min;
+
             self.fringe.later_to_now();
+
             // println!("{}\n\n", f_limit);
         }
 

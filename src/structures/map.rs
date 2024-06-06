@@ -48,17 +48,16 @@ pub enum MapType {
 }
 
 /// Read and build a map from a file and specify the type with [MapType]
-pub fn map_builder(file_path: PathBuf, map_type: MapType) -> anyhow::Result<Box<dyn Map>> {
+pub fn map_builder(file_path: PathBuf, map_type: MapType) -> anyhow::Result<ArrayMap> {
     let (height, width, map) = read_map(file_path)?;
     let map = simplify_map(map);
 
     match map_type {
-        MapType::GridMap => Ok(Box::new(GridMap::new(height, width, map))),
-        MapType::ArrayMap => Ok(Box::new(ArrayMap::new(height, width, map))),
+        _ => Ok(ArrayMap::new(height, width, map)),
     }
 }
 
-/// Representation of the underlying terrain map
+/* /// Representation of the underlying terrain map
 pub trait Map: fmt::Display {
     /// Constructor
     /// Provide a cell of the grid if it exists
@@ -120,7 +119,7 @@ impl fmt::Display for GridMap {
         }
         writeln!(f, "{}", result)
     }
-}
+} */
 
 /// Terrainmap stored as a continuous `array[x + y*width]`
 pub struct ArrayMap {
@@ -138,10 +137,8 @@ impl ArrayMap {
             array: map.drain(..).flatten().collect(),
         }
     }
-}
 
-impl Map for ArrayMap {
-    fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
             Some(self.array[xy_to_index(x, y, self.width)])
         } else {
@@ -149,11 +146,11 @@ impl Map for ArrayMap {
         }
     }
 
-    fn get_height(&self) -> usize {
+    pub fn get_height(&self) -> usize {
         self.height
     }
 
-    fn get_width(&self) -> usize {
+    pub fn get_width(&self) -> usize {
         self.width
     }
 }
@@ -187,7 +184,7 @@ mod tests {
         assert_eq!(expected, result);
     }
 
-    #[test]
+    /* #[test]
     fn gridmap_gets_correct_cell() {
         let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
         let map = GridMap::new(2, 3, vec);
@@ -199,7 +196,7 @@ mod tests {
         let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
         let map = GridMap::new(2, 3, vec);
         assert_eq!(None, map.get_cell(3, 3));
-    }
+    } */
 
     #[test]
     fn arraymap_gets_correct_cell() {

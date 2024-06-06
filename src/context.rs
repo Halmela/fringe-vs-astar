@@ -1,10 +1,12 @@
+use crate::algorithms::heuristic;
 use crate::algorithms::*;
 use crate::cli::*;
 use crate::problem::Problem;
 use crate::structures::map::map_builder;
+use crate::structures::AdjacencyListGraph;
 use crate::structures::{
-    graph::{graph_builder, Graph, GraphType},
-    map::{Map, MapType},
+    graph::{graph_builder, GraphType},
+    map::{ArrayMap, MapType},
 };
 use crate::{index_to_xy, xy_to_index};
 
@@ -16,8 +18,8 @@ use std::time::Instant;
 
 /// Holds all relevant information of map and problems and handles pathfinders
 pub struct Context {
-    map: Box<dyn Map>,
-    graph: Box<dyn Graph>,
+    map: ArrayMap,
+    graph: AdjacencyListGraph,
     problems: Vec<Problem>,
     mode: Mode,
     print_level: usize,
@@ -206,6 +208,12 @@ impl Context {
         } = self.problems[problem];
         let start = xy_to_index(start_x, start_y, self.graph.get_width());
         let goal = xy_to_index(goal_x, goal_y, self.graph.get_width());
+
+        // let heuristic_lookup: Vec<Option<f64>> =
+        //     (0..self.map.get_width())
+        //     .zip(0..self.map.get_height())
+        //         .filter(|(x,y)| self.map.get_cell(x,y).is_some_and(|b| b))
+        //         .map(|(x,y)| )
 
         match self.mode {
             Mode::AStar => {

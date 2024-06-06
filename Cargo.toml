@@ -18,6 +18,10 @@ harness = false
 name = "a_star_bench"
 harness = false
 
+[[bench]]
+name = "comparison_bench"
+harness = false
+
 [[bin]]
 name = "fringe-vs-astar"
 path = "src/main.rs"
