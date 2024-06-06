@@ -1,4 +1,3 @@
-use crate::algorithms::heuristic;
 use crate::algorithms::*;
 use crate::cli::*;
 use crate::problem::Problem;

@@ -5,7 +5,7 @@ use crate::structures::{AdjacencyListGraph, Frontier};
 /// A* pathfinder
 pub struct AStar<'a> {
     frontier: Frontier,
-    cache: Vec<(usize, f64)>,
+    cache: Vec<(usize, f64, Option<f64>)>,
     start: usize,
     goal: usize,
     graph: &'a AdjacencyListGraph,
@@ -18,8 +18,9 @@ impl<'a> AStar<'a> {
         let frontier = Frontier::new(start, size);
 
         // (previous, current cost)
-        let mut cache: Vec<(usize, f64)> = std::iter::repeat((0, f64::MAX)).take(size).collect();
-        cache[start] = (start, 0.0);
+        let mut cache: Vec<(usize, f64, Option<f64>)> =
+            std::iter::repeat((0, f64::MAX, None)).take(size).collect();
+        cache[start] = (start, 0.0, None);
 
         AStar {
             frontier,
@@ -44,10 +45,19 @@ impl<'a> AStar<'a> {
             let current_cost = self.cache[node].1;
 
             for (child, w1) in self.graph.neighbors(node) {
+                let to_goal: f64;
+                if let Some(tg) = self.cache[*child].2 {
+                    to_goal = tg;
+                } else {
+                    to_goal = h(*child);
+                    self.cache[*child].2 = Some(to_goal);
+                }
+
                 let new_cost = current_cost + w1;
-                let priority = new_cost + h(*child);
+                let priority = new_cost + to_goal;
                 if self.frontier.push(*child, priority) {
-                    self.cache[*child] = (node, new_cost);
+                    self.cache[*child].0 = node;
+                    self.cache[*child].1 = new_cost;
                 }
             }
         }

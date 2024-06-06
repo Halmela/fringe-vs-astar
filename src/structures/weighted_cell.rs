@@ -3,10 +3,10 @@ use std::fmt;
 
 /// Cell with a weight. IMPORTANT: lower weights are ordered as greater.
 /// This allows us to use binary heap
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct WeightedCell {
     pub i: usize,
-    weight: f64,
+    pub weight: f64,
 }
 
 impl WeightedCell {

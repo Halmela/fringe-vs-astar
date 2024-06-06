@@ -13,7 +13,7 @@ impl Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
-        let mut smallest_found: Vec<Option<f64>> = vec![];
+        let mut smallest_found: Vec<Option<f64>> = Vec::with_capacity(size);
         for _ in 0..size {
             smallest_found.push(None);
         }
@@ -28,7 +28,7 @@ impl Frontier {
     /// Push a value to the heap, if it was not already there or if new priority is higher than the old
     pub fn push(&mut self, i: usize, weight: f64) -> bool {
         match self.smallest_found[i] {
-            Some(w) if w < weight => {
+            Some(w) if w <= weight => {
                 return false;
             }
             Some(_) => {
@@ -53,13 +53,13 @@ impl Frontier {
     }
 
     // Replace old value in heap with the new one
-    fn replace(&mut self, i: usize, value: f64) {
+    fn replace(&mut self, i: usize, weight: f64) {
         self.heap = self
             .heap
             .drain()
             .map(|mut wc| {
                 if wc.get_i() == i {
-                    wc.change_weight(value)
+                    wc.change_weight(weight)
                 }
                 wc
             })

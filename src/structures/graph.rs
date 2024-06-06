@@ -1,7 +1,5 @@
 use crate::structures::map::*;
-use crate::{index_to_xy, xy_to_index, DIAGONAL_COST};
-use std::collections::HashMap;
-use std::fmt;
+use crate::{xy_to_index, DIAGONAL_COST};
 
 /// Enum for specifying different types of graphs
 pub enum GraphType {
