@@ -39,11 +39,15 @@ impl Fringe {
     }
 
     /// Swap later to now
-    pub fn later_to_now(&mut self) {
+    pub fn later_to_now(&mut self) -> bool {
+        if self.later.is_empty() {
+            return false;
+        }
         self.now
             .reserve(self.later.capacity() - self.now.capacity());
         self.now.extend(self.later.iter().copied());
 
         self.later.clear();
+        return true;
     }
 }
