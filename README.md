@@ -31,17 +31,31 @@ Options:
           Print version
 ```
 
+## Testit
+```bash
+$ cargo test 
+```
+
+## Benchmark
+```bash
+$ cargo bench
+```
+
 
 ## Dokumentaatio
 - [Määrittelydokumentti](/docs/m%C3%A4%C3%A4rittely.md)
 - [Testausdokumentti](/docs/testaus.md)
+- [Toteutusdokumentti](/docs/toteutus.md)
 
 ### Viikkoraportit
 - [Viikko 1](/docs/Viikkoraportti%201.md)
 - [Viikko 2](/docs/Viikkoraportti%202.md)
 - [Viikko 3](/docs/Viikkoraportti%203.md)
+- [Viikko 4](/docs/Viikkoraportti%204.md)
 
 ### Sisäinen dokumentaatio
 ```bash
 $ cargo doc --open
 ```
+
+
