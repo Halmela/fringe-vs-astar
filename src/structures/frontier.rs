@@ -13,7 +13,7 @@ impl Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
-        let mut smallest_found: Vec<Option<f64>> = std::iter::repeat(None).take(size).collect();
+        let mut smallest_found: Vec<Option<f64>> = vec![None; size];
 
         smallest_found[start] = Some(0.0);
         Frontier {

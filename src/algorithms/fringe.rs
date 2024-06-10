@@ -1,6 +1,6 @@
 use super::heuristic;
 use crate::index_to_xy;
-use crate::structures::{graph, AdjacencyListGraph, Fringe};
+use crate::structures::{AdjacencyListGraph, Fringe};
 
 #[derive(Clone, Copy)]
 enum Status {
@@ -61,7 +61,7 @@ impl<'a> FringeSearch<'a> {
         let size = graph.get_width() * graph.get_height();
         let fringe = Fringe::new(start, size);
 
-        let mut cache: Vec<CacheValue> = std::iter::repeat(CacheValue::new()).take(size).collect();
+        let mut cache: Vec<CacheValue> = vec![CacheValue::new(); size];
         cache[start].cost = 0.0;
         cache[start].status = Status::Now;
 
@@ -99,7 +99,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     fn process_node(&mut self, node: usize) -> Option<usize> {
-        if self.in_fringe(node) {
+        if !self.in_fringe(node) {
             return None;
         }
 
@@ -125,7 +125,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     fn in_fringe(&self, node: usize) -> bool {
-        matches!(self.cache[node].status, Status::None)
+        matches!(self.cache[node].status, Status::Later | Status::Now)
     }
 
     fn check_estimate(&mut self, node: usize) -> bool {
@@ -167,6 +167,7 @@ impl<'a> FringeSearch<'a> {
         }
         self.cache[node].heuristic
     }
+
     /// Reconstruct path that was found
     fn construct_path(self) -> Vec<usize> {
         let mut path = vec![(self.goal)];

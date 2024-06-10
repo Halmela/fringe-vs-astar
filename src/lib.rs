@@ -15,6 +15,8 @@ pub mod context;
 /// Instance of a problem
 pub mod problem;
 
+pub mod printable;
+
 pub const DIAGONAL_COST: f64 = std::f64::consts::SQRT_2;
 
 /// Adapter for converting grid coordinate to array index

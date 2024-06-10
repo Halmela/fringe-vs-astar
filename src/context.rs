@@ -1,25 +1,22 @@
 use crate::algorithms::*;
 use crate::cli::*;
-use crate::problem::Problem;
+use crate::printable::Printable;
+use crate::problem::{Problem, Problems};
 use crate::structures::map::map_builder;
 use crate::structures::AdjacencyListGraph;
-use crate::structures::{
-    graph::{graph_builder, GraphType},
-    map::{ArrayMap, MapType},
-};
+use crate::structures::{graph::graph_builder, map::ArrayMap};
 use crate::{index_to_xy, xy_to_index};
 
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::time::Duration;
 use std::time::Instant;
 
 /// Holds all relevant information of map and problems and handles pathfinders
 pub struct Context {
     map: ArrayMap,
     graph: AdjacencyListGraph,
-    problems: Vec<Problem>,
+    problems: Problems,
     mode: Mode,
     print_level: usize,
 }
@@ -29,85 +26,72 @@ impl Context {
     /// run() should be used usually.
     /// These are the same, but this does nothing but build automatically
     /// Will not print, but can panic for malformed files
-    pub fn new(cli: Cli) -> Self {
-        let map_type = MapType::ArrayMap;
-        let graph_type = GraphType::AdjacencyListGraph;
-
-        let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
-
-        let graph = graph_builder(&map, graph_type);
-
-        let problems = load_problems(
-            cli.problem_file,
-            cli.map_file.clone(),
-            cli.problem_number,
-            cli.silent as usize,
-        )
-        .expect("Error loading problems");
-
-        Context {
-            map,
-            graph,
-            problems,
-            mode: cli.mode,
-            print_level: cli.silent as usize,
+    pub fn new(cli: Cli) -> Option<Self> {
+        let scenario_file = cli
+            .problem_file
+            .unwrap_or_else(|| deduce_problem_file(cli.map_file.clone()));
+        if cli.silent <= 2 {
+            println!("Using scenario file {}", scenario_file.to_str().unwrap());
         }
-    }
+        let problems =
+            Problems::new(scenario_file, cli.problem_number).expect("Error loading problems");
 
-    /// Create self from CLI and run commands as specified.
-    pub fn run(cli: Cli) {
         // Early exit
         if matches!(cli.mode, Mode::Print) && cli.silent == 1 {
-            let problems = load_problems(
-                cli.problem_file,
-                cli.map_file.clone(),
-                cli.problem_number,
-                cli.silent as usize,
-            )
-            .expect("Error loading problems");
-
-            for problem in &problems {
-                println!("{}", problem);
-            }
-            return;
+            println!("{}", problems);
+            return None;
         }
-
-        // default for now
-        let map_type = MapType::ArrayMap;
-        let graph_type = GraphType::AdjacencyListGraph;
 
         if cli.silent <= 2 {
             println!("Loading map {}", cli.map_file.to_str().unwrap());
         }
-        let map = map_builder(cli.map_file.clone(), map_type).expect("invalid map");
+        let map = map_builder(cli.map_file).expect("invalid map");
+
+        if matches!(cli.mode, Mode::PrintMap) {
+            println!("{}", Printable::new(&map));
+            return None;
+        }
 
         if cli.silent <= 2 {
             println!("Map loaded, creating graph");
         }
-        let graph = graph_builder(&map, graph_type);
+        let graph = graph_builder(&map);
 
-        let problems = load_problems(
-            cli.problem_file,
-            cli.map_file.clone(),
-            cli.problem_number,
-            cli.silent as usize,
-        )
-        .expect("Error loading problems");
-
-        let context = Context {
+        Some(Context {
             map,
             graph,
             problems,
             mode: cli.mode,
             print_level: cli.silent as usize,
-        };
+        })
+    }
 
-        match context.mode {
+    pub fn bare(self) -> BareContext {
+        let bare_problems = self
+            .problems
+            .iter()
+            .map(|p| {
+                (
+                    xy_to_index(p.start_x, p.start_y, self.map.get_width()),
+                    xy_to_index(p.goal_x, p.goal_y, self.map.get_width()),
+                )
+            })
+            .collect();
+        BareContext {
+            graph: self.graph,
+            bare_problems,
+        }
+    }
+
+    /// Create self from CLI and run commands as specified.
+    pub fn run(self) {
+        match self.mode {
             Mode::Print => {
-                context.print_mode();
+                self.print_mode();
             }
+            Mode::PrintMap => {}
             _ => {
-                context.solve_mode();
+                self.solve_mode();
             }
         }
     }
@@ -130,8 +114,8 @@ impl Context {
 
         if self.problems.is_empty() {
             panic!("No problems to solve")
-        } else if self.problems.len() == 1 {
-            self.solve(0);
+        } else if let Some(problem) = self.problems.single_problem() {
+            self.solve(problem);
         } else {
             self.solve_full();
         }
@@ -139,9 +123,6 @@ impl Context {
 
     fn print_mode(self) {
         match (self.print_level, self.problems.len()) {
-            (0, 0) => {
-                println!("{}", self.map);
-            }
             (0, _) => {
                 self.print_problems();
             }
@@ -153,40 +134,33 @@ impl Context {
                 );
             }
             (1, _) => {
-                for problem in self.problems {
-                    println!("{}", problem);
-                }
+                println!("{}", self.problems);
             }
             _ => {}
         }
     }
 
-    /// Set problem
-    pub fn set_problem(&mut self, problem: Problem) {
-        self.problems = vec![problem];
-    }
-
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
     pub fn solve_full(&mut self) -> f64 {
         let mut error = 0.0;
-        let mut len = 0.0;
+        let mut count = 0.0;
 
         if self.print_level <= 2 {
             println!("Solving {} problems...", self.problems.len());
         }
 
-        for (i, problem) in self.problems.iter().enumerate() {
+        for problem in self.problems.iter() {
             let result = self
-                .solve(i)
+                .solve(*problem)
                 .unwrap_or_else(|| panic!("Could not find solution for:\n{}", problem));
             let expected = problem.length;
-            len += expected.map_or_else(|| 0.0, |_| 1.0);
+            count += expected.map_or_else(|| 0.0, |_| 1.0);
             if let Some(expected) = problem.length {
-                len += 1.0;
+                count += 1.0;
                 error += (result - expected).abs();
             }
         }
-        let average = error / len;
+        let average = error / count;
         if self.print_level <= 2 {
             println!("Average error: {}", average);
         }
@@ -194,123 +168,37 @@ impl Context {
     }
 
     /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
-    pub fn solve(&self, problem: usize) -> Option<f64> {
+    pub fn solve(&self, problem: Problem) -> Option<f64> {
         if self.print_level <= 1 {
-            println!("{}", self.problems[problem]);
+            println!("{}", problem);
         }
-        let Problem {
-            start_x,
-            start_y,
-            goal_x,
-            goal_y,
-            ..
-        } = self.problems[problem];
-        let start = xy_to_index(start_x, start_y, self.graph.get_width());
-        let goal = xy_to_index(goal_x, goal_y, self.graph.get_width());
-
-        // let heuristic_lookup: Vec<Option<f64>> =
-        //     (0..self.map.get_width())
-        //     .zip(0..self.map.get_height())
-        //         .filter(|(x,y)| self.map.get_cell(x,y).is_some_and(|b| b))
-        //         .map(|(x,y)| )
 
         match self.mode {
             Mode::AStar => {
-                let now = Instant::now();
-
-                let astar = AStar::new(start, goal, &self.graph);
-                let solution = astar.solve();
-
-                let done = Instant::now();
-                let duration = done.checked_duration_since(now);
-                if self.print_level <= 2 {
-                    if let Some(d) = duration {
-                        println!("Solved in {:?}", d);
-                    } else {
-                        println!("Error in timing");
-                    }
-                }
-                if let Some((path, length)) = solution {
-                    self.print_solution(
-                        path.iter()
-                            .map(|i| index_to_xy(*i, self.graph.get_width()))
-                            .collect(),
-                        length,
-                        problem,
-                    );
-                    Some(length)
-                } else {
-                    println!("No path found");
-                    None
-                }
+                let (solution, duration) = self.timed_astar(&problem);
+                self.print_timing(duration);
+                self.print_solution(solution, problem)
             }
             Mode::Fringe => {
-                let now = Instant::now();
-                let fringe = FringeSearch::new(start, goal, &self.graph);
-                let solution = fringe.solve();
-
-                let done = Instant::now();
-                let duration = done.checked_duration_since(now);
-                if self.print_level <= 2 {
-                    if let Some(d) = duration {
-                        println!("Solved in {:?}", d);
-                    } else {
-                        println!("Error in timing");
-                    }
-                }
-                if let Some((path, length)) = solution {
-                    self.print_solution(
-                        path.iter()
-                            .map(|i| index_to_xy(*i, self.graph.get_width()))
-                            .collect(),
-                        length,
-                        problem,
-                    );
-                    Some(length)
-                } else {
-                    println!("No path found");
-                    None
-                }
+                let (solution, duration) = self.timed_fringe(&problem);
+                self.print_timing(duration);
+                self.print_solution(solution, problem)
             }
             Mode::Compare => {
                 println!("Solving using A*");
-                let a_now = Instant::now();
-
-                let astar = AStar::new(start, goal, &self.graph);
-                let a_solution = astar.solve();
-
-                let a_done = Instant::now();
-                let a_duration = a_done.checked_duration_since(a_now);
-                if self.print_level <= 2 {
-                    if let Some(d) = a_duration {
-                        println!("Solved in {:?}", d);
-                    } else {
-                        println!("Error in timing");
-                    }
-                }
+                let (a_solution, a_duration) = self.timed_astar(&problem);
+                self.print_timing(a_duration);
 
                 println!("Solving using Fringe search");
-
-                let f_now = Instant::now();
-                let fringe = FringeSearch::new(start, goal, &self.graph);
-                let f_solution = fringe.solve();
-
-                let f_done = Instant::now();
-                let f_duration = f_done.checked_duration_since(f_now);
-                if self.print_level <= 2 {
-                    if let Some(d) = f_duration {
-                        println!("Solved in {:?}", d);
-                    } else {
-                        println!("Error in timing");
-                    }
-                }
+                let (f_solution, f_duration) = self.timed_fringe(&problem);
+                self.print_timing(f_duration);
 
                 match (a_duration, f_duration) {
                     (Some(a), Some(f)) if a < f => {
                         println!("A* was {:?} faster than Fringe search", f - a);
                     }
                     (Some(a), Some(f)) if f < a => {
-                        println!("Fringe search was {:?} than A*", a - f);
+                        println!("Fringe search was {:?} faster than A*", a - f);
                     }
                     _ => {
                         println!("Error in timing")
@@ -324,8 +212,46 @@ impl Context {
         }
     }
 
+    fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<usize>, f64)>, Option<Duration>) {
+        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
+        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
+        let now = Instant::now();
+
+        let astar = AStar::new(start, goal, &self.graph);
+        let solution = astar.solve();
+
+        let done = Instant::now();
+        let duration = done.checked_duration_since(now);
+
+        (solution, duration)
+    }
+
+    fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<usize>, f64)>, Option<Duration>) {
+        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
+        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
+        let now = Instant::now();
+
+        let fringe = FringeSearch::new(start, goal, &self.graph);
+        let solution = fringe.solve();
+
+        let done = Instant::now();
+        let duration = done.checked_duration_since(now);
+
+        (solution, duration)
+    }
+
+    fn print_timing(&self, duration: Option<Duration>) {
+        if self.print_level <= 2 {
+            if let Some(d) = duration {
+                println!("Solved in {:?}", d);
+            } else {
+                println!("Error in timing");
+            }
+        }
+    }
+
     /// Print solution, `full` specifies if map is printed
-    fn print_solution(&self, mut path: Vec<(usize, usize)>, path_length: f64, problem: usize) {
+    fn print_solution(&self, solution: Option<(Vec<usize>, f64)>, problem: Problem) -> Option<f64> {
         let Problem {
             start_x,
             start_y,
@@ -333,29 +259,32 @@ impl Context {
             goal_y,
             length,
             ..
-        } = self.problems[problem];
+        } = problem;
+
+        let mut path;
+        let path_length;
+
+        if let Some((p, l)) = solution {
+            path = p;
+            path_length = l;
+        } else {
+            println!("No path found");
+            return None;
+        }
 
         if self.print_level == 0 {
-            let path: HashSet<(usize, usize)> = path.drain(..).collect();
-            let mut result = String::new();
-            for y in 0..self.map.get_height() {
-                for x in 0..self.map.get_width() {
-                    if (x, y) == (start_x, start_y) {
-                        result.push('🏁');
-                    } else if (x, y) == (goal_x, goal_y) {
-                        result.push('🏆');
-                    } else if path.contains(&(x, y)) {
-                        result.push('🟩');
-                    } else if let Some(true) = self.map.get_cell(x, y) {
-                        result.push('⬛');
-                    } else {
-                        result.push('⬜');
-                    }
-                }
-                result.push('\n');
-            }
-            println!("{}", result);
-            println!("{}", self.problems[problem]);
+            let path: HashSet<(usize, usize)> = path
+                .drain(..)
+                .map(|i| index_to_xy(i, self.graph.get_width()))
+                .collect();
+
+            let mut printable = Printable::new(&self.map);
+            printable.add_path(path);
+            printable.add_start(start_x, start_y);
+            printable.add_goal(goal_x, goal_y);
+
+            println!("{}\n", printable);
+            println!("{}", problem);
             println!("Result:\n\t{}", path_length);
             if let Some(l) = length {
                 println!("Difference:\n\t{}\n", path_length - l);
@@ -366,95 +295,67 @@ impl Context {
                 println!("Difference:\n\t{}\n", path_length - l);
             }
         }
+        Some(path_length)
     }
 
     /// Print a problems in a map
     pub fn print_problems(&self) {
-        for (
-            i,
-            Problem {
-                start_x,
-                start_y,
-                goal_x,
-                goal_y,
-                ..
-            },
-        ) in self.problems.iter().enumerate()
-        {
-            let mut result = String::new();
-            for y in 0..self.map.get_height() {
-                for x in 0..self.map.get_width() {
-                    if (x, y) == (*start_x, *start_y) {
-                        result.push('🏁');
-                    } else if (x, y) == (*goal_x, *goal_y) {
-                        result.push('🏆');
-                    } else if let Some(true) = self.map.get_cell(x, y) {
-                        result.push('⬛');
-                    } else {
-                        result.push('⬜');
-                    }
-                }
-                result.push('\n');
-            }
-            println!("{}", result);
-            println!("{}\n", self.problems[i]);
-        }
-    }
-}
-
-fn load_problems(
-    problem_file: Option<PathBuf>,
-    map_file: PathBuf,
-    problem_number: Option<usize>,
-    print_level: usize,
-) -> anyhow::Result<Vec<Problem>> {
-    let mut path;
-
-    if let Some(problem) = problem_file {
-        path = problem;
-    } else {
-        path = map_file;
-        path.set_extension("map.scenario");
-        if !path.as_path().try_exists().is_ok_and(|b| b) {
-            path.set_extension("scen");
-            if !path.as_path().try_exists().is_ok_and(|b| b) {
-                panic!("Could not find a default problem file for map with extensions .scenario and .scen");
-            }
-        }
-    }
-    if print_level <= 2 {
-        if let Some(s) = path.to_str() {
-            println!("Using scenario file {s}");
+        for problem in self.problems.iter() {
+            println!("{}", self.problem_in_map(problem));
+            println!("{}\n", problem);
         }
     }
 
-    if let Some(n) = problem_number {
-        println!("Loading problem number {n}");
-        Ok(vec![read_problem_from_file(&path, n)
-            .expect("Could not find a problem with supplied number")])
-    } else {
-        Ok(read_full_problem_file(path)?)
+    fn problem_in_map(&self, problem: &Problem) -> Printable {
+        let Problem {
+            start_x,
+            start_y,
+            goal_x,
+            goal_y,
+            ..
+        } = problem;
+
+        let mut result = Printable::new(&self.map);
+        result.add_start(*start_x, *start_y);
+        result.add_goal(*goal_x, *goal_y);
+
+        result
     }
 }
 
-fn read_problem_from_file(problem_file: &PathBuf, problem: usize) -> anyhow::Result<Problem> {
-    let f = File::open(problem_file)?;
-    let mut content = BufReader::new(f).lines();
+fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
+    path.set_extension("map.scenario");
+    if path.as_path().try_exists().is_ok_and(|b| b) {
+        return path;
+    }
 
-    Problem::parse_problem(content.nth(problem).unwrap()?, problem)
+    path.set_extension("scen");
+    if path.as_path().try_exists().is_ok_and(|b| b) {
+        return path;
+    }
+
+    panic!("Could not find a default problem file for map with extensions .scenario or .scen");
 }
 
-fn read_full_problem_file(file_path: PathBuf) -> anyhow::Result<Vec<Problem>> {
-    let f = File::open(file_path)?;
-    let mut content = BufReader::new(f).lines().enumerate();
-    content.next();
-    let problems: Vec<Problem> = content
-        .flat_map(|(i, row)| {
-            Problem::parse_problem(
-                row.unwrap_or_else(|_| panic!("Error parsing problem {}", i)),
-                i,
-            )
-        })
-        .collect();
-    Ok(problems)
+pub struct BareContext {
+    graph: AdjacencyListGraph,
+    bare_problems: Vec<(usize, usize)>,
+}
+
+impl BareContext {
+    pub fn astar(&self) {
+        for (start, goal) in &self.bare_problems {
+            let astar = AStar::new(*start, *goal, &self.graph);
+
+            astar.solve();
+        }
+    }
+
+    pub fn fringe(&self) {
+        for (start, goal) in &self.bare_problems {
+            let fringe = FringeSearch::new(*start, *goal, &self.graph);
+
+            fringe.solve();
+        }
+    }
 }

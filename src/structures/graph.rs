@@ -9,13 +9,8 @@ pub enum GraphType {
 }
 
 /// Build new graph from a map, as specified by [GraphType]
-pub fn graph_builder(map: &ArrayMap, graph_type: GraphType) -> AdjacencyListGraph {
-    match graph_type {
-        /* GraphType::AdjacencyMapGraph => Box::new(AdjacencyMapGraph::new(map)),
-        GraphType::AdjacencyGridGraph => Box::new(AdjacencyGridGraph::new(map)),
-        GraphType::AdjacencyListGraph => Box::new(AdjacencyListGraph::new(map)), */
-        _ => AdjacencyListGraph::new(map),
-    }
+pub fn graph_builder(map: &ArrayMap) -> AdjacencyListGraph {
+    AdjacencyListGraph::new(map)
 }
 
 /// Representation of terrain map as a graph
@@ -156,7 +151,7 @@ pub struct AdjacencyListGraph {
 }
 impl AdjacencyListGraph {
     /// Constructor
-    fn new(map: &ArrayMap) -> AdjacencyListGraph {
+    pub fn new(map: &ArrayMap) -> AdjacencyListGraph {
         let mut adjacency_list: Vec<Vec<(usize, f64)>> =
             Vec::with_capacity(map.get_height() * map.get_width());
 

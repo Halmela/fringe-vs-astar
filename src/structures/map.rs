@@ -48,13 +48,11 @@ pub enum MapType {
 }
 
 /// Read and build a map from a file and specify the type with [MapType]
-pub fn map_builder(file_path: PathBuf, map_type: MapType) -> anyhow::Result<ArrayMap> {
+pub fn map_builder(file_path: PathBuf) -> anyhow::Result<ArrayMap> {
     let (height, width, map) = read_map(file_path)?;
     let map = simplify_map(map);
 
-    match map_type {
-        _ => Ok(ArrayMap::new(height, width, map)),
-    }
+    Ok(ArrayMap::new(height, width, map))
 }
 
 /* /// Representation of the underlying terrain map
@@ -153,22 +151,9 @@ impl ArrayMap {
     pub fn get_width(&self) -> usize {
         self.width
     }
-}
 
-impl fmt::Display for ArrayMap {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut result = String::new();
-        for y in 0..self.get_height() {
-            for x in 0..self.get_width() {
-                if let Some(true) = self.get_cell(x, y) {
-                    result.push('□');
-                } else {
-                    result.push('■');
-                }
-            }
-            result.push('\n');
-        }
-        writeln!(f, "{}", result)
+    pub fn array(&self) -> Vec<bool> {
+        self.array.iter().copied().collect()
     }
 }
 

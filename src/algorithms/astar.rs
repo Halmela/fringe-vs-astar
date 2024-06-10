@@ -18,8 +18,7 @@ impl<'a> AStar<'a> {
         let frontier = Frontier::new(start, size);
 
         // (previous, current cost)
-        let mut cache: Vec<(usize, f64, Option<f64>)> =
-            std::iter::repeat((0, f64::MAX, None)).take(size).collect();
+        let mut cache: Vec<(usize, f64, Option<f64>)> = vec![(0, f64::MAX, None); size];
         cache[start] = (start, 0.0, None);
 
         AStar {

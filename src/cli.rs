@@ -30,6 +30,7 @@ pub struct Cli {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum Mode {
     Print,
+    PrintMap,
     AStar,
     Fringe,
     Compare,
