@@ -1,11 +1,16 @@
 use clap::{Parser, ValueEnum};
 use std::path::{Path, PathBuf};
 
-/// Pathfinder comparison. Currently only A* is supported
+/// Pathfinders for gridmaps
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    /// How program is executed. print only prints the map and possible problem, a-star solves using A*, fringe solves using Fringe Search
+    /// How program is executed.
+    /// print-map prints the map ;
+    /// print prints the map with problems ;
+    /// a-star solves using A* ;
+    /// fringe solves using Fringe Search ;
+    /// compare compares a-star and fringe
     #[arg(value_enum)]
     pub mode: Mode,
 
