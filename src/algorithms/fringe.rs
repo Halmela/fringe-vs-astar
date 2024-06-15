@@ -56,12 +56,10 @@ impl<'a> FringeSearch<'a> {
                     let cost = self.cache.get_cost(goal);
                     return Some((self.construct_path(), cost));
                 }
+            } else if self.prepare_next_iteration() {
+                continue;
             } else {
-                if self.prepare_next_iteration() {
-                    continue;
-                } else {
-                    return None;
-                }
+                return None;
             }
         }
     }

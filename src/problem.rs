@@ -68,7 +68,7 @@ impl fmt::Display for Problem {
         if let Some(l) = self.length {
             result.push_str(&format!("\t{l}"));
         }
-        write!(f, "{}\n", result)
+        writeln!(f, "{}", result)
     }
 }
 
@@ -91,7 +91,7 @@ impl Problems {
     }
 
     pub fn from_file(file_path: PathBuf) -> anyhow::Result<Problems> {
-        let f = File::open(file_path.to_owned())?;
+        let f = File::open(&file_path)?;
         let mut content = BufReader::new(f).lines().enumerate();
         content.next();
         let problems: Vec<Problem> = content
@@ -143,6 +143,6 @@ impl fmt::Display for Problems {
         ));
         let problems: String = self.problems.iter().map(|p| p.to_string()).collect();
         result.push_str(&problems);
-        write!(f, "{}\n", result)
+        writeln!(f, "{}", result)
     }
 }

@@ -48,7 +48,7 @@ impl Cache {
     pub fn check_estimate(&mut self, node: Node) -> bool {
         let estimate = self[node].estimate;
         if estimate <= self.f_limit {
-            return true;
+            true
         } else if estimate < self.f_min {
             self.f_min = estimate;
             return false;
@@ -86,9 +86,9 @@ impl Cache {
 
         if new_cost < self[child].cost {
             self.update(child, new_cost, parent);
-            return Some(child);
+            Some(child)
         } else {
-            return None;
+            None
         }
     }
 }

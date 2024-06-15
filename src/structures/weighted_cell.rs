@@ -14,16 +14,6 @@ impl WeightedCell {
     pub fn new(i: usize, weight: f64) -> WeightedCell {
         WeightedCell { i, weight }
     }
-
-    /// Get `i`
-    pub fn get_i(&self) -> usize {
-        self.i
-    }
-
-    /// Change own priority
-    pub fn change_weight(&mut self, weight: f64) {
-        self.weight = weight;
-    }
 }
 
 impl fmt::Display for WeightedCell {

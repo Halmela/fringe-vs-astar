@@ -152,7 +152,7 @@ impl ArrayMap {
     }
 
     pub fn array(&self) -> Vec<bool> {
-        self.array.iter().copied().collect()
+        self.array.to_vec()
     }
 }
 

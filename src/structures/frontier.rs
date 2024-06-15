@@ -34,7 +34,7 @@ impl Frontier {
         }
 
         self.smallest_found[i] = Some(weight);
-        return true;
+        true
     }
 
     // Provide node with the highest priority
