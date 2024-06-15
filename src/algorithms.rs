@@ -2,6 +2,7 @@
 pub mod astar;
 pub use crate::algorithms::astar::AStar;
 
+/// Fringe path finder
 pub mod fringe;
 pub use crate::algorithms::fringe::FringeSearch;
 

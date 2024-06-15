@@ -1,14 +1,16 @@
+use crate::Node;
+
 /// Datastructure used for storing nodes in Fringe search.
 /// Does not hold any data on existence of a node in fringe
 #[derive(Debug)]
 pub struct Fringe {
-    now: Vec<usize>,
-    later: Vec<usize>,
+    now: Vec<Node>,
+    later: Vec<Node>,
 }
 
 impl Fringe {
     /// Create new Fringe
-    pub fn new(start: usize, size: usize) -> Self {
+    pub fn new(start: Node, size: usize) -> Self {
         let mut now = Vec::with_capacity(size);
         now.push(start);
         let later = Vec::with_capacity(size);
@@ -17,17 +19,17 @@ impl Fringe {
     }
 
     /// Push node to be processed in this iteration
-    pub fn push_now(&mut self, node: usize) {
+    pub fn push_now(&mut self, node: Node) {
         self.now.push(node);
     }
 
     /// Push node to be processed in later iteration
-    pub fn push_later(&mut self, node: usize) {
+    pub fn push_later(&mut self, node: Node) {
         self.later.push(node);
     }
 
     /// Try to give a node from now list
-    pub fn pop_now(&mut self) -> Option<usize> {
+    pub fn pop_now(&mut self) -> Option<Node> {
         // Try to take first element
 
         self.now.pop()

@@ -15,8 +15,12 @@ pub mod context;
 /// Instance of a problem
 pub mod problem;
 
+/// Neat printing of a map and possibly start, goal and a path.
 pub mod printable;
 
+// pub mod node;
+
+/// Octile distance of diagonal movement
 pub const DIAGONAL_COST: f64 = std::f64::consts::SQRT_2;
 
 /// Adapter for converting grid coordinate to array index
@@ -38,3 +42,5 @@ pub fn xy_to_index(x: usize, y: usize, width: usize) -> usize {
 pub fn index_to_xy(i: usize, width: usize) -> (usize, usize) {
     (i % width, i / width)
 }
+
+pub type Node = u32;
