@@ -1,13 +1,15 @@
-Toteutusdokumentti
+# Toteutusdokumentti
 
 ## Ohjelman yleisrakenne
 Ohjelmaa käsitellään komentorivikäyttöliittymän (CLI) kautta.
 CLIn keräämät tiedot annetaan eteenpäin Kontekstille, joka rakentaa Kartan ja sen pohjalta Verkon.
 Konteksti kerää myös tiedot ongelmista ja tallettaa ne.
 
-Kontekstilla on neljä tilaa, joihin sen ajo voi mennä:
+Kontekstilla on viisi tilaa, joihin sen ajo voi mennä:
 - print
   - Tulosta Kartta ja mahdolliset ongelmat
+- print-map
+  - Tulosta Kartta
 - a-star
   - Ratkaise ongelma tai ongelmia Verkosta A*-haulla.
 - fringe
@@ -20,7 +22,15 @@ joka soveltuu myös indeksointiin.
 Sen koon määrittää, kuinka monta tavua tarvitaan viittaamaan mihin tahansa kohtaan muistissa 
 (64-bittisissä järjetelmissä se on 8 tavua).
 Apufunktioilla saa muutettua solmun kartan koordinaatiksi ja takaisin.
+> Olen tällä hetkellä siirtymässä käyttämään 32-bittistä kokonaislukua, mutta vain Fringe tukee sitä tällä hetkellä.
 
+Hakemisto ja moduulirakenne on hieman sekava tällä hetkellä, mutta pääpiirteittäin näin:
+- (/src) sisältää itse sovelluksen toimintaan tarvittavat kilkkeet
+- (/src/algorithms) sisältää fringen ja A*:n sekä muuta algoritmien toimintaan liittyvää
+- (/src/structures) sisältää käytetyt tietorakenteet (pl. fringen käyttämä cache, joka löytyy (/src/algorithms/fringe) 
+- (/tests) sisältää testit
+- (/benches) sisältää benchmarkkaukset
+- (/maps) sisältää kartat
 
 ## Saavutetut aika- ja tilavaativuudet (esim. O-analyysit pseudokoodista)
 Fringe-haulle ei löydy O-analyysia kirjallisuudesta, mutta uskoisin sen olevan sama kuin A*:n, 
@@ -43,7 +53,7 @@ Tarkat speksit ilmestyvät joskus, mutta esim. koneellani suurimman kartan viime
 ```bash
 $ cargo build --release
 $ target/release/fringe-vs-astar compare -s -n 2000 maps/scene_sp_sax_04.map
-Loading map maps/scene_sp_sax_04.map
+ Loading map maps/scene_sp_sax_04.map
 Map loaded, creating graph
 Using scenario file maps/scene_sp_sax_04.map.scen
 Loading problem number 2000
@@ -51,10 +61,10 @@ Comparing A* and Fringe search
 Problem 2000:
 	(3411, 4166) -> (3381, 533)	7712.59278044
 Solving using A*
-Solved in 2.347416605s
+Solved in 2.077095669s
 Solving using Fringe search
-Solved in 40.713421969s
-A* was 38.366005364s faster than Fringe search 
+Solved in 27.26211631s
+A* was 25.185020641s faster than Fringe search
 ```
 
 Alkuvaiheissa molemmilla rakenteilla kesti 2+ minuuttia ratkoa tämä.

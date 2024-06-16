@@ -45,6 +45,7 @@ impl Cache {
         }
     }
 
+    #[inline]
     pub fn check_estimate(&mut self, node: Node) -> bool {
         let estimate = self[node].estimate;
         if estimate <= self.f_limit {
@@ -80,9 +81,8 @@ impl Cache {
     }
 
     pub fn check(&mut self, child: &usize, parent: Node, move_cost: f64) -> Option<Node> {
-        let child = (*child).try_into().unwrap();
-
         let new_cost = self[parent].cost + move_cost;
+        let child = (*child).try_into().unwrap();
 
         if new_cost < self[child].cost {
             self.update(child, new_cost, parent);
