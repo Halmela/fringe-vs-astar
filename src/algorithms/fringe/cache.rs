@@ -6,19 +6,19 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Copy)]
 pub struct CacheValue {
-    pub cost: f64,
-    pub heuristic: f64,
+    pub cost: f32,
+    pub heuristic: f32,
     pub parent: Node,
-    pub estimate: f64,
+    pub estimate: f32,
 }
 
 impl CacheValue {
     pub fn new() -> Self {
         CacheValue {
-            cost: f64::MAX,
-            heuristic: f64::MAX,
+            cost: f32::MAX,
+            heuristic: f32::MAX,
             parent: 0,
-            estimate: f64::MAX,
+            estimate: f32::MAX,
         }
     }
 }
@@ -26,8 +26,8 @@ impl CacheValue {
 pub struct Cache {
     cache: Vec<CacheValue>,
     heuristic: Heuristic,
-    f_limit: f64,
-    f_min: f64,
+    f_limit: f32,
+    f_min: f32,
 }
 
 impl Cache {
@@ -41,7 +41,7 @@ impl Cache {
             cache,
             heuristic,
             f_limit,
-            f_min: f64::MAX,
+            f_min: f32::MAX,
         }
     }
 
@@ -70,29 +70,29 @@ impl Cache {
         } */
     }
 
-    pub fn update(&mut self, node: Node, cost: f64, parent: Node) {
+    pub fn update(&mut self, node: Node, cost: f32, parent: Node) {
         self[node].cost = cost;
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
     }
 
-    pub fn get_heuristic(&mut self, node: Node) -> f64 {
-        if self[node].heuristic == f64::MAX {
+    pub fn get_heuristic(&mut self, node: Node) -> f32 {
+        if self[node].heuristic == f32::MAX {
             self[node].heuristic = self.heuristic.get(node);
         }
         self[node].heuristic
     }
 
-    pub fn get_cost(&self, node: Node) -> f64 {
+    pub fn get_cost(&self, node: Node) -> f32 {
         self[node].cost
     }
 
     pub fn refresh_limits(&mut self) {
         self.f_limit = self.f_min;
-        self.f_min = f64::MAX;
+        self.f_min = f32::MAX;
     }
 
-    pub fn check(&mut self, child: &usize, parent: Node, move_cost: f64) -> Option<Node> {
+    pub fn check(&mut self, child: &usize, parent: Node, move_cost: f32) -> Option<Node> {
         let new_cost = self[parent].cost + move_cost;
         let child = (*child).try_into().unwrap();
 

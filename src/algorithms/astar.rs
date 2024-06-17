@@ -5,7 +5,7 @@ use crate::structures::{AdjacencyListGraph, Frontier};
 /// A* pathfinder
 pub struct AStar<'a> {
     frontier: Frontier,
-    cache: Vec<(usize, f64, Option<f64>)>,
+    cache: Vec<(usize, f32, Option<f32>)>,
     start: usize,
     goal: usize,
     graph: &'a AdjacencyListGraph,
@@ -18,7 +18,7 @@ impl<'a> AStar<'a> {
         let frontier = Frontier::new(start, size);
 
         // (previous, current cost)
-        let mut cache: Vec<(usize, f64, Option<f64>)> = vec![(0, f64::MAX, None); size];
+        let mut cache: Vec<(usize, f32, Option<f32>)> = vec![(0, f32::MAX, None); size];
         cache[start] = (start, 0.0, None);
 
         AStar {
@@ -31,7 +31,7 @@ impl<'a> AStar<'a> {
     }
 
     /// Try to solve the problem
-    pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
+    pub fn solve(mut self) -> Option<(Vec<usize>, f32)> {
         let ixy = |i: usize| index_to_xy(i, self.graph.get_width());
         let gxy = ixy(self.goal);
         let h = |i: usize| heuristic(ixy(i), gxy);
@@ -44,7 +44,7 @@ impl<'a> AStar<'a> {
             let current_cost = self.cache[node].1;
 
             for (child, w1) in self.graph.neighbors(node) {
-                let to_goal: f64;
+                let to_goal: f32;
                 if let Some(tg) = self.cache[*child].2 {
                     to_goal = tg;
                 } else {

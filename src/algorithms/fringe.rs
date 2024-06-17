@@ -20,7 +20,7 @@ impl Heuristic {
         }
     }
 
-    pub fn get(&self, i: Node) -> f64 {
+    pub fn get(&self, i: Node) -> f32 {
         heuristic(index_to_xy(i as usize, self.width), self.goal)
     }
 }
@@ -49,7 +49,7 @@ impl<'a> FringeSearch<'a> {
         }
     }
 
-    pub fn solve(mut self) -> Option<(Vec<usize>, f64)> {
+    pub fn solve(mut self) -> Option<(Vec<usize>, f32)> {
         loop {
             if let Some(node) = self.fringe.pop_now() {
                 if let Some(goal) = self.process_node(node) {

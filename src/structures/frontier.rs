@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 /// BinaryHeap augmented with key update for a node
 pub struct Frontier {
     heap: BinaryHeap<WeightedCell>,
-    smallest_found: Vec<Option<f64>>,
+    smallest_found: Vec<Option<f32>>,
 }
 
 impl Frontier {
@@ -13,7 +13,7 @@ impl Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
-        let mut smallest_found: Vec<Option<f64>> = vec![None; size];
+        let mut smallest_found: Vec<Option<f32>> = vec![None; size];
 
         smallest_found[start] = Some(0.0);
         Frontier {
@@ -23,7 +23,7 @@ impl Frontier {
     }
 
     /// Push a value to the heap, if it was not already there or if new priority is higher than the old
-    pub fn push(&mut self, i: usize, weight: f64) -> bool {
+    pub fn push(&mut self, i: usize, weight: f32) -> bool {
         match self.smallest_found[i] {
             Some(w) if w <= weight => {
                 return false;

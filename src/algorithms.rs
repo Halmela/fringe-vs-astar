@@ -9,9 +9,9 @@ pub use crate::algorithms::fringe::FringeSearch;
 use crate::DIAGONAL_COST;
 
 /// Octile distance between two points
-pub fn heuristic(start: (usize, usize), goal: (usize, usize)) -> f64 {
-    let x_distance: f64 = ((start.0 as f64) - (goal.0 as f64)).abs();
-    let y_distance: f64 = ((start.1 as f64) - (goal.1 as f64)).abs();
+pub fn heuristic(start: (usize, usize), goal: (usize, usize)) -> f32 {
+    let x_distance: f32 = ((start.0 as f32) - (goal.0 as f32)).abs();
+    let y_distance: f32 = ((start.1 as f32) - (goal.1 as f32)).abs();
 
     if x_distance > y_distance {
         (x_distance - y_distance) + DIAGONAL_COST * y_distance

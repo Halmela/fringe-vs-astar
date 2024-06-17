@@ -141,7 +141,7 @@ impl Context {
     }
 
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
-    pub fn solve_full(&mut self) -> f64 {
+    pub fn solve_full(&mut self) -> f32 {
         let mut error = 0.0;
         let mut count = 0.0;
 
@@ -168,7 +168,7 @@ impl Context {
     }
 
     /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
-    pub fn solve(&self, problem: Problem) -> Option<f64> {
+    pub fn solve(&self, problem: Problem) -> Option<f32> {
         if self.print_level <= 1 {
             println!("{}", problem);
         }
@@ -212,7 +212,7 @@ impl Context {
         }
     }
 
-    fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<usize>, f64)>, Option<Duration>) {
+    fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<usize>, f32)>, Option<Duration>) {
         let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
         let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
@@ -226,7 +226,7 @@ impl Context {
         (solution, duration)
     }
 
-    fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<usize>, f64)>, Option<Duration>) {
+    fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<usize>, f32)>, Option<Duration>) {
         let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
         let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
@@ -251,7 +251,7 @@ impl Context {
     }
 
     /// Print solution, `full` specifies if map is printed
-    fn print_solution(&self, solution: Option<(Vec<usize>, f64)>, problem: Problem) -> Option<f64> {
+    fn print_solution(&self, solution: Option<(Vec<usize>, f32)>, problem: Problem) -> Option<f32> {
         let Problem {
             start_x,
             start_y,

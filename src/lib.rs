@@ -21,7 +21,7 @@ pub mod printable;
 // pub mod node;
 
 /// Octile distance of diagonal movement
-pub const DIAGONAL_COST: f64 = std::f64::consts::SQRT_2;
+pub const DIAGONAL_COST: f32 = std::f32::consts::SQRT_2;
 
 /// Adapter for converting grid coordinate to array index
 /// ```

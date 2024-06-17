@@ -12,7 +12,7 @@ pub struct Problem {
     pub start_y: usize,
     pub goal_x: usize,
     pub goal_y: usize,
-    pub length: Option<f64>,
+    pub length: Option<f32>,
     pub number: usize,
 }
 
@@ -23,7 +23,7 @@ impl Problem {
         start_y: usize,
         goal_x: usize,
         goal_y: usize,
-        length: Option<f64>,
+        length: Option<f32>,
         number: usize,
     ) -> Problem {
         Problem {

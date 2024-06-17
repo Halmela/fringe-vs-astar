@@ -6,12 +6,12 @@ use std::fmt;
 #[derive(Debug, Copy, Clone)]
 pub struct WeightedCell {
     pub i: usize,
-    pub weight: f64,
+    pub weight: f32,
 }
 
 impl WeightedCell {
     /// Create a new cell
-    pub fn new(i: usize, weight: f64) -> WeightedCell {
+    pub fn new(i: usize, weight: f32) -> WeightedCell {
         WeightedCell { i, weight }
     }
 }
