@@ -48,14 +48,26 @@ impl Cache {
     #[inline]
     pub fn check_estimate(&mut self, node: Node) -> bool {
         let estimate = self[node].estimate;
-        if estimate <= self.f_limit {
+
+        if estimate >= self.f_min {
+            false
+        } else if estimate <= self.f_limit {
+            true
+        } else {
+            self.f_min = estimate;
+            false
+        }
+        /* if estimate <= self.f_limit {
+            self.counter.1 += 1;
             true
         } else if estimate < self.f_min {
+            self.counter.2 += 1;
             self.f_min = estimate;
             return false;
         } else {
+            self.counter.3 += 1;
             return false;
-        }
+        } */
     }
 
     pub fn update(&mut self, node: Node, cost: f64, parent: Node) {
@@ -86,7 +98,11 @@ impl Cache {
 
         if new_cost < self[child].cost {
             self.update(child, new_cost, parent);
-            Some(child)
+            if new_cost <= self.f_limit {
+                Some(child)
+            } else {
+                None
+            }
         } else {
             None
         }
