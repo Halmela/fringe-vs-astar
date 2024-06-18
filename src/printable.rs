@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap, Node};
+use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap};
 
 #[derive(Clone, Copy)]
 pub enum Cell {

@@ -80,7 +80,7 @@ impl Cache {
     /// Decide what the algorithm should do for a given node.
     /// This is the most used function in the search, since every node popped from now passes through this
     #[inline(always)]
-    pub fn check_estimate(&mut self, node: Node) -> Action {
+    pub fn _check_estimate(&mut self, node: Node) -> Action {
         if self[node].status == Status::Closed {
             return Action::Nothing;
         }
@@ -96,7 +96,7 @@ impl Cache {
             self.f_min = estimate;
         }
 
-        if self.not_in_later(node) {
+        if self._not_in_later(node) {
             Action::ToLater(node)
         } else {
             Action::Nothing
@@ -167,7 +167,7 @@ impl Cache {
     }
 
     /// Check if a node is already in later and mark it to be there if it already wasn't
-    fn not_in_later(&mut self, node: Node) -> bool {
+    fn _not_in_later(&mut self, node: Node) -> bool {
         if self[node].later != self.iteration {
             self[node].status = Status::Later;
             self[node].later = self.iteration;

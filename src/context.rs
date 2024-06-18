@@ -251,7 +251,7 @@ impl Context {
         print.add_problem(problem);
 
         loop {
-            match fringe.next() {
+            match fringe.progress() {
                 fringe::State::Processing(node) => {
                     print = fringe.add_to_printable(print);
                     print.add_problem(problem);

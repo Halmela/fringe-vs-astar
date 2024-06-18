@@ -1,7 +1,6 @@
 use crate::algorithms::fringe::cache::*;
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
-use crate::printable::Cell;
 use crate::printable::Printable;
 use crate::structures::AdjacencyListGraph;
 use crate::structures::Fringe;
@@ -88,17 +87,17 @@ impl<'a> FringeSearch<'a> {
         }
     }
 
-    pub fn next(&mut self) -> State {
+    pub fn progress(&mut self) -> State {
         if let Some(node) = self.fringe.pop_now() {
             if let Some(goal) = self.process_node(node) {
                 let cost = self.cache.get_cost(goal);
                 let path = self.construct_path();
-                return State::Finished((path, cost));
+                State::Finished((path, cost))
             } else {
-                return State::Processing(node);
+                State::Processing(node)
             }
         } else if self.prepare_next_iteration() {
-            return self.next();
+            return self.progress();
         } else {
             return State::NotFound;
         }
