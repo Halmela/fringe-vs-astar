@@ -42,6 +42,8 @@ Kokeellinen ominaisuus, käytä varoen.
 ```
 Ennen jokaista karttaprinttiä on `-`. Etsi `-` (`less`issä painamalla `/-<Enter>`) ja selaa sen jokainen löytymä (`less`iss' painamalla `n`).
 
+[![asciicast](https://asciinema.org/a/7HbX2XcvLkE2vPXHA58rmiFfI.svg)](https://asciinema.org/a/7HbX2XcvLkE2vPXHA58rmiFfI)
+
 ## Testit
 ```bash
 $ cargo test 
