@@ -50,6 +50,7 @@ impl Fringe {
         self.now.extend(self.later.iter().copied());
 
         self.later.clear();
+
         true
     }
 }

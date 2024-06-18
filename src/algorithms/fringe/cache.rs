@@ -4,12 +4,13 @@ use super::Heuristic;
 
 use std::ops::{Index, IndexMut};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct CacheValue {
     pub cost: f32,
     pub heuristic: f32,
     pub parent: Node,
     pub estimate: f32,
+    pub later: u32,
 }
 
 impl CacheValue {
@@ -19,15 +20,23 @@ impl CacheValue {
             heuristic: f32::MAX,
             parent: 0,
             estimate: f32::MAX,
+            later: 0,
         }
     }
 }
 
+pub enum Action {
+    Process(Node),
+    ToLater(Node),
+    Nothing,
+}
+
 pub struct Cache {
-    cache: Vec<CacheValue>,
+    pub cache: Vec<CacheValue>,
     heuristic: Heuristic,
     f_limit: f32,
     f_min: f32,
+    pub iteration: u32,
 }
 
 impl Cache {
@@ -42,32 +51,27 @@ impl Cache {
             heuristic,
             f_limit,
             f_min: f32::MAX,
+            iteration: 1,
         }
     }
 
-    #[inline]
-    pub fn check_estimate(&mut self, node: Node) -> bool {
+    #[inline(always)]
+    pub fn check_estimate(&mut self, node: Node) -> Action {
         let estimate = self[node].estimate;
 
-        if estimate >= self.f_min {
-            false
-        } else if estimate <= self.f_limit {
-            true
-        } else {
-            self.f_min = estimate;
-            false
+        if estimate <= self.f_limit {
+            return Action::Process(node);
         }
-        /* if estimate <= self.f_limit {
-            self.counter.1 += 1;
-            true
-        } else if estimate < self.f_min {
-            self.counter.2 += 1;
+
+        if estimate < self.f_min {
             self.f_min = estimate;
-            return false;
+        }
+
+        if self.not_in_later(node) {
+            Action::ToLater(node)
         } else {
-            self.counter.3 += 1;
-            return false;
-        } */
+            Action::Nothing
+        }
     }
 
     pub fn update(&mut self, node: Node, cost: f32, parent: Node) {
@@ -90,6 +94,7 @@ impl Cache {
     pub fn refresh_limits(&mut self) {
         self.f_limit = self.f_min;
         self.f_min = f32::MAX;
+        self.iteration += 1;
     }
 
     pub fn check(&mut self, child: &usize, parent: Node, move_cost: f32) -> Option<Node> {
@@ -98,13 +103,22 @@ impl Cache {
 
         if new_cost < self[child].cost {
             self.update(child, new_cost, parent);
-            if new_cost <= self.f_limit {
-                Some(child)
-            } else {
+            // if new_cost <= self.f_min {
+            Some(child)
+            /* } else {
+                self[child].later = self.iteration;
                 None
-            }
+            } */
         } else {
             None
+        }
+    }
+    fn not_in_later(&mut self, node: Node) -> bool {
+        if self[node].later != self.iteration {
+            self[node].later = self.iteration;
+            true
+        } else {
+            false
         }
     }
 }

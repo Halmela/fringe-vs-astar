@@ -174,8 +174,8 @@ impl AdjacencyListGraph {
             width: map.get_width(),
         }
     }
-    pub fn neighbors(&self, i: usize) -> &Vec<(usize, f32)> {
-        &self.adjacency_list[i]
+    pub fn neighbors(&self, i: usize) -> std::slice::Iter<'_, (usize, f32)> {
+        self.adjacency_list[i].iter()
     }
 
     pub fn get_height(&self) -> usize {

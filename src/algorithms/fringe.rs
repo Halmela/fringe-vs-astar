@@ -1,4 +1,4 @@
-use crate::algorithms::fringe::cache::Cache;
+use crate::algorithms::fringe::cache::*;
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
 use crate::structures::AdjacencyListGraph;
@@ -65,14 +65,15 @@ impl<'a> FringeSearch<'a> {
     }
 
     fn process_node(&mut self, node: Node) -> Option<Node> {
-        if self.cache.check_estimate(node) {
-            if node == self.goal {
-                return Some(node);
+        match self.cache.check_estimate(node) {
+            Action::Process(goal) if goal == self.goal => return Some(goal),
+            Action::Process(node) => {
+                self.process_neighbors(node);
             }
-
-            self.process_neighbors(node);
-        } else {
-            self.fringe.push_later(node);
+            Action::ToLater(node) => {
+                self.fringe.push_later(node);
+            }
+            _ => {}
         }
         None
     }
@@ -85,7 +86,6 @@ impl<'a> FringeSearch<'a> {
     fn process_neighbors(&mut self, node: Node) {
         self.graph
             .neighbors(node as usize)
-            .iter()
             .filter_map(|(child, c)| self.cache.check(child, node, *c))
             .for_each(|child| self.fringe.push_now(child));
     }

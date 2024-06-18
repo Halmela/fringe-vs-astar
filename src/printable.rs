@@ -21,11 +21,11 @@ impl Printable {
     pub fn new(map: &ArrayMap) -> Self {
         let mut grid = vec![vec!(Cell::Wall; map.get_width()); map.get_height()];
 
-        for y in 0..map.get_height() {
-            for x in 0..map.get_width() {
-                if let Some(true) = map.get_cell(x, y) {
-                    grid[y][x] = Cell::Open;
-                }
+        for (y, x) in
+            (0..map.get_height()).flat_map(|y| std::iter::repeat(y).zip(0..map.get_width()))
+        {
+            if let Some(true) = map.get_cell(x, y) {
+                grid[y][x] = Cell::Open;
             }
         }
 
