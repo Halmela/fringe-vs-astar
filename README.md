@@ -33,6 +33,14 @@ Options:
   -V, --version
 ```
 
+Fringe-haun tilan pystyy tulostamaan `-sssss` flägillä. Tämä printtaa haun JOKAISEN tilan, 
+joten pistä tämän ulostulo johonkin tiedostoon tai putkita se johonkin katselijaan.
+Kokeellinen ominaisuus, käytä varoen.
+
+```bash
+        $ cargo run -- fringe -sssss -n 99 maps/lak104d.map | less
+```
+
 ## Testit
 ```bash
 $ cargo test 
