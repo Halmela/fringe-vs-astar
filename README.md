@@ -40,6 +40,7 @@ Kokeellinen ominaisuus, käytä varoen.
 ```bash
         $ cargo run -- fringe -sssss -n 99 maps/lak104d.map | less
 ```
+Ennen jokaista karttaprinttiä on `-`. Etsi `-` (`less`issä painamalla `/-<Enter>`) ja selaa sen jokainen löytymä (`less`iss' painamalla `n`).
 
 ## Testit
 ```bash
