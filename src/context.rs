@@ -180,6 +180,9 @@ impl Context {
                 self.print_solution(solution, problem)
             }
             Mode::Fringe => {
+                if self.print_level == 5 {
+                    self.printed_fringe(&problem);
+                }
                 let (solution, duration) = self.timed_fringe(&problem);
                 self.print_timing(duration);
                 self.print_solution(solution, problem)
@@ -238,6 +241,33 @@ impl Context {
         let duration = done.checked_duration_since(now);
 
         (solution, duration)
+    }
+
+    fn printed_fringe(&self, problem: &Problem) {
+        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
+        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
+        let mut fringe = FringeSearch::new(start, goal, &self.graph);
+        let mut print = Printable::new(&self.map);
+        print.add_problem(problem);
+
+        loop {
+            match fringe.next() {
+                fringe::State::Processing(node) => {
+                    print = fringe.add_to_printable(print);
+                    print.add_problem(problem);
+                    print.add_current(index_to_xy(node.try_into().unwrap(), self.map.get_width()));
+                    println!("-\n{print}");
+                }
+                fringe::State::Finished(_) => {
+                    println!("path found");
+                    break;
+                }
+                fringe::State::NotFound => {
+                    println!("not found");
+                    break;
+                }
+            }
+        }
     }
 
     fn print_timing(&self, duration: Option<Duration>) {

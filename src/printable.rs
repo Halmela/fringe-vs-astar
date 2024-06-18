@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use crate::structures::map::ArrayMap;
+use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap, Node};
 
 #[derive(Clone, Copy)]
 pub enum Cell {
@@ -9,10 +9,15 @@ pub enum Cell {
     Start,
     Goal,
     Path,
+    Current,
+    InOpen,
+    InClosed,
+    InLater,
 }
 
+#[derive(Clone)]
 pub struct Printable {
-    grid: Vec<Vec<Cell>>,
+    pub grid: Vec<Vec<Cell>>,
     width: usize,
     height: usize,
 }
@@ -42,10 +47,30 @@ impl Printable {
     pub fn add_start(&mut self, x: usize, y: usize) {
         self.grid[y][x] = Cell::Start;
     }
+
+    pub fn add_problem(&mut self, problem: &Problem) {
+        self.grid[problem.start_y][problem.start_x] = Cell::Start;
+        self.grid[problem.goal_y][problem.goal_x] = Cell::Goal;
+    }
     pub fn add_path(&mut self, path: HashSet<(usize, usize)>) {
         for (x, y) in path {
             self.grid[y][x] = Cell::Path;
         }
+    }
+    pub fn add_current(&mut self, (x, y): (usize, usize)) {
+        self.grid[y][x] = Cell::Current;
+    }
+    pub fn add_inopen(&mut self, node: usize) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::InOpen;
+    }
+    pub fn add_inclosed(&mut self, node: usize) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::InClosed;
+    }
+    pub fn add_inlater(&mut self, node: usize) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::InLater;
     }
 }
 
@@ -60,6 +85,10 @@ impl fmt::Display for Printable {
                     Cell::Start => '🏁',
                     Cell::Goal => '🏆',
                     Cell::Path => '🟩',
+                    Cell::Current => '🟪',
+                    Cell::InOpen => '❓',
+                    Cell::InClosed => '✅',
+                    Cell::InLater => '⭕',
                 });
             }
             result.push('\n');

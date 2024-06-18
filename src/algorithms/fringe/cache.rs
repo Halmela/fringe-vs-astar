@@ -14,6 +14,7 @@ pub struct CacheValue {
     pub parent: Node,
     pub estimate: f32,
     pub later: u32,
+    pub status: Status,
 }
 
 impl CacheValue {
@@ -25,8 +26,17 @@ impl CacheValue {
             parent: 0,
             estimate: f32::MAX,
             later: 0,
+            status: Status::NotVisited,
         }
     }
+}
+
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
+pub enum Status {
+    Now,
+    Later,
+    Closed,
+    NotVisited,
 }
 
 /// What should the main algorithm do with a node?
@@ -39,6 +49,8 @@ pub enum Action {
 /// Datastructure for caching information while performing Fringe search.
 /// I separated this to its own structure to clarify the main algorithm.
 /// This does the book keeping for every node and updates the values as needed.
+///
+/// Cache can be indexed with a `Node`: `cache[node]` or `self[node]`.
 pub struct Cache {
     pub cache: Vec<CacheValue>,
     heuristic: Heuristic,
@@ -55,6 +67,7 @@ impl Cache {
         cache[start].cost = 0.0;
         cache[start].heuristic = f_limit;
         cache[start].estimate = f_limit;
+        cache[start].status = Status::Now;
         Cache {
             cache,
             heuristic,
@@ -68,9 +81,14 @@ impl Cache {
     /// This is the most used function in the search, since every node popped from now passes through this
     #[inline(always)]
     pub fn check_estimate(&mut self, node: Node) -> Action {
+        if self[node].status == Status::Closed {
+            return Action::Nothing;
+        }
+
         let estimate = self[node].estimate;
 
         if estimate <= self.f_limit {
+            self[node].status = Status::Closed;
             return Action::Process(node);
         }
 
@@ -85,11 +103,32 @@ impl Cache {
         }
     }
 
+    pub fn decide_action(&mut self, node: Node) -> Action {
+        if self[node].status == Status::Closed {
+            // println!("early");
+            return Action::Nothing;
+        }
+        match self[node].estimate {
+            e if e <= self.f_limit => {
+                // println!("close");
+                self[node].status = Status::Closed;
+                Action::Process(node)
+            }
+            e if e < self.f_min => {
+                // println!("f_min");
+                self.f_min = e;
+                self.later_or_nothing(node)
+            }
+            _ => self.later_or_nothing(node),
+        }
+    }
+
     /// Update value of a node
     pub fn update(&mut self, node: Node, cost: f32, parent: Node) {
         self[node].cost = cost;
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
+        self[node].status = Status::Now;
     }
 
     /// Get heuristic value from cache or calculate it
@@ -130,10 +169,23 @@ impl Cache {
     /// Check if a node is already in later and mark it to be there if it already wasn't
     fn not_in_later(&mut self, node: Node) -> bool {
         if self[node].later != self.iteration {
+            self[node].status = Status::Later;
             self[node].later = self.iteration;
             true
         } else {
             false
+        }
+    }
+
+    fn later_or_nothing(&mut self, node: Node) -> Action {
+        if self[node].later != self.iteration {
+            self[node].status = Status::Later;
+            self[node].later = self.iteration;
+            // println!("later");
+            Action::ToLater(node)
+        } else {
+            // println!("nothing");
+            Action::Nothing
         }
     }
 }

@@ -1,11 +1,19 @@
 use crate::algorithms::fringe::cache::*;
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
+use crate::printable::Cell;
+use crate::printable::Printable;
 use crate::structures::AdjacencyListGraph;
 use crate::structures::Fringe;
 use crate::Node;
 
 mod cache;
+
+pub enum State {
+    Finished((Vec<usize>, f32)),
+    Processing(Node),
+    NotFound,
+}
 
 /// Ugly wrapper for the common heuristic function. Handles 1D -> 2D coordinate conversion...
 /// This should not be a thing anymore...
@@ -80,11 +88,27 @@ impl<'a> FringeSearch<'a> {
         }
     }
 
+    pub fn next(&mut self) -> State {
+        if let Some(node) = self.fringe.pop_now() {
+            if let Some(goal) = self.process_node(node) {
+                let cost = self.cache.get_cost(goal);
+                let path = self.construct_path();
+                return State::Finished((path, cost));
+            } else {
+                return State::Processing(node);
+            }
+        } else if self.prepare_next_iteration() {
+            return self.next();
+        } else {
+            return State::NotFound;
+        }
+    }
+
     /// Check from cache if a `Node` has a low enough cost to have it (as a goal) returned,
     /// or have its neighbors processed.
     /// If it has too high of a cost, it is then put to later if it is not already there.
     fn process_node(&mut self, node: Node) -> Option<Node> {
-        match self.cache.check_estimate(node) {
+        match self.cache.decide_action(node) {
             Action::Process(goal) if goal == self.goal => return Some(goal),
             Action::Process(node) => {
                 self.process_neighbors(node);
@@ -112,7 +136,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     /// Reconstruct path that was found
-    fn construct_path(self) -> Vec<usize> {
+    fn construct_path(&self) -> Vec<usize> {
         let mut path = vec![(self.goal)];
         loop {
             let i = path[path.len() - 1];
@@ -125,6 +149,20 @@ impl<'a> FringeSearch<'a> {
         }
         path.reverse();
 
-        path.drain(..).map(|n| n as usize).collect()
+        path.iter().map(|n| *n as usize).collect()
+    }
+
+    pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+        self.cache
+            .cache
+            .iter()
+            .enumerate()
+            .for_each(|(i, n): (usize, &CacheValue)| match n.status {
+                Status::Now => print.add_inopen(i),
+                Status::Later => print.add_inlater(i),
+                Status::Closed => print.add_inclosed(i),
+                Status::NotVisited => {}
+            });
+        print
     }
 }
