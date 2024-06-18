@@ -25,12 +25,12 @@ Apufunktioilla saa muutettua solmun kartan koordinaatiksi ja takaisin.
 > Olen tällä hetkellä siirtymässä käyttämään 32-bittistä kokonaislukua, mutta vain Fringe tukee sitä tällä hetkellä.
 
 Hakemisto ja moduulirakenne on hieman sekava tällä hetkellä, mutta pääpiirteittäin näin:
-- (/src) sisältää itse sovelluksen toimintaan tarvittavat kilkkeet
-- (/src/algorithms) sisältää fringen ja A*:n sekä muuta algoritmien toimintaan liittyvää
-- (/src/structures) sisältää käytetyt tietorakenteet (pl. fringen käyttämä cache, joka löytyy (/src/algorithms/fringe) 
-- (/tests) sisältää testit
-- (/benches) sisältää benchmarkkaukset
-- (/maps) sisältää kartat
+- [src](src) sisältää itse sovelluksen toimintaan tarvittavat kilkkeet
+- [src/algorithms](src/algorithms) sisältää fringen ja A*:n sekä muuta algoritmien toimintaan liittyvää
+- [src/structures](src/structures) sisältää käytetyt tietorakenteet (pl. fringen käyttämä cache, joka löytyy [src/algorithms/fringe](src/algorithms/fringe) 
+- [tests](tests) sisältää testit
+- [benches](benches) sisältää benchmarkkaukset
+- [maps](maps) sisältää kartat
 
 ## Saavutetut aika- ja tilavaativuudet (esim. O-analyysit pseudokoodista)
 Fringe-haulle ei löydy O-analyysia kirjallisuudesta, mutta uskoisin sen olevan sama kuin A*:n, 
@@ -38,7 +38,7 @@ eli  $O(b^d)$, missä $b$ on solmun haarautuvuus (ruudukossa se on $max 7$)
 ja $d$ on ratkaisun syvyys (lyhimmän reitin pituus).
 
 ### A*
-A*:n [päätietorakenne](/src/structures/frontier.rs) on Rustin standardikirjastoista löytyvä binäärikeko, 
+A*:n [päätietorakenne](src/structures/frontier.rs) on Rustin standardikirjastoista löytyvä binäärikeko, 
 jonka työntö on $O(~1)$ ja pienimmän otto on $O(log n)$.
 Sitä avustamassa on lista pienimmistä löydetyistä arvoista kullekin solmulle.
 
