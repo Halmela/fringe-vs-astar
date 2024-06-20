@@ -3,8 +3,8 @@ pub mod astar;
 pub use crate::algorithms::astar::AStar;
 
 /// Fringe path finder
-pub mod fringe;
-pub use crate::algorithms::fringe::FringeSearch;
+pub mod fringesearch;
+pub use crate::algorithms::fringesearch::FringeSearch;
 
 use crate::DIAGONAL_COST;
 

@@ -1,3 +1,4 @@
+use crate::algorithms::fringesearch::*;
 use crate::algorithms::*;
 use crate::cli::*;
 use crate::printable::Printable;
@@ -253,13 +254,13 @@ impl Context {
         loop {
             println!("-");
             match fringe.progress() {
-                fringe::State::Processing(node) => {
+                State::Processing(node) => {
                     print = fringe.add_to_printable(print);
                     print.add_problem(problem);
                     print.add_current(index_to_xy(node.try_into().unwrap(), self.map.get_width()));
                     println!("{print}");
                 }
-                fringe::State::Finished((mut path, cost)) => {
+                State::Finished((mut path, cost)) => {
                     print = fringe.add_to_printable(print);
                     let path: HashSet<(usize, usize)> = path
                         .drain(..)
@@ -270,7 +271,7 @@ impl Context {
                     println!("Cost: {cost}\n{print}");
                     break;
                 }
-                fringe::State::NotFound => {
+                State::NotFound => {
                     println!("not found");
                     break;
                 }

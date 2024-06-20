@@ -1,7 +1,7 @@
-use crate::structures::fringe::Bucket;
-use crate::Node;
-
+use super::Action;
+use super::Bucket;
 use super::Heuristic;
+use crate::Node;
 
 use std::fmt;
 use std::ops::{Index, IndexMut};
@@ -16,7 +16,6 @@ pub struct CacheValue {
     pub parent: Node,
     pub estimate: f32,
     pub later: u32,
-    // pub status: Status,
     pub closed: bool,
 }
 
@@ -29,25 +28,9 @@ impl CacheValue {
             parent: 0,
             estimate: f32::MAX,
             later: 0,
-            // status: Status::NotVisited,
             closed: false,
         }
     }
-}
-
-#[derive(Eq, PartialEq, Debug, Clone, Copy)]
-pub enum Status {
-    Now,
-    Later(Bucket),
-    Closed,
-    NotVisited,
-}
-
-/// What should the main algorithm do with a node?
-pub enum Action {
-    Process(Node),
-    ToLater((Node, Bucket)),
-    Nothing,
 }
 
 /// Datastructure for caching information while performing Fringe search.
@@ -71,7 +54,6 @@ impl Cache {
         cache[start].cost = 0.0;
         cache[start].heuristic = f_limit;
         cache[start].estimate = f_limit;
-        // cache[start].status = Status::Now;
         Cache {
             cache,
             heuristic,
@@ -87,7 +69,6 @@ impl Cache {
         }
         match self[node].estimate {
             e if e <= self.f_limit => {
-                // self[node].status = Status::Closed;
                 self[node].closed = true;
                 Action::Process(node)
             }
@@ -104,7 +85,6 @@ impl Cache {
         self[node].cost = cost;
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
-        // self[node].status = Status::Now;
         self[node].closed = false;
     }
 
@@ -152,7 +132,6 @@ impl Cache {
 
     fn later_or_nothing(&mut self, node: Node) -> Action {
         let bucket: Bucket = self[node].estimate.into();
-        // self[node].status = Status::Later(bucket);
         self[node].closed = false;
         if self[node].later != self.iteration {
             self[node].later = self.iteration;

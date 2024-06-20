@@ -1,14 +1,17 @@
-use crate::algorithms::fringe::cache::*;
+use crate::algorithms::fringesearch::action::Action;
+use crate::algorithms::fringesearch::bucket::Bucket;
+use crate::algorithms::fringesearch::cache::*;
+use crate::algorithms::fringesearch::fringe::*;
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
 use crate::printable::Printable;
 use crate::structures::AdjacencyListGraph;
-use crate::structures::Fringe;
 use crate::Node;
 
+mod action;
+mod bucket;
 mod cache;
-
-use std::collections::HashMap;
+mod fringe;
 
 pub enum State {
     Finished((Vec<usize>, f32)),
@@ -89,45 +92,17 @@ impl<'a> FringeSearch<'a> {
         }
     }
 
+    /// One step of the solving process. This is used for the experimental printing of solution.
     pub fn progress(&mut self) -> State {
         if let Some(node) = self.fringe.pop_now() {
-            // println!("{:?}\t{:?}", self.fringe.current, self.cache.f_limit);
             if let Some(goal) = self.process_node(node) {
                 let cost = self.cache.get_cost(goal);
                 let path = self.construct_path();
                 State::Finished((path, cost))
             } else {
-                // println!("- {:?}", self.fringe.buckets);
-                // println!("{}", self.cache);
                 State::Processing(node)
             }
         } else if self.prepare_next_iteration() {
-            /* let v: Vec<f32> = self
-            .fringe
-            .now
-            .iter()
-            .map(|i| self.cache[*i].estimate)
-            .collect(); */
-
-            /* let mut h: HashMap<u32, i32> = HashMap::new();
-            for g in self
-                .fringe
-                .now
-                .iter()
-                .map(|i| self.cache[*i].estimate.floor() as u32)
-            {
-                h.entry(g).and_modify(|counter| *counter += 1).or_insert(1);
-            }
-            let mut v: Vec<_> = h.iter().collect();
-            v.sort(); */
-
-            /* println!(
-                "v: {}\t{:<12} {:?}",
-                self.fringe.now.len(),
-                ((*v[0].1 as f32) / (v.iter().map(|(_, c)| **c).sum::<i32>() as f32)),
-                v
-            ); */
-            // println!("l: {}", v.len());
             return self.progress();
         } else {
             return State::NotFound;
