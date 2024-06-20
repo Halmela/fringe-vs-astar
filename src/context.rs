@@ -251,15 +251,23 @@ impl Context {
         print.add_problem(problem);
 
         loop {
+            println!("-");
             match fringe.progress() {
                 fringe::State::Processing(node) => {
                     print = fringe.add_to_printable(print);
                     print.add_problem(problem);
                     print.add_current(index_to_xy(node.try_into().unwrap(), self.map.get_width()));
-                    println!("-\n{print}");
+                    println!("{print}");
                 }
-                fringe::State::Finished(_) => {
-                    println!("path found");
+                fringe::State::Finished((mut path, cost)) => {
+                    print = fringe.add_to_printable(print);
+                    let path: HashSet<(usize, usize)> = path
+                        .drain(..)
+                        .map(|i| index_to_xy(i, self.graph.get_width()))
+                        .collect();
+                    print.add_path(path);
+                    print.add_problem(problem);
+                    println!("Cost: {cost}\n{print}");
                     break;
                 }
                 fringe::State::NotFound => {

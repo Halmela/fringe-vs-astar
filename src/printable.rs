@@ -13,6 +13,7 @@ pub enum Cell {
     InOpen,
     InClosed,
     InLater,
+    OldLater,
 }
 
 #[derive(Clone)]
@@ -72,6 +73,10 @@ impl Printable {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::InLater;
     }
+    pub fn add_oldlater(&mut self, node: usize) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::OldLater;
+    }
 }
 
 impl fmt::Display for Printable {
@@ -84,15 +89,17 @@ impl fmt::Display for Printable {
                     Cell::Wall => '⬜',
                     Cell::Start => '🏁',
                     Cell::Goal => '🏆',
-                    Cell::Path => '🟩',
+                    Cell::Path => '🟦',
                     Cell::Current => '🟪',
                     Cell::InOpen => '❓',
+                    Cell::InLater => '❔',
+                    Cell::OldLater => '⭕',
                     Cell::InClosed => '✅',
-                    Cell::InLater => '⭕',
                 });
             }
             result.push('\n');
         }
+        result.pop();
         writeln!(f, "{}", result)
     }
 }

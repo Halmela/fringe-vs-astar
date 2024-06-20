@@ -8,6 +8,8 @@ use crate::Node;
 
 mod cache;
 
+use std::collections::HashMap;
+
 pub enum State {
     Finished((Vec<usize>, f32)),
     Processing(Node),
@@ -53,9 +55,9 @@ impl<'a> FringeSearch<'a> {
     /// Initialize the search with a start, goal and a graph to be acted upon.
     pub fn new(start: usize, goal: usize, graph: &'a AdjacencyListGraph) -> Self {
         let size = graph.get_width() * graph.get_height();
-        let fringe = Fringe::new(start.try_into().unwrap(), size);
         let heuristic = Heuristic::new(goal, graph.get_width());
         let cache = Cache::new(start, size, heuristic);
+        let fringe = Fringe::new(start.try_into().unwrap(), size, cache.f_limit);
 
         FringeSearch {
             fringe,
@@ -89,14 +91,43 @@ impl<'a> FringeSearch<'a> {
 
     pub fn progress(&mut self) -> State {
         if let Some(node) = self.fringe.pop_now() {
+            // println!("{:?}\t{:?}", self.fringe.current, self.cache.f_limit);
             if let Some(goal) = self.process_node(node) {
                 let cost = self.cache.get_cost(goal);
                 let path = self.construct_path();
                 State::Finished((path, cost))
             } else {
+                // println!("- {:?}", self.fringe.buckets);
+                // println!("{}", self.cache);
                 State::Processing(node)
             }
         } else if self.prepare_next_iteration() {
+            /* let v: Vec<f32> = self
+            .fringe
+            .now
+            .iter()
+            .map(|i| self.cache[*i].estimate)
+            .collect(); */
+
+            /* let mut h: HashMap<u32, i32> = HashMap::new();
+            for g in self
+                .fringe
+                .now
+                .iter()
+                .map(|i| self.cache[*i].estimate.floor() as u32)
+            {
+                h.entry(g).and_modify(|counter| *counter += 1).or_insert(1);
+            }
+            let mut v: Vec<_> = h.iter().collect();
+            v.sort(); */
+
+            /* println!(
+                "v: {}\t{:<12} {:?}",
+                self.fringe.now.len(),
+                ((*v[0].1 as f32) / (v.iter().map(|(_, c)| **c).sum::<i32>() as f32)),
+                v
+            ); */
+            // println!("l: {}", v.len());
             return self.progress();
         } else {
             return State::NotFound;
@@ -122,8 +153,12 @@ impl<'a> FringeSearch<'a> {
 
     /// Prepare the datastructures for next iteration
     fn prepare_next_iteration(&mut self) -> bool {
-        self.cache.refresh_limits();
-        self.fringe.later_to_now()
+        if let Some(lower_limit) = self.fringe.later_to_now() {
+            self.cache.refresh_limits(lower_limit);
+            true
+        } else {
+            false
+        }
     }
 
     /// Put node's viable neighbors to the now-queue. Viable as in lower cost then ever seen before.
@@ -152,16 +187,50 @@ impl<'a> FringeSearch<'a> {
     }
 
     pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+        self.fringe
+            .buckets
+            .iter()
+            .flatten()
+            .for_each(|n| print.add_oldlater((*n).try_into().unwrap()));
+        self.fringe[self.fringe.current]
+            .iter()
+            .for_each(|n| print.add_inlater((*n).try_into().unwrap()));
+        self.fringe
+            .now
+            .iter()
+            .for_each(|n| print.add_inopen((*n).try_into().unwrap()));
+        self.cache
+            .cache
+            .iter()
+            .enumerate()
+            .filter(|(_, n): &(usize, &CacheValue)| n.closed)
+            .for_each(|(i, _)| print.add_inclosed(i));
+        /*
         self.cache
             .cache
             .iter()
             .enumerate()
             .for_each(|(i, n): (usize, &CacheValue)| match n.status {
                 Status::Now => print.add_inopen(i),
-                Status::Later => print.add_inlater(i),
+                Status::Later(b) => {
+                    if self.fringe.current == b.into() {
+                        print.add_inlater(i)
+                    } else {
+                        print.add_oldlater(i)
+                    }
+                }
+                /* Status::Later => {
+                    if self.cache.iteration == n.later {
+                        print.add_inlater(i)
+                    } else {
+                        print.add_oldlater(i)
+                    }
+                } */
                 Status::Closed => print.add_inclosed(i),
                 Status::NotVisited => {}
             });
+            */
+
         print
     }
 }

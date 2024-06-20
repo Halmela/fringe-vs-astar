@@ -1,7 +1,9 @@
+use crate::structures::fringe::Bucket;
 use crate::Node;
 
 use super::Heuristic;
 
+use std::fmt;
 use std::ops::{Index, IndexMut};
 
 /// Stored values for a single node in graph as wanted by Fringe Search.
@@ -14,7 +16,8 @@ pub struct CacheValue {
     pub parent: Node,
     pub estimate: f32,
     pub later: u32,
-    pub status: Status,
+    // pub status: Status,
+    pub closed: bool,
 }
 
 impl CacheValue {
@@ -26,7 +29,8 @@ impl CacheValue {
             parent: 0,
             estimate: f32::MAX,
             later: 0,
-            status: Status::NotVisited,
+            // status: Status::NotVisited,
+            closed: false,
         }
     }
 }
@@ -34,7 +38,7 @@ impl CacheValue {
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Status {
     Now,
-    Later,
+    Later(Bucket),
     Closed,
     NotVisited,
 }
@@ -42,7 +46,7 @@ pub enum Status {
 /// What should the main algorithm do with a node?
 pub enum Action {
     Process(Node),
-    ToLater(Node),
+    ToLater((Node, Bucket)),
     Nothing,
 }
 
@@ -54,7 +58,7 @@ pub enum Action {
 pub struct Cache {
     pub cache: Vec<CacheValue>,
     heuristic: Heuristic,
-    f_limit: f32,
+    pub f_limit: f32,
     f_min: f32,
     pub iteration: u32,
 }
@@ -67,7 +71,7 @@ impl Cache {
         cache[start].cost = 0.0;
         cache[start].heuristic = f_limit;
         cache[start].estimate = f_limit;
-        cache[start].status = Status::Now;
+        // cache[start].status = Status::Now;
         Cache {
             cache,
             heuristic,
@@ -77,45 +81,17 @@ impl Cache {
         }
     }
 
-    /// Decide what the algorithm should do for a given node.
-    /// This is the most used function in the search, since every node popped from now passes through this
-    #[inline(always)]
-    pub fn _check_estimate(&mut self, node: Node) -> Action {
-        if self[node].status == Status::Closed {
-            return Action::Nothing;
-        }
-
-        let estimate = self[node].estimate;
-
-        if estimate <= self.f_limit {
-            self[node].status = Status::Closed;
-            return Action::Process(node);
-        }
-
-        if estimate < self.f_min {
-            self.f_min = estimate;
-        }
-
-        if self._not_in_later(node) {
-            Action::ToLater(node)
-        } else {
-            Action::Nothing
-        }
-    }
-
     pub fn decide_action(&mut self, node: Node) -> Action {
-        if self[node].status == Status::Closed {
-            // println!("early");
+        if self[node].closed {
             return Action::Nothing;
         }
         match self[node].estimate {
             e if e <= self.f_limit => {
-                // println!("close");
-                self[node].status = Status::Closed;
+                // self[node].status = Status::Closed;
+                self[node].closed = true;
                 Action::Process(node)
             }
             e if e < self.f_min => {
-                // println!("f_min");
                 self.f_min = e;
                 self.later_or_nothing(node)
             }
@@ -128,7 +104,8 @@ impl Cache {
         self[node].cost = cost;
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
-        self[node].status = Status::Now;
+        // self[node].status = Status::Now;
+        self[node].closed = false;
     }
 
     /// Get heuristic value from cache or calculate it
@@ -145,8 +122,15 @@ impl Cache {
     }
 
     /// Update f_limit value and +1 to the iteration count used for counting if a node is in later
-    pub fn refresh_limits(&mut self) {
-        self.f_limit = self.f_min;
+    pub fn refresh_limits(&mut self, lower_limit: u8) {
+        // Really uglly haccck for the times when floor(f_limit+lower_limit) was found on earlier iterations
+        if lower_limit > 0 {
+            self.f_limit = (self.f_limit + lower_limit as f32).floor();
+        }
+        // Really funky behavior without this check
+        else if self.f_min != f32::MAX {
+            self.f_limit = self.f_min;
+        }
         self.f_min = f32::MAX;
         self.iteration += 1;
     }
@@ -166,25 +150,14 @@ impl Cache {
         }
     }
 
-    /// Check if a node is already in later and mark it to be there if it already wasn't
-    fn _not_in_later(&mut self, node: Node) -> bool {
-        if self[node].later != self.iteration {
-            self[node].status = Status::Later;
-            self[node].later = self.iteration;
-            true
-        } else {
-            false
-        }
-    }
-
     fn later_or_nothing(&mut self, node: Node) -> Action {
+        let bucket: Bucket = self[node].estimate.into();
+        // self[node].status = Status::Later(bucket);
+        self[node].closed = false;
         if self[node].later != self.iteration {
-            self[node].status = Status::Later;
             self[node].later = self.iteration;
-            // println!("later");
-            Action::ToLater(node)
+            Action::ToLater((node, bucket))
         } else {
-            // println!("nothing");
             Action::Nothing
         }
     }
@@ -201,5 +174,15 @@ impl Index<Node> for Cache {
 impl IndexMut<Node> for Cache {
     fn index_mut(&mut self, index: Node) -> &mut Self::Output {
         &mut self.cache[index as usize]
+    }
+}
+
+impl fmt::Display for Cache {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "i: {}\tlimit: {}\tmin: {}",
+            self.iteration, self.f_limit, self.f_min
+        )
     }
 }

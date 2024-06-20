@@ -19,7 +19,8 @@ impl Heuristic {
             goal_y: goal_y as f32,
             cache,
             width,
-            p: 1.0 / ((width * height) as f32),
+            // p: 1.0 + (1.0 / ((width * height) as f32)),
+            p: 1.0,
         }
     }
 
