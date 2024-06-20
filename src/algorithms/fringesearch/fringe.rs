@@ -8,7 +8,6 @@ use std::ops::{Index, IndexMut};
 #[derive(Debug)]
 pub struct Fringe {
     pub now: Vec<Node>,
-    pub later: Vec<Node>,
     pub buckets: [Vec<Node>; 8],
     pub current: Bucket,
 }
@@ -18,11 +17,9 @@ impl Fringe {
     pub fn new(start: Node, size: usize, f_limit: f32) -> Self {
         let mut now = Vec::with_capacity(size);
         now.push(start);
-        let later = Vec::with_capacity(size);
 
         Fringe {
             now,
-            later,
             buckets: Default::default(),
             current: Bucket::from(f_limit),
         }
