@@ -1,7 +1,7 @@
-use crate::algorithms::fringesearch::action::Action;
-use crate::algorithms::fringesearch::bucket::Bucket;
-use crate::algorithms::fringesearch::cache::*;
-use crate::algorithms::fringesearch::fringe::*;
+use self::action::Action;
+use self::bucket::Bucket;
+use self::cache::*;
+use self::fringe::*;
 use crate::algorithms::heuristic;
 use crate::index_to_xy;
 use crate::printable::Printable;

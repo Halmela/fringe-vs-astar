@@ -1,6 +1,12 @@
 use crate::algorithms::heuristic;
-use crate::structures::{AdjacencyListGraph, Frontier};
+use crate::structures::AdjacencyListGraph;
 use crate::{index_to_xy, Node};
+
+use self::frontier::Frontier;
+use crate::algorithms::astar::weighted_cell::WeightedCell;
+
+mod frontier;
+mod weighted_cell;
 
 /// A* pathfinder
 pub struct AStar<'a> {
