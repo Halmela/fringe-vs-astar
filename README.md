@@ -61,11 +61,12 @@ $ cargo bench
 - [Toteutusdokumentti](/docs/toteutus.md)
 
 ### Viikkoraportit
-- [Viikko 1](/docs/Viikkoraportti%201.md)
-- [Viikko 2](/docs/Viikkoraportti%202.md)
-- [Viikko 3](/docs/Viikkoraportti%203.md)
-- [Viikko 4](/docs/Viikkoraportti%204.md)
-- [Viikko 5](/docs/Viikkoraportti%205.md)
+- [Viikko 1](/docs/viikkoraportit/Viikkoraportti%201.md)
+- [Viikko 2](/docs/viikkoraportit/Viikkoraportti%202.md)
+- [Viikko 3](/docs/viikkoraportit/Viikkoraportti%203.md)
+- [Viikko 4](/docs/viikkoraportit/Viikkoraportti%204.md)
+- [Viikko 5](/docs/viikkoraportit/Viikkoraportti%205.md)
+- [Viikko 6](/docs/viikkoraportit/Viikkoraportti%206.md)
 
 ### Sisäinen dokumentaatio
 ```bash
