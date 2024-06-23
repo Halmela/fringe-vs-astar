@@ -167,16 +167,13 @@ impl<'a> FringeSearch<'a> {
             .buckets
             .iter()
             .flatten()
-            .for_each(|n| print.add_oldlater((*n).try_into().unwrap()));
+            .for_each(|n| print.add_oldlater(*n));
 
         self.fringe[self.fringe.current]
             .iter()
-            .for_each(|n| print.add_inlater((*n).try_into().unwrap()));
+            .for_each(|n| print.add_inlater(*n));
 
-        self.fringe
-            .now
-            .iter()
-            .for_each(|n| print.add_inopen((*n).try_into().unwrap()));
+        self.fringe.now.iter().for_each(|n| print.add_inopen(*n));
 
         self.cache
             .cache

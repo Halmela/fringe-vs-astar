@@ -258,7 +258,7 @@ impl Context {
                 State::Processing(node) => {
                     print = fringe.add_to_printable(print);
                     print.add_problem(problem);
-                    print.add_current(index_to_xy(node.try_into().unwrap(), self.map.get_width()));
+                    print.add_current(index_to_xy(node, self.map.get_width()));
                     println!("{print}");
                 }
                 State::Finished((mut path, cost)) => {
