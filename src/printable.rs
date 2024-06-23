@@ -91,8 +91,8 @@ impl fmt::Display for Printable {
                     Cell::Goal => '🏆',
                     Cell::Path => '🟦',
                     Cell::Current => '🟪',
-                    Cell::InOpen => '❓',
-                    Cell::InLater => '❔',
+                    Cell::InOpen => '❔',
+                    Cell::InLater => '❓',
                     Cell::OldLater => '⭕',
                     Cell::InClosed => '✅',
                 });
