@@ -14,7 +14,7 @@ mod cache;
 mod fringe;
 
 pub enum State {
-    Finished((Vec<usize>, f32)),
+    Finished((Vec<Node>, f32)),
     Processing(Node),
     NotFound,
 }
@@ -28,7 +28,7 @@ struct Heuristic {
 
 impl Heuristic {
     /// Initialize self with goal and width
-    pub fn new(goal: usize, width: usize) -> Self {
+    pub fn new(goal: Node, width: usize) -> Self {
         Heuristic {
             goal: index_to_xy(goal, width),
             width,
@@ -37,7 +37,7 @@ impl Heuristic {
 
     /// Calculate heuristic value
     pub fn get(&self, i: Node) -> f32 {
-        heuristic(index_to_xy(i as usize, self.width), self.goal)
+        heuristic(index_to_xy(i, self.width), self.goal)
     }
 }
 
@@ -56,17 +56,17 @@ pub struct FringeSearch<'a> {
 
 impl<'a> FringeSearch<'a> {
     /// Initialize the search with a start, goal and a graph to be acted upon.
-    pub fn new(start: usize, goal: usize, graph: &'a AdjacencyListGraph) -> Self {
+    pub fn new(start: Node, goal: Node, graph: &'a AdjacencyListGraph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let heuristic = Heuristic::new(goal, graph.get_width());
         let cache = Cache::new(start, size, heuristic);
-        let fringe = Fringe::new(start.try_into().unwrap(), size, cache.f_limit);
+        let fringe = Fringe::new(start, size, cache.f_limit);
 
         FringeSearch {
             fringe,
             cache,
-            start: start.try_into().unwrap(),
-            goal: goal.try_into().unwrap(),
+            start,
+            goal,
             graph,
         }
     }
@@ -77,7 +77,7 @@ impl<'a> FringeSearch<'a> {
     /// Main idea here is to get a new node from now-queue, process it and maybe return it.
     /// If now is empty, then try to prepare datastructures for next iteration (f_min -> f_limit and later -> now).
     /// If now is empty and later is empty, then no further search can be conducted and thus a path can be found and `None` is returned.
-    pub fn solve(mut self) -> Option<(Vec<usize>, f32)> {
+    pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         loop {
             if let Some(node) = self.fringe.pop_now() {
                 if let Some(goal) = self.process_node(node) {
@@ -139,17 +139,17 @@ impl<'a> FringeSearch<'a> {
     /// Put node's viable neighbors to the now-queue. Viable as in lower cost then ever seen before.
     fn process_neighbors(&mut self, node: Node) {
         self.graph
-            .neighbors(node as usize)
-            .filter_map(|(child, c)| self.cache.check(child, node, *c))
+            .neighbors(node)
+            .filter_map(|(child, c)| self.cache.check(*child, node, *c))
             .for_each(|child| self.fringe.push_now(child));
     }
 
     /// Reconstruct path that was found
-    fn construct_path(&self) -> Vec<usize> {
+    fn construct_path(&self) -> Vec<Node> {
         let mut path = vec![(self.goal)];
         loop {
-            let i = path[path.len() - 1];
-            let new = self.cache[i].parent;
+            let node = path[path.len() - 1];
+            let new = self.cache[node].parent;
             path.push(new);
 
             if new == self.start {
@@ -158,53 +158,32 @@ impl<'a> FringeSearch<'a> {
         }
         path.reverse();
 
-        path.iter().map(|n| *n as usize).collect()
+        path
     }
 
+    /// Add current state to Printable
     pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         self.fringe
             .buckets
             .iter()
             .flatten()
             .for_each(|n| print.add_oldlater((*n).try_into().unwrap()));
+
         self.fringe[self.fringe.current]
             .iter()
             .for_each(|n| print.add_inlater((*n).try_into().unwrap()));
+
         self.fringe
             .now
             .iter()
             .for_each(|n| print.add_inopen((*n).try_into().unwrap()));
+
         self.cache
             .cache
             .iter()
             .enumerate()
             .filter(|(_, n): &(usize, &CacheValue)| n.closed)
-            .for_each(|(i, _)| print.add_inclosed(i));
-        /*
-        self.cache
-            .cache
-            .iter()
-            .enumerate()
-            .for_each(|(i, n): (usize, &CacheValue)| match n.status {
-                Status::Now => print.add_inopen(i),
-                Status::Later(b) => {
-                    if self.fringe.current == b.into() {
-                        print.add_inlater(i)
-                    } else {
-                        print.add_oldlater(i)
-                    }
-                }
-                /* Status::Later => {
-                    if self.cache.iteration == n.later {
-                        print.add_inlater(i)
-                    } else {
-                        print.add_oldlater(i)
-                    }
-                } */
-                Status::Closed => print.add_inclosed(i),
-                Status::NotVisited => {}
-            });
-            */
+            .for_each(|(i, _)| print.add_inclosed(i.try_into().unwrap()));
 
         print
     }

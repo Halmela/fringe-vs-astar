@@ -17,6 +17,7 @@ pub struct CacheValue {
     pub estimate: f32,
     pub later: u32,
     pub closed: bool,
+    pub bucket: Option<Bucket>,
 }
 
 impl CacheValue {
@@ -29,6 +30,7 @@ impl CacheValue {
             estimate: f32::MAX,
             later: 0,
             closed: false,
+            bucket: None,
         }
     }
 }
@@ -48,12 +50,12 @@ pub struct Cache {
 
 impl Cache {
     /// Initialize cache
-    pub fn new(start: usize, size: usize, heuristic: Heuristic) -> Self {
+    pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
         let mut cache: Vec<CacheValue> = vec![CacheValue::new(); size];
-        let f_limit = heuristic.get(start.try_into().unwrap());
-        cache[start].cost = 0.0;
-        cache[start].heuristic = f_limit;
-        cache[start].estimate = f_limit;
+        let f_limit = heuristic.get(start);
+        cache[start as usize].cost = 0.0;
+        cache[start as usize].heuristic = f_limit;
+        cache[start as usize].estimate = f_limit;
         Cache {
             cache,
             heuristic,
@@ -86,6 +88,7 @@ impl Cache {
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
         self[node].closed = false;
+        self[node].bucket = Some(Bucket::from(self[node].estimate));
     }
 
     /// Get heuristic value from cache or calculate it
@@ -118,9 +121,8 @@ impl Cache {
     /// Decide if a child-node should be added to the now-queue.
     /// It's value is updated, if it is added.
     /// This returns `Option<Node` because it allows neat filter_map on the call site.
-    pub fn check(&mut self, child: &usize, parent: Node, move_cost: f32) -> Option<Node> {
+    pub fn check(&mut self, child: Node, parent: Node, move_cost: f32) -> Option<Node> {
         let new_cost = self[parent].cost + move_cost;
-        let child = (*child).try_into().unwrap();
 
         if new_cost < self[child].cost {
             self.update(child, new_cost, parent);
@@ -131,11 +133,10 @@ impl Cache {
     }
 
     fn later_or_nothing(&mut self, node: Node) -> Action {
-        let bucket: Bucket = self[node].estimate.into();
         self[node].closed = false;
         if self[node].later != self.iteration {
             self[node].later = self.iteration;
-            Action::ToLater((node, bucket))
+            Action::ToLater((node, self[node].bucket.unwrap()))
         } else {
             Action::Nothing
         }

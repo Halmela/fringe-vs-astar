@@ -54,70 +54,6 @@ pub fn map_builder(file_path: PathBuf) -> anyhow::Result<ArrayMap> {
     Ok(ArrayMap::new(height, width, map))
 }
 
-/* /// Representation of the underlying terrain map
-pub trait Map: fmt::Display {
-    /// Constructor
-    /// Provide a cell of the grid if it exists
-    fn get_cell(&self, x: usize, y: usize) -> Option<bool>;
-    /// Get width
-    fn get_height(&self) -> usize;
-    /// Get height
-    fn get_width(&self) -> usize;
-}
-
-/// Terrainmap stored as `grid[y][x]`
-pub struct GridMap {
-    height: usize,
-    width: usize,
-    grid: Vec<Vec<bool>>,
-}
-
-impl GridMap {
-    /// Constructor
-    pub fn new(height: usize, width: usize, map: Vec<Vec<bool>>) -> GridMap {
-        GridMap {
-            height,
-            width,
-            grid: map,
-        }
-    }
-}
-
-impl Map for GridMap {
-    fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
-        if x < self.width && y < self.height {
-            Some(self.grid[y][x])
-        } else {
-            None
-        }
-    }
-
-    fn get_height(&self) -> usize {
-        self.height
-    }
-
-    fn get_width(&self) -> usize {
-        self.width
-    }
-}
-
-impl fmt::Display for GridMap {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut result = String::new();
-        for y in 0..self.get_height() {
-            for x in 0..self.get_width() {
-                if let Some(true) = self.get_cell(x, y) {
-                    result.push('⬛');
-                } else {
-                    result.push('⬜');
-                }
-            }
-            result.push('\n');
-        }
-        writeln!(f, "{}", result)
-    }
-} */
-
 /// Terrainmap stored as a continuous `array[x + y*width]`
 pub struct ArrayMap {
     height: usize,
@@ -137,7 +73,7 @@ impl ArrayMap {
 
     pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
-            Some(self.array[xy_to_index(x, y, self.width)])
+            Some(self.array[xy_to_index(x, y, self.width) as usize])
         } else {
             None
         }

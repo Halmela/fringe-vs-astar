@@ -29,8 +29,8 @@ pub const DIAGONAL_COST: f32 = std::f32::consts::SQRT_2;
 /// let (x, y, width) = (1,1,3);
 /// assert_eq!(xy_to_index(x, y, width), 4);
 /// ```
-pub fn xy_to_index(x: usize, y: usize, width: usize) -> usize {
-    x + width * y
+pub fn xy_to_index(x: usize, y: usize, width: usize) -> Node {
+    (x + width * y).try_into().unwrap()
 }
 
 /// Adapter for converting array index to grid coordinate
@@ -39,8 +39,8 @@ pub fn xy_to_index(x: usize, y: usize, width: usize) -> usize {
 /// let (index,width) = (4,3);
 /// assert_eq!(index_to_xy(index, width), (1,1));
 /// ```
-pub fn index_to_xy(i: usize, width: usize) -> (usize, usize) {
-    (i % width, i / width)
+pub fn index_to_xy(i: Node, width: usize) -> (usize, usize) {
+    ((i as usize) % width, (i as usize) / width)
 }
 
 pub type Node = u32;

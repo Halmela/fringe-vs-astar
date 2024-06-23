@@ -11,23 +11,22 @@ pub struct Heuristic {
 }
 
 impl Heuristic {
-    pub fn new(goal_x: usize, goal_y: usize, width: usize, height: usize) -> Self {
+    pub fn new(goal: Node, width: usize, height: usize) -> Self {
         let cache = std::iter::repeat(None).take(width * height).collect();
+        let (goal_x, goal_y) = index_to_xy(goal, width);
 
         Heuristic {
             goal_x: goal_x as f32,
             goal_y: goal_y as f32,
             cache,
             width,
-            // p: 1.0 + (1.0 / ((width * height) as f32)),
-            p: 1.0,
         }
     }
 
     /// Diagonal octile distance from current node to goal.
     /// This is a grid specific method.
-    pub fn distance_to_goal(&self, i: usize) -> f32 {
-        if let Some(distance) = self.cache[i] {
+    pub fn distance_to_goal(&self, i: Node) -> f32 {
+        if let Some(distance) = self.cache[i as usize] {
             return distance;
         }
 
@@ -37,9 +36,9 @@ impl Heuristic {
         let y_distance: f32 = ((y as f32) - self.goal_y).abs();
 
         if x_distance > y_distance {
-            ((x_distance - y_distance) + DIAGONAL_COST * y_distance) * self.p
+            ((x_distance - y_distance) + DIAGONAL_COST * y_distance)
         } else {
-            ((y_distance - x_distance) + DIAGONAL_COST * x_distance) * self.p
+            ((y_distance - x_distance) + DIAGONAL_COST * x_distance)
         }
     }
 }

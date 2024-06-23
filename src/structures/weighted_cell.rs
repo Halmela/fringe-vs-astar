@@ -1,3 +1,4 @@
+use crate::Node;
 use std::cmp::Ordering;
 use std::fmt;
 
@@ -5,26 +6,26 @@ use std::fmt;
 /// This allows us to use binary heap
 #[derive(Debug, Copy, Clone)]
 pub struct WeightedCell {
-    pub i: usize,
+    pub node: Node,
     pub weight: f32,
 }
 
 impl WeightedCell {
     /// Create a new cell
-    pub fn new(i: usize, weight: f32) -> WeightedCell {
-        WeightedCell { i, weight }
+    pub fn new(node: Node, weight: f32) -> WeightedCell {
+        WeightedCell { node, weight }
     }
 }
 
 impl fmt::Display for WeightedCell {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "W({}, {})", self.i, self.weight)
+        write!(f, "W({}, {})", self.node, self.weight)
     }
 }
 
 impl PartialEq for WeightedCell {
     fn eq(&self, other: &Self) -> bool {
-        self.i == other.i && self.weight == other.weight
+        self.node == other.node && self.weight == other.weight
     }
 }
 

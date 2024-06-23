@@ -1,4 +1,5 @@
 use crate::structures::map::*;
+use crate::Node;
 use crate::{xy_to_index, DIAGONAL_COST};
 
 /// Enum for specifying different types of graphs
@@ -13,146 +14,15 @@ pub fn graph_builder(map: &ArrayMap) -> AdjacencyListGraph {
     AdjacencyListGraph::new(map)
 }
 
-/// Representation of terrain map as a graph
-/* pub trait Graph {
-    /// Get neighbors of a node.
-    /// Making it a `usize` is something I have to consider again.
-    /// Returns a vector of nodes with their weight
-    fn neighbors(&self, i: usize) -> &Vec<(usize, f32)>;
-    /// Map height
-    fn get_height(&self) -> usize;
-    /// Map width
-    fn get_width(&self) -> usize;
-} */
-
-/* /// Graph represented as a HashMap with key `(x,y)`
-#[derive(Debug)]
-pub struct AdjacencyMapGraph {
-    adjacency_map: HashMap<(usize, usize), Vec<((usize, usize), f32)>>,
-    height: usize,
-    width: usize,
-}
-
-impl AdjacencyMapGraph {
-    /// Constructor
-    pub fn new(map: &Box<dyn Map>) -> AdjacencyMapGraph {
-        let mut adjacency_map = HashMap::new();
-
-        for y in 0..map.get_height() {
-            for x in 0..map.get_width() {
-                if let Some(true) = map.get_cell(x, y) {
-                    adjacency_map.insert((x, y), generate_neighbors(x, y, map));
-                }
-            }
-        }
-
-        AdjacencyMapGraph {
-            adjacency_map,
-            height: map.get_height(),
-            width: map.get_width(),
-        }
-    }
-}
-
-impl Graph for AdjacencyMapGraph {
-    fn neighbors(&self, i: usize) -> &Vec<(usize, f32)> {
-        self.adjacency_map
-            .get(&index_to_xy(i, self.width))
-            .cloned()
-            .unwrap_or_default()
-            .drain(..)
-            .map(|((x, y), f)| (xy_to_index(x, y, self.width), f))
-            .collect()
-    }
-
-    fn get_height(&self) -> usize {
-        self.height
-    }
-    fn get_width(&self) -> usize {
-        self.width
-    }
-}
-
-impl fmt::Display for AdjacencyMapGraph {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut result = String::new();
-        for (cell, neighbors) in &self.adjacency_map {
-            result.push_str(&format!("{:?} {:?}\n", cell, neighbors));
-        }
-        write!(f, "{}", result)
-    }
-}
-
-/// Graph represented as a 3D matrix that can be keyed with x,y
-#[derive(Debug)]
-pub struct AdjacencyGridGraph {
-    adjacency_grid: Vec<Vec<Vec<((usize, usize), f32)>>>,
-    height: usize,
-    width: usize,
-}
-
-impl AdjacencyGridGraph {
-    /// Constructor
-    fn new(map: &Box<dyn Map>) -> AdjacencyGridGraph {
-        let mut adjacency_grid: Vec<Vec<Vec<((usize, usize), f32)>>> =
-            Vec::with_capacity(map.get_height());
-
-        for y in 0..map.get_height() {
-            adjacency_grid.push(vec![]);
-            for x in 0..map.get_width() {
-                adjacency_grid[y].push(vec![]);
-                if let Some(true) = map.get_cell(x, y) {
-                    adjacency_grid[y][x] = generate_neighbors(x, y, map);
-                }
-            }
-        }
-
-        AdjacencyGridGraph {
-            adjacency_grid,
-            height: map.get_height(),
-            width: map.get_width(),
-        }
-    }
-}
-
-impl Graph for AdjacencyGridGraph {
-    fn neighbors(&self, i: usize) -> Vec<(usize, f32)> {
-        let (x, y) = index_to_xy(i, self.width);
-        self.adjacency_grid[y][x]
-            .to_owned()
-            .drain(..)
-            .map(|((x1, y1), f)| (xy_to_index(x1, y1, self.width), f))
-            .collect()
-    }
-    fn get_height(&self) -> usize {
-        self.height
-    }
-    fn get_width(&self) -> usize {
-        self.width
-    }
-}
-
-impl fmt::Display for AdjacencyGridGraph {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut result = String::new();
-        for y in 0..self.height {
-            for x in 0..self.width {
-                result.push_str(&format!("{:?} {:?}\n", (x, y), self.adjacency_grid[y][x]));
-            }
-        }
-        write!(f, "{}", result)
-    }
-} */
-
 pub struct AdjacencyListGraph {
-    adjacency_list: Vec<Vec<(usize, f32)>>,
+    adjacency_list: Vec<Vec<(Node, f32)>>,
     height: usize,
     width: usize,
 }
 impl AdjacencyListGraph {
     /// Constructor
     pub fn new(map: &ArrayMap) -> AdjacencyListGraph {
-        let mut adjacency_list: Vec<Vec<(usize, f32)>> =
+        let mut adjacency_list: Vec<Vec<(Node, f32)>> =
             Vec::with_capacity(map.get_height() * map.get_width());
 
         for y in 0..map.get_height() {
@@ -160,7 +30,7 @@ impl AdjacencyListGraph {
                 adjacency_list.push(vec![]);
                 let i = xy_to_index(x, y, map.get_width());
                 if let Some(true) = map.get_cell(x, y) {
-                    adjacency_list[i] = generate_neighbors(x, y, map)
+                    adjacency_list[i as usize] = generate_neighbors(x, y, map)
                         .drain(..)
                         .map(|((x1, y1), f)| (xy_to_index(x1, y1, map.get_width()), f))
                         .collect();
@@ -174,8 +44,8 @@ impl AdjacencyListGraph {
             width: map.get_width(),
         }
     }
-    pub fn neighbors(&self, i: usize) -> std::slice::Iter<'_, (usize, f32)> {
-        self.adjacency_list[i].iter()
+    pub fn neighbors(&self, i: Node) -> std::slice::Iter<'_, (Node, f32)> {
+        self.adjacency_list[i as usize].iter()
     }
 
     pub fn get_height(&self) -> usize {

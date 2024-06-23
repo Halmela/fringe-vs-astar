@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap};
+use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap, Node};
 
 #[derive(Clone, Copy)]
 pub enum Cell {
@@ -61,19 +61,19 @@ impl Printable {
     pub fn add_current(&mut self, (x, y): (usize, usize)) {
         self.grid[y][x] = Cell::Current;
     }
-    pub fn add_inopen(&mut self, node: usize) {
+    pub fn add_inopen(&mut self, node: Node) {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::InOpen;
     }
-    pub fn add_inclosed(&mut self, node: usize) {
+    pub fn add_inclosed(&mut self, node: Node) {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::InClosed;
     }
-    pub fn add_inlater(&mut self, node: usize) {
+    pub fn add_inlater(&mut self, node: Node) {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::InLater;
     }
-    pub fn add_oldlater(&mut self, node: usize) {
+    pub fn add_oldlater(&mut self, node: Node) {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::OldLater;
     }

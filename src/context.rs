@@ -6,6 +6,7 @@ use crate::problem::{Problem, Problems};
 use crate::structures::map::map_builder;
 use crate::structures::AdjacencyListGraph;
 use crate::structures::{graph::graph_builder, map::ArrayMap};
+use crate::Node;
 use crate::{index_to_xy, xy_to_index};
 
 use std::collections::HashSet;
@@ -216,7 +217,7 @@ impl Context {
         }
     }
 
-    fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<usize>, f32)>, Option<Duration>) {
+    fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<Node>, f32)>, Option<Duration>) {
         let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
         let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
@@ -230,7 +231,7 @@ impl Context {
         (solution, duration)
     }
 
-    fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<usize>, f32)>, Option<Duration>) {
+    fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<Node>, f32)>, Option<Duration>) {
         let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
         let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
@@ -290,7 +291,7 @@ impl Context {
     }
 
     /// Print solution, `full` specifies if map is printed
-    fn print_solution(&self, solution: Option<(Vec<usize>, f32)>, problem: Problem) -> Option<f32> {
+    fn print_solution(&self, solution: Option<(Vec<Node>, f32)>, problem: Problem) -> Option<f32> {
         let Problem {
             start_x,
             start_y,
@@ -378,7 +379,7 @@ fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
 
 pub struct BareContext {
     graph: AdjacencyListGraph,
-    bare_problems: Vec<(usize, usize)>,
+    bare_problems: Vec<(Node, Node)>,
 }
 
 impl BareContext {
