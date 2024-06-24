@@ -10,7 +10,7 @@ use crate::structures::AdjacencyListGraph;
 use crate::Node;
 
 mod action;
-mod bucket;
+pub mod bucket;
 mod cache;
 mod fringe;
 

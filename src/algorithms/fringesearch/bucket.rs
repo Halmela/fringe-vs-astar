@@ -1,6 +1,18 @@
 /// Enum for indexing to a correct bucket.
 /// Main idea is that a float is converted to an integer and then taken a modulo 8 is taken from that.
 /// This is an enum to clarify the finite values it can hold.
+///
+///```
+/// # use fringe_vs_astar::algorithms::fringesearch::bucket::Bucket;
+/// let mut bucket = Bucket::from(14.4 as f32);
+/// assert_eq!(Bucket::Six, bucket);
+///
+/// bucket = bucket.add(); // Bucket::Seven
+/// bucket = bucket.add(); // Bucket::Zero
+/// assert_eq!(0 as usize, bucket.into());
+///
+///```
+
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum Bucket {
     Zero,
