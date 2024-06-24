@@ -44,7 +44,7 @@ impl Frontier {
             .collect();
 
         (
-            v.get(v.len() - 1).copied(),
+            v.last().copied(),
             v.get(v.len() - 2).copied(),
             v.get(v.len() - 3).copied(),
         )

@@ -8,8 +8,7 @@ use std::path::PathBuf;
 /// '.' and 'G' are traversable, others are not.
 fn simplify_map(map: Vec<String>) -> Vec<bool> {
     map.iter()
-        .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')))
-        .flatten()
+        .flat_map(|s| s.chars().map(|c| matches!(c, '.' | 'G')))
         .collect()
 }
 

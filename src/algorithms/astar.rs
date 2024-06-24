@@ -70,9 +70,9 @@ impl<'a> AStar<'a> {
                     self.frontier.push(node, weight);
                 }
             }
-            return State::Processing(node);
+            State::Processing(node)
         } else {
-            return State::NotFound;
+            State::NotFound
         }
     }
 
