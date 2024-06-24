@@ -29,4 +29,24 @@ impl Frontier {
             None
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Node> {
+        self.heap.iter().map(|w| &w.node)
+    }
+
+    pub fn top3(&self) -> (Option<Node>, Option<Node>, Option<Node>) {
+        let v: Vec<Node> = self
+            .heap
+            .to_owned()
+            .into_sorted_vec()
+            .iter()
+            .map(|w| w.node)
+            .collect();
+
+        (
+            v.get(v.len() - 1).copied(),
+            v.get(v.len() - 2).copied(),
+            v.get(v.len() - 3).copied(),
+        )
+    }
 }

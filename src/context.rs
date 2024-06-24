@@ -1,4 +1,3 @@
-use crate::algorithms::fringesearch::*;
 use crate::algorithms::*;
 use crate::cli::*;
 use crate::printable::Printable;
@@ -177,6 +176,9 @@ impl Context {
 
         match self.mode {
             Mode::AStar => {
+                if self.print_level == 5 {
+                    self.printed_a_star(&problem);
+                }
                 let (solution, duration) = self.timed_astar(&problem);
                 self.print_timing(duration);
                 self.print_solution(solution, problem)
@@ -243,6 +245,41 @@ impl Context {
         let duration = done.checked_duration_since(now);
 
         (solution, duration)
+    }
+
+    fn printed_a_star(&self, problem: &Problem) {
+        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
+        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
+        let mut a_star = AStar::new(start, goal, &self.graph);
+        let mut print = Printable::new(&self.map);
+        print.add_problem(problem);
+
+        loop {
+            println!("-");
+            match a_star.progress() {
+                State::Processing(node) => {
+                    print = a_star.add_to_printable(print);
+                    print.add_problem(problem);
+                    print.add_current(index_to_xy(node, self.map.get_width()));
+                    println!("{print}");
+                }
+                State::Finished((mut path, cost)) => {
+                    print = a_star.add_to_printable(print);
+                    let path: HashSet<(usize, usize)> = path
+                        .drain(..)
+                        .map(|i| index_to_xy(i, self.graph.get_width()))
+                        .collect();
+                    print.add_path(path);
+                    print.add_problem(problem);
+                    println!("Cost: {cost}\n{print}");
+                    break;
+                }
+                State::NotFound => {
+                    println!("not found");
+                    break;
+                }
+            }
+        }
     }
 
     fn printed_fringe(&self, problem: &Problem) {

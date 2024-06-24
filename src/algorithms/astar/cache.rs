@@ -5,7 +5,7 @@ use std::ops::{Index, IndexMut};
 #[derive(Clone, Copy)]
 pub struct CacheValue {
     pub parent: Node,
-    cost: f32,
+    pub cost: f32,
     heuristic: f32,
     estimate: f32,
 }
@@ -60,6 +60,10 @@ impl Cache {
         } else {
             None
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CacheValue> {
+        self.cache.iter()
     }
 }
 

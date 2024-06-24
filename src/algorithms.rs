@@ -10,6 +10,12 @@ pub use crate::algorithms::fringesearch::FringeSearch;
 
 use crate::{index_to_xy, Node, DIAGONAL_COST};
 
+pub enum State {
+    Finished((Vec<Node>, f32)),
+    Processing(Node),
+    NotFound,
+}
+
 /// Octile distance calculator for a set goal node.
 /// ```
 /// // ... | 012

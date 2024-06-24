@@ -3,6 +3,7 @@ use self::bucket::Bucket;
 use self::cache::*;
 use self::fringe::*;
 use super::Heuristic;
+use super::State;
 
 use crate::printable::Printable;
 use crate::structures::AdjacencyListGraph;
@@ -12,12 +13,6 @@ mod action;
 mod bucket;
 mod cache;
 mod fringe;
-
-pub enum State {
-    Finished((Vec<Node>, f32)),
-    Processing(Node),
-    NotFound,
-}
 
 /// Fringe search implementation.
 /// Fringe holds now- and later-queues and Cache holds information on nodes.

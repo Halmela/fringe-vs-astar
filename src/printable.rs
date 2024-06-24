@@ -14,6 +14,10 @@ pub enum Cell {
     InClosed,
     InLater,
     OldLater,
+    First,
+    Second,
+    Third,
+    InFrontier,
 }
 
 #[derive(Clone)]
@@ -77,6 +81,22 @@ impl Printable {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::OldLater;
     }
+    pub fn add_first(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::First;
+    }
+    pub fn add_second(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::Second;
+    }
+    pub fn add_third(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::Third;
+    }
+    pub fn add_infrontier(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
+        self.grid[y][x] = Cell::InFrontier;
+    }
 }
 
 impl fmt::Display for Printable {
@@ -95,6 +115,10 @@ impl fmt::Display for Printable {
                     Cell::InLater => '❓',
                     Cell::OldLater => '⭕',
                     Cell::InClosed => '✅',
+                    Cell::First => '❗',
+                    Cell::Second => '❔',
+                    Cell::Third => '❓',
+                    Cell::InFrontier => '⭕',
                 });
             }
             result.push('\n');
