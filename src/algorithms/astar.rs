@@ -95,25 +95,6 @@ impl<'a> AStar<'a> {
 
     /// Add current state to Printable
     pub fn add_to_printable(&self, mut print: Printable) -> Printable {
-        /* self.fringe
-            .buckets
-            .iter()
-            .flatten()
-            .for_each(|n| print.add_oldlater(*n));
-
-        self.fringe[self.fringe.current]
-            .iter()
-            .for_each(|n| print.add_inlater(*n));
-
-        self.fringe.now.iter().for_each(|n| print.add_inopen(*n));
-
-        self.cache
-            .cache
-            .iter()
-            .enumerate()
-            .filter(|(_, n): &(usize, &CacheValue)| n.closed)
-            .for_each(|(i, _)| print.add_inclosed(i.try_into().unwrap())); */
-
         self.cache
             .iter()
             .enumerate()

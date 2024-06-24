@@ -2,6 +2,7 @@ use super::Heuristic;
 use crate::Node;
 use std::ops::{Index, IndexMut};
 
+/// A* cache value. Holds parent, cost, heuristic (calculated once) and estimate
 #[derive(Clone, Copy)]
 pub struct CacheValue {
     pub parent: Node,
@@ -11,6 +12,7 @@ pub struct CacheValue {
 }
 
 impl CacheValue {
+    /// Initialize self
     pub fn new() -> Self {
         CacheValue {
             parent: 0,
@@ -21,6 +23,7 @@ impl CacheValue {
     }
 }
 
+/// A* cache, can be indexed as `cache[node]`.
 pub struct Cache {
     cache: Vec<CacheValue>,
     heuristic: Heuristic,
@@ -48,6 +51,7 @@ impl Cache {
         self[node].cost
     }
 
+    /// Check if a node should be processed. Updates values as needed
     pub fn check(&mut self, node: Node, parent: Node, new_cost: f32) -> Option<(Node, f32)> {
         let to_goal = self.get_heuristic(node);
         let estimate = new_cost + to_goal;
@@ -62,6 +66,7 @@ impl Cache {
         }
     }
 
+    /// Ergonomy iterator for own cache
     pub fn iter(&self) -> impl Iterator<Item = &CacheValue> {
         self.cache.iter()
     }
