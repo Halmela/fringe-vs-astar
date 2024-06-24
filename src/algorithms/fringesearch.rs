@@ -2,8 +2,8 @@ use self::action::Action;
 use self::bucket::Bucket;
 use self::cache::*;
 use self::fringe::*;
-use crate::algorithms::heuristic;
-use crate::index_to_xy;
+use super::Heuristic;
+
 use crate::printable::Printable;
 use crate::structures::AdjacencyListGraph;
 use crate::Node;
@@ -17,28 +17,6 @@ pub enum State {
     Finished((Vec<Node>, f32)),
     Processing(Node),
     NotFound,
-}
-
-/// Ugly wrapper for the common heuristic function. Handles 1D -> 2D coordinate conversion...
-/// This should not be a thing anymore...
-struct Heuristic {
-    goal: (usize, usize),
-    width: usize,
-}
-
-impl Heuristic {
-    /// Initialize self with goal and width
-    pub fn new(goal: Node, width: usize) -> Self {
-        Heuristic {
-            goal: index_to_xy(goal, width),
-            width,
-        }
-    }
-
-    /// Calculate heuristic value
-    pub fn get(&self, i: Node) -> f32 {
-        heuristic(index_to_xy(i, self.width), self.goal)
-    }
 }
 
 /// Fringe search implementation.

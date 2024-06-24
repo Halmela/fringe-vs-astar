@@ -23,7 +23,8 @@ pub mod printable;
 /// Octile distance of diagonal movement
 pub const DIAGONAL_COST: f32 = std::f32::consts::SQRT_2;
 
-/// Adapter for converting grid coordinate to array index
+/// Adapter for converting grid coordinate to array index.
+/// Formula is `x + width * y`
 /// ```
 /// # use fringe_vs_astar::xy_to_index;
 /// let (x, y, width) = (1,1,3);
@@ -43,4 +44,5 @@ pub fn index_to_xy(i: Node, width: usize) -> (usize, usize) {
     ((i as usize) % width, (i as usize) / width)
 }
 
+/// Type alias for Node. This is calculated with [`xy_to_index`].
 pub type Node = u32;

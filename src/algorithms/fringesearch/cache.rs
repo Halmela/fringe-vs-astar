@@ -52,7 +52,7 @@ impl Cache {
     /// Initialize cache
     pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
         let mut cache: Vec<CacheValue> = vec![CacheValue::new(); size];
-        let f_limit = heuristic.get(start);
+        let f_limit = heuristic.calc(start);
         cache[start as usize].cost = 0.0;
         cache[start as usize].heuristic = f_limit;
         cache[start as usize].estimate = f_limit;
@@ -94,7 +94,7 @@ impl Cache {
     /// Get heuristic value from cache or calculate it
     pub fn get_heuristic(&mut self, node: Node) -> f32 {
         if self[node].heuristic == f32::MAX {
-            self[node].heuristic = self.heuristic.get(node);
+            self[node].heuristic = self.heuristic.calc(node);
         }
         self[node].heuristic
     }
