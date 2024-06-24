@@ -6,7 +6,7 @@ use super::Heuristic;
 use super::State;
 
 use crate::printable::Printable;
-use crate::structures::AdjacencyListGraph;
+use crate::structures::Graph;
 use crate::Node;
 
 mod action;
@@ -24,12 +24,12 @@ pub struct FringeSearch<'a> {
     cache: Cache,
     start: Node,
     goal: Node,
-    graph: &'a AdjacencyListGraph,
+    graph: &'a Graph,
 }
 
 impl<'a> FringeSearch<'a> {
     /// Initialize the search with a start, goal and a graph to be acted upon.
-    pub fn new(start: Node, goal: Node, graph: &'a AdjacencyListGraph) -> Self {
+    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let heuristic = Heuristic::new(goal, graph.get_width());
         let cache = Cache::new(start, size, heuristic);

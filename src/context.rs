@@ -2,9 +2,8 @@ use crate::algorithms::*;
 use crate::cli::*;
 use crate::printable::Printable;
 use crate::problem::{Problem, Problems};
-use crate::structures::map::map_builder;
-use crate::structures::AdjacencyListGraph;
-use crate::structures::{graph::graph_builder, map::ArrayMap};
+use crate::structures::graph::Graph;
+use crate::structures::map::Map;
 use crate::Node;
 use crate::{index_to_xy, xy_to_index};
 
@@ -15,8 +14,8 @@ use std::time::Instant;
 
 /// Holds all relevant information of map and problems and handles pathfinders
 pub struct Context {
-    map: ArrayMap,
-    graph: AdjacencyListGraph,
+    map: Map,
+    graph: Graph,
     problems: Problems,
     mode: Mode,
     print_level: usize,
@@ -46,7 +45,7 @@ impl Context {
         if cli.silent <= 2 {
             println!("Loading map {}", cli.map_file.to_str().unwrap());
         }
-        let map = map_builder(cli.map_file).expect("invalid map");
+        let map = Map::new(cli.map_file);
 
         if matches!(cli.mode, Mode::PrintMap) {
             println!("{}", Printable::new(&map));
@@ -56,7 +55,7 @@ impl Context {
         if cli.silent <= 2 {
             println!("Map loaded, creating graph");
         }
-        let graph = graph_builder(&map);
+        let graph = Graph::new(&map);
 
         Some(Context {
             map,
@@ -415,7 +414,7 @@ fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
 }
 
 pub struct BareContext {
-    graph: AdjacencyListGraph,
+    graph: Graph,
     bare_problems: Vec<(Node, Node)>,
 }
 

@@ -2,26 +2,14 @@ use crate::structures::map::*;
 use crate::Node;
 use crate::{xy_to_index, DIAGONAL_COST};
 
-/// Enum for specifying different types of graphs
-pub enum GraphType {
-    AdjacencyMapGraph,
-    AdjacencyGridGraph,
-    AdjacencyListGraph,
-}
-
-/// Build new graph from a map, as specified by [GraphType]
-pub fn graph_builder(map: &ArrayMap) -> AdjacencyListGraph {
-    AdjacencyListGraph::new(map)
-}
-
-pub struct AdjacencyListGraph {
+pub struct Graph {
     adjacency_list: Vec<Vec<(Node, f32)>>,
     height: usize,
     width: usize,
 }
-impl AdjacencyListGraph {
+impl Graph {
     /// Constructor
-    pub fn new(map: &ArrayMap) -> AdjacencyListGraph {
+    pub fn new(map: &Map) -> Graph {
         let mut adjacency_list: Vec<Vec<(Node, f32)>> =
             Vec::with_capacity(map.get_height() * map.get_width());
 
@@ -38,7 +26,7 @@ impl AdjacencyListGraph {
             }
         }
 
-        AdjacencyListGraph {
+        Graph {
             adjacency_list,
             height: map.get_height(),
             width: map.get_width(),
@@ -58,7 +46,7 @@ impl AdjacencyListGraph {
 
 /// Provide a list of neighbors for given cell in a grid.
 /// Makes sure that path does not cut through corners of unpassable cells.
-fn generate_neighbors(x: usize, y: usize, map: &ArrayMap) -> Vec<((usize, usize), f32)> {
+fn generate_neighbors(x: usize, y: usize, map: &Map) -> Vec<((usize, usize), f32)> {
     // We are dealing with usize here, so x-1 will always be checked to avoid underflow errors.
     // Side-effects of this are that the coordinates will be correct and this can be harder to read.
 

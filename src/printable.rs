@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use crate::{index_to_xy, problem::Problem, structures::map::ArrayMap, Node};
+use crate::{index_to_xy, problem::Problem, structures::map::Map, Node};
 
 #[derive(Clone, Copy)]
 pub enum Cell {
@@ -28,7 +28,7 @@ pub struct Printable {
 }
 
 impl Printable {
-    pub fn new(map: &ArrayMap) -> Self {
+    pub fn new(map: &Map) -> Self {
         let mut grid = vec![vec!(Cell::Wall; map.get_width()); map.get_height()];
 
         for (y, x) in

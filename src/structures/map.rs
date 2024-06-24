@@ -6,10 +6,10 @@ use std::path::PathBuf;
 
 /// Simplifies lines to a boolean vector.
 /// '.' and 'G' are traversable, others are not.
-/// Some maps have Swamps, I have to think about that
-fn simplify_map(map: Vec<String>) -> Vec<Vec<bool>> {
+fn simplify_map(map: Vec<String>) -> Vec<bool> {
     map.iter()
-        .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')).collect())
+        .map(|s| s.chars().map(|c| matches!(c, '.' | 'G')))
+        .flatten()
         .collect()
 }
 
@@ -39,41 +39,24 @@ fn read_map(file_path: PathBuf) -> anyhow::Result<(usize, usize, Vec<String>)> {
     Ok((height, width, map))
 }
 
-/// Enum for different map types.
-/// These can be used to distinguish what map is wanted in MapBuilder
-pub enum MapType {
-    GridMap,
-    ArrayMap,
-}
-
-/// Read and build a map from a file and specify the type with [MapType]
-pub fn map_builder(file_path: PathBuf) -> anyhow::Result<ArrayMap> {
-    let (height, width, map) = read_map(file_path)?;
-    let map = simplify_map(map);
-
-    Ok(ArrayMap::new(height, width, map))
-}
-
 /// Terrainmap stored as a continuous `array[x + y*width]`
-pub struct ArrayMap {
+pub struct Map {
     height: usize,
     width: usize,
-    array: Vec<bool>,
+    map: Vec<bool>,
 }
 
-impl ArrayMap {
+impl Map {
     /// Constructor
-    pub fn new(height: usize, width: usize, mut map: Vec<Vec<bool>>) -> ArrayMap {
-        ArrayMap {
-            height,
-            width,
-            array: map.drain(..).flatten().collect(),
-        }
+    pub fn new(file_path: PathBuf) -> Map {
+        let (height, width, map) = read_map(file_path).expect("Malformed map file");
+        let map = simplify_map(map);
+        Map { height, width, map }
     }
 
     pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
-            Some(self.array[xy_to_index(x, y, self.width) as usize])
+            Some(self.map[xy_to_index(x, y, self.width) as usize])
         } else {
             None
         }
@@ -88,7 +71,7 @@ impl ArrayMap {
     }
 
     pub fn array(&self) -> Vec<bool> {
-        self.array.to_vec()
+        self.map.to_vec()
     }
 }
 
@@ -99,36 +82,26 @@ mod tests {
     #[test]
     fn map_simplifies() {
         let lines = vec![".T.".to_string(), "TGT".to_string()];
-        let expected = vec![vec![true, false, true], vec![false, true, false]];
+        let expected = vec![true, false, true, false, true, false];
         let result = simplify_map(lines);
         assert_eq!(expected, result);
     }
 
-    /* #[test]
-    fn gridmap_gets_correct_cell() {
-        let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
-        let map = GridMap::new(2, 3, vec);
+    #[test]
+    fn map_gets_correct_cell() {
+        let map = Map::new(PathBuf::from("maps/3x3.map"));
         assert_eq!(Some(true), map.get_cell(0, 0));
     }
 
     #[test]
-    fn gridmap_fails_out_of_bounds() {
-        let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
-        let map = GridMap::new(2, 3, vec);
-        assert_eq!(None, map.get_cell(3, 3));
-    } */
-
-    #[test]
-    fn arraymap_gets_correct_cell() {
-        let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
-        let map = ArrayMap::new(2, 3, vec);
-        assert_eq!(Some(true), map.get_cell(0, 0));
+    fn map_gets_correct_wall() {
+        let map = Map::new(PathBuf::from("maps/3x3.map"));
+        assert_eq!(Some(false), map.get_cell(1, 1));
     }
 
     #[test]
-    fn arraymap_fails_out_of_bounds() {
-        let vec = simplify_map(vec![".T.".to_string(), "TGT".to_string()]);
-        let map = ArrayMap::new(2, 3, vec);
+    fn map_fails_out_of_bounds() {
+        let map = Map::new(PathBuf::from("maps/3x3.map"));
         assert_eq!(None, map.get_cell(3, 3));
     }
 }

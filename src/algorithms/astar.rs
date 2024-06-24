@@ -1,6 +1,6 @@
 use super::{Heuristic, State};
 use crate::printable::Printable;
-use crate::structures::AdjacencyListGraph;
+use crate::structures::Graph;
 use crate::Node;
 
 use self::cache::Cache;
@@ -17,12 +17,12 @@ pub struct AStar<'a> {
     cache: Cache,
     start: Node,
     goal: Node,
-    graph: &'a AdjacencyListGraph,
+    graph: &'a Graph,
 }
 
 impl<'a> AStar<'a> {
     /// Create solver of a problem for a graph
-    pub fn new(start: Node, goal: Node, graph: &'a AdjacencyListGraph) -> Self {
+    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let frontier = Frontier::new(start, size);
 
