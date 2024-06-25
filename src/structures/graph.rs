@@ -50,7 +50,8 @@ impl Graph {
         let (total, n) = self
             .adjacency_list
             .iter()
-            .filter_map(|v| (!v.is_empty()).then(|| v.len()))
+            .filter(|v| !v.is_empty())
+            .map(|v| v.len())
             .fold((0, 0), |acc, l| (acc.0 + l, acc.1 + 1));
 
         total as f32 / n as f32

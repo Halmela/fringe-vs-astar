@@ -153,10 +153,11 @@ impl Printable {
                 self.grid
                     .iter()
                     .map(|row| row.iter().map(|cell| char::from(*cell)).collect::<String>())
-                    .chain(repeat(repeat('➖').take(self.width).collect::<String>())),
+                    .chain(repeat("➖".repeat(self.width))),
             )
-            .map(|(header, row)| format!("{row}{header}"))
-            .collect()
+            .fold(String::new(), |acc, (header, row)| {
+                format!("{acc}{row}{header}")
+            })
     }
 
     fn big_map(&self) -> String {
@@ -174,10 +175,9 @@ impl Printable {
     }
 
     fn headers(&self) -> String {
-        self.headers
-            .iter()
-            .map(|(k, v)| format!("{:<10} {}\n", k, v))
-            .collect()
+        self.headers.iter().fold(String::new(), |acc, (k, v)| {
+            format!("{acc}{:<10} {}\n", k, v)
+        })
     }
 
     pub fn suppress_print(&mut self) {
