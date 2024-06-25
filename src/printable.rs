@@ -160,7 +160,7 @@ impl Printable {
             })
     }
 
-    fn big_map(&self) -> String {
+    fn _big_map(&self) -> String {
         let map: String = self
             .grid
             .iter()
@@ -211,9 +211,9 @@ impl fmt::Display for Printable {
         if !self.print_map {
             return write!(f, "{}", self.headers());
         }
-        if self.width > 80 {
+        /* if self.width > 80 {
             return write!(f, "{}", self.big_map());
-        }
+        } */
         if self.grid.len() > self.headers.len() {
             write!(f, "{}", self.map_longer_than_headers())
         } else {

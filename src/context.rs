@@ -120,7 +120,11 @@ impl Context {
         if self.problems.is_empty() {
             panic!("No problems to solve")
         } else if let Some(problem) = self.problems.single_problem() {
-            self.use_solver(problem);
+            if self.mode == Mode::Compare {
+                self.solve(problem);
+            } else {
+                self.use_solver(problem);
+            }
         } else {
             self.solve_full();
         }
@@ -213,15 +217,11 @@ impl Context {
         average
     }
 
-    /// Solve currently loaded problem. `full_print` handles if results should be printed with a map
+    /// Solve currently loaded problem.
     pub fn solve(&self, problem: Problem) -> Option<f32> {
         if self.print_level <= 1 {
             println!("{}", problem);
         }
-
-        let mut printable = Printable::new(&self.map);
-        printable.add_problem(&problem);
-        printable.add_spacing();
 
         match self.mode {
             Mode::AStar => {
