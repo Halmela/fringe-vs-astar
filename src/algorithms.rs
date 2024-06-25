@@ -8,6 +8,9 @@ pub use crate::algorithms::astar::AStar;
 pub mod fringesearch;
 pub use crate::algorithms::fringesearch::FringeSearch;
 
+pub mod solver;
+pub use crate::algorithms::solver::*;
+
 use crate::{index_to_xy, Node, DIAGONAL_COST};
 
 pub enum State {

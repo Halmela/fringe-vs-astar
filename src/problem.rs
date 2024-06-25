@@ -57,6 +57,12 @@ impl Problem {
 
         Problem::parse(content.nth(problem).unwrap()?, problem)
     }
+    pub fn coordinates(&self) -> String {
+        format!(
+            "({}, {}) -> ({}, {})",
+            self.start_x, self.start_y, self.goal_x, self.goal_y
+        )
+    }
 }
 
 impl fmt::Display for Problem {

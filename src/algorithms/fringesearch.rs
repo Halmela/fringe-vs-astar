@@ -53,9 +53,8 @@ impl<'a> FringeSearch<'a> {
     pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         loop {
             if let Some(node) = self.fringe.pop_now() {
-                if let Some(goal) = self.process_node(node) {
-                    let cost = self.cache.get_cost(goal);
-                    return Some((self.construct_path(), cost));
+                if let Some(_goal) = self.process_node(node) {
+                    return Some(self.construct_path());
                 }
             } else if self.prepare_next_iteration() {
                 continue;
@@ -68,10 +67,8 @@ impl<'a> FringeSearch<'a> {
     /// One step of the solving process. This is used for the experimental printing of solution.
     pub fn progress(&mut self) -> State {
         if let Some(node) = self.fringe.pop_now() {
-            if let Some(goal) = self.process_node(node) {
-                let cost = self.cache.get_cost(goal);
-                let path = self.construct_path();
-                State::Finished((path, cost))
+            if let Some(_goal) = self.process_node(node) {
+                State::Finished(self.construct_path())
             } else {
                 State::Processing(node)
             }
@@ -118,7 +115,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     /// Reconstruct path that was found
-    fn construct_path(&self) -> Vec<Node> {
+    fn construct_path(&self) -> (Vec<Node>, f32) {
         let mut path = vec![(self.goal)];
         loop {
             let node = path[path.len() - 1];
@@ -131,7 +128,7 @@ impl<'a> FringeSearch<'a> {
         }
         path.reverse();
 
-        path
+        (path, self.cache.get_cost(self.goal))
     }
 
     /// Add current state to Printable
@@ -155,6 +152,38 @@ impl<'a> FringeSearch<'a> {
             .filter(|(_, n): &(usize, &CacheValue)| n.closed)
             .for_each(|(i, _)| print.add_inclosed(i.try_into().unwrap()));
 
+        print.add_start(self.start);
+        print.add_goal(self.goal);
+
+        print.add_header("|Now|", self.fringe.now.len());
+        let current_l = self.fringe.buckets[self.fringe.current as usize].len();
+        print.add_header(format!("|{:?}|", self.fringe.current), current_l);
+        let later_total: usize = self.fringe.buckets.iter().map(|b| b.len()).sum();
+        print.add_header("|Later|", later_total);
+        if later_total > 0 {
+            print.add_header(
+                "% of later",
+                (current_l as f32 / later_total as f32) * 100.0,
+            );
+            print.add_header(format!("in {:?}", self.fringe.current), "");
+        }
+
         print
+    }
+
+    pub fn get_cost(&self, node: Node) -> f32 {
+        self.cache.get_cost(node)
+    }
+    pub fn get_estimate(&self, node: Node) -> f32 {
+        self.cache[node].estimate
+    }
+    pub fn now_size(&self) -> usize {
+        self.fringe.now.len()
+    }
+    pub fn bucket_size(&self) -> usize {
+        self.fringe[self.fringe.current].len()
+    }
+    pub fn later_size(&self) -> usize {
+        self.fringe.buckets.iter().map(|b| b.len()).sum()
     }
 }

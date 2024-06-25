@@ -4,10 +4,9 @@ use crate::printable::Printable;
 use crate::problem::{Problem, Problems};
 use crate::structures::graph::Graph;
 use crate::structures::map::Map;
+use crate::xy_to_index;
 use crate::Node;
-use crate::{index_to_xy, xy_to_index};
 
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
@@ -18,6 +17,7 @@ pub struct Context {
     graph: Graph,
     problems: Problems,
     mode: Mode,
+    printable: Printable,
     print_level: usize,
 }
 
@@ -42,13 +42,16 @@ impl Context {
             return None;
         }
 
+        let map_name = cli.map_file.to_str().unwrap().to_owned();
         if cli.silent <= 2 {
-            println!("Loading map {}", cli.map_file.to_str().unwrap());
+            println!("Loading map {}", map_name);
         }
         let map = Map::new(cli.map_file);
+        let mut printable = Printable::new(&map);
+        printable.add_header("Map", map_name);
 
         if matches!(cli.mode, Mode::PrintMap) {
-            println!("{}", Printable::new(&map));
+            println!("{}", printable);
             return None;
         }
 
@@ -56,6 +59,7 @@ impl Context {
             println!("Map loaded, creating graph");
         }
         let graph = Graph::new(&map);
+        printable.add_header("Branching", graph.average_branching());
 
         Some(Context {
             map,
@@ -63,6 +67,7 @@ impl Context {
             problems,
             mode: cli.mode,
             print_level: cli.silent as usize,
+            printable,
         })
     }
 
@@ -115,7 +120,7 @@ impl Context {
         if self.problems.is_empty() {
             panic!("No problems to solve")
         } else if let Some(problem) = self.problems.single_problem() {
-            self.solve(problem);
+            self.use_solver(problem);
         } else {
             self.solve_full();
         }
@@ -138,6 +143,47 @@ impl Context {
             }
             _ => {}
         }
+    }
+
+    fn use_solver(self, problem: Problem) {
+        let mut printable = self.printable.clone();
+        printable.add_problem(&problem);
+        printable.add_spacing();
+
+        let algorithm = match self.mode {
+            Mode::AStar => {
+                printable.add_header("Algorithm", "A*");
+                Algorithm::AStar
+            }
+            Mode::Fringe => {
+                printable.add_header("Algorithm", "Fringe search");
+                Algorithm::Fringe
+            }
+            _ => panic!("use_solver does not support this mode of operation"),
+        };
+
+        let result = match self.print_level {
+            0 => Result::EndState(printable),
+            1 => {
+                printable.suppress_print();
+                Result::EndState(printable)
+            }
+            2 => Result::Time(printable),
+            3 => {
+                printable.suppress_print();
+                Result::Time(printable)
+            }
+            _ => Result::Full(printable),
+        };
+
+        let solver = Solver::new(
+            algorithm,
+            result,
+            problem,
+            self.graph.to_owned(),
+            self.map.get_width(),
+        );
+        solver.run();
     }
 
     /// Read `n`th (INDEXING STARTS FROM 1!!!) problem from file to the struct.
@@ -173,22 +219,18 @@ impl Context {
             println!("{}", problem);
         }
 
+        let mut printable = Printable::new(&self.map);
+        printable.add_problem(&problem);
+        printable.add_spacing();
+
         match self.mode {
             Mode::AStar => {
-                if self.print_level == 5 {
-                    self.printed_a_star(&problem);
-                }
                 let (solution, duration) = self.timed_astar(&problem);
-                self.print_timing(duration);
-                self.print_solution(solution, problem)
+                self.print_solution(solution, problem, duration)
             }
             Mode::Fringe => {
-                if self.print_level == 5 {
-                    self.printed_fringe(&problem);
-                }
                 let (solution, duration) = self.timed_fringe(&problem);
-                self.print_timing(duration);
-                self.print_solution(solution, problem)
+                self.print_solution(solution, problem, duration)
             }
             Mode::Compare => {
                 println!("Solving using A*");
@@ -246,76 +288,6 @@ impl Context {
         (solution, duration)
     }
 
-    fn printed_a_star(&self, problem: &Problem) {
-        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
-        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
-        let mut a_star = AStar::new(start, goal, &self.graph);
-        let mut print = Printable::new(&self.map);
-        print.add_problem(problem);
-
-        loop {
-            println!("-");
-            match a_star.progress() {
-                State::Processing(node) => {
-                    print = a_star.add_to_printable(print);
-                    print.add_problem(problem);
-                    print.add_current(index_to_xy(node, self.map.get_width()));
-                    println!("{print}");
-                }
-                State::Finished((mut path, cost)) => {
-                    print = a_star.add_to_printable(print);
-                    let path: HashSet<(usize, usize)> = path
-                        .drain(..)
-                        .map(|i| index_to_xy(i, self.graph.get_width()))
-                        .collect();
-                    print.add_path(path);
-                    print.add_problem(problem);
-                    println!("Cost: {cost}\n{print}");
-                    break;
-                }
-                State::NotFound => {
-                    println!("not found");
-                    break;
-                }
-            }
-        }
-    }
-
-    fn printed_fringe(&self, problem: &Problem) {
-        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
-        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
-        let mut fringe = FringeSearch::new(start, goal, &self.graph);
-        let mut print = Printable::new(&self.map);
-        print.add_problem(problem);
-
-        loop {
-            println!("-");
-            match fringe.progress() {
-                State::Processing(node) => {
-                    print = fringe.add_to_printable(print);
-                    print.add_problem(problem);
-                    print.add_current(index_to_xy(node, self.map.get_width()));
-                    println!("{print}");
-                }
-                State::Finished((mut path, cost)) => {
-                    print = fringe.add_to_printable(print);
-                    let path: HashSet<(usize, usize)> = path
-                        .drain(..)
-                        .map(|i| index_to_xy(i, self.graph.get_width()))
-                        .collect();
-                    print.add_path(path);
-                    print.add_problem(problem);
-                    println!("Cost: {cost}\n{print}");
-                    break;
-                }
-                State::NotFound => {
-                    println!("not found");
-                    break;
-                }
-            }
-        }
-    }
-
     fn print_timing(&self, duration: Option<Duration>) {
         if self.print_level <= 2 {
             if let Some(d) = duration {
@@ -327,17 +299,13 @@ impl Context {
     }
 
     /// Print solution, `full` specifies if map is printed
-    fn print_solution(&self, solution: Option<(Vec<Node>, f32)>, problem: Problem) -> Option<f32> {
-        let Problem {
-            start_x,
-            start_y,
-            goal_x,
-            goal_y,
-            length,
-            ..
-        } = problem;
-
-        let mut path;
+    fn print_solution(
+        &self,
+        solution: Option<(Vec<Node>, f32)>,
+        problem: Problem,
+        duration: Option<Duration>,
+    ) -> Option<f32> {
+        let path;
         let path_length;
 
         if let Some((p, l)) = solution {
@@ -349,25 +317,24 @@ impl Context {
         }
 
         if self.print_level == 0 {
-            let path: HashSet<(usize, usize)> = path
-                .drain(..)
-                .map(|i| index_to_xy(i, self.graph.get_width()))
-                .collect();
-
             let mut printable = Printable::new(&self.map);
             printable.add_path(path);
-            printable.add_start(start_x, start_y);
-            printable.add_goal(goal_x, goal_y);
+            printable.add_problem(&problem);
+            printable.add_header("Branching", self.graph.average_branching());
+            printable.add_spacing();
+
+            if let Some(d) = duration {
+                printable.add_header("Duration", format!("{:?}", d));
+            }
+            printable.add_header("Length", path_length);
+            if let Some(l) = problem.length {
+                printable.add_header("Difference", path_length - l);
+            }
 
             println!("{}\n", printable);
-            println!("{}", problem);
-            println!("Result:\n\t{}", path_length);
-            if let Some(l) = length {
-                println!("Difference:\n\t{}\n", path_length - l);
-            }
         } else if self.print_level == 1 {
             println!("Result:\n\t{}", path_length);
-            if let Some(l) = length {
+            if let Some(l) = problem.length {
                 println!("Difference:\n\t{}\n", path_length - l);
             }
         }
@@ -383,17 +350,8 @@ impl Context {
     }
 
     fn problem_in_map(&self, problem: &Problem) -> Printable {
-        let Problem {
-            start_x,
-            start_y,
-            goal_x,
-            goal_y,
-            ..
-        } = problem;
-
         let mut result = Printable::new(&self.map);
-        result.add_start(*start_x, *start_y);
-        result.add_goal(*goal_x, *goal_y);
+        result.add_problem(problem);
 
         result
     }

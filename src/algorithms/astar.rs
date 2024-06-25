@@ -57,6 +57,7 @@ impl<'a> AStar<'a> {
         None
     }
 
+    /// Advance solving by one step
     pub fn progress(&mut self) -> State {
         if let Some(node) = self.frontier.pop() {
             if node == self.goal {
@@ -95,11 +96,15 @@ impl<'a> AStar<'a> {
 
     /// Add current state to Printable
     pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+        let mut closed = 0;
         self.cache
             .iter()
             .enumerate()
             .filter(|(_, n)| n.cost != 0.0)
-            .for_each(|(i, _)| print.add_inclosed(i.try_into().unwrap()));
+            .for_each(|(i, _)| {
+                closed += 1;
+                print.add_inclosed(i.try_into().unwrap())
+            });
 
         self.frontier.iter().for_each(|n| print.add_infrontier(*n));
         let top3 = self.frontier.top3();
@@ -112,7 +117,22 @@ impl<'a> AStar<'a> {
         if let Some(third) = top3.2 {
             print.add_third(third);
         }
+        print.add_header("|Open|", self.frontier.size());
+        print.add_header("|Closed|", closed - self.frontier.size());
+
+        print.add_start(self.start);
+        print.add_goal(self.goal);
 
         print
+    }
+
+    pub fn get_cost(&self, node: Node) -> f32 {
+        self.cache.get_cost(node)
+    }
+    pub fn get_estimate(&self, node: Node) -> f32 {
+        self.cache.get_estimate(node)
+    }
+    pub fn size(&self) -> usize {
+        self.frontier.size()
     }
 }

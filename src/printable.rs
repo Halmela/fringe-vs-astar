@@ -1,4 +1,5 @@
-use std::{collections::HashSet, fmt};
+use std::fmt;
+use std::iter::repeat;
 
 use crate::{index_to_xy, problem::Problem, structures::map::Map, Node};
 
@@ -23,8 +24,9 @@ pub enum Cell {
 #[derive(Clone)]
 pub struct Printable {
     pub grid: Vec<Vec<Cell>>,
-    width: usize,
-    height: usize,
+    headers: Vec<(String, String)>,
+    pub width: usize,
+    print_map: bool,
 }
 
 impl Printable {
@@ -42,27 +44,48 @@ impl Printable {
         Printable {
             grid,
             width: map.get_width(),
-            height: map.get_height(),
+            headers: Default::default(),
+            print_map: true,
         }
     }
 
-    pub fn add_goal(&mut self, x: usize, y: usize) {
+    pub fn add_goal(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::Goal;
     }
-    pub fn add_start(&mut self, x: usize, y: usize) {
+    pub fn add_start(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::Start;
     }
 
     pub fn add_problem(&mut self, problem: &Problem) {
         self.grid[problem.start_y][problem.start_x] = Cell::Start;
         self.grid[problem.goal_y][problem.goal_x] = Cell::Goal;
+        self.add_header("Problem", format!("{}", problem.number));
+        self.add_header(
+            "",
+            format!(
+                "({}, {}) -> ({}, {})",
+                problem.start_x, problem.start_y, problem.goal_x, problem.goal_y
+            ),
+        );
+        if let Some(l) = problem.length {
+            self.add_header("Expected", l);
+        }
     }
-    pub fn add_path(&mut self, path: HashSet<(usize, usize)>) {
+    pub fn add_path(&mut self, mut path: Vec<Node>) {
+        let path: Vec<(usize, usize)> = path
+            .drain(..)
+            .map(|i| index_to_xy(i, self.width))
+            .filter(|(x, y)| !matches!(self.grid[*y][*x], Cell::Start | Cell::Goal))
+            .collect();
+
         for (x, y) in path {
             self.grid[y][x] = Cell::Path;
         }
     }
-    pub fn add_current(&mut self, (x, y): (usize, usize)) {
+    pub fn add_current(&mut self, node: Node) {
+        let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::Current;
     }
     pub fn add_inopen(&mut self, node: Node) {
@@ -97,33 +120,104 @@ impl Printable {
         let (x, y) = index_to_xy(node, self.width);
         self.grid[y][x] = Cell::InFrontier;
     }
+
+    pub fn add_header<T: ToString, U: ToString>(&mut self, key: T, value: U) {
+        self.headers.push((key.to_string(), value.to_string()));
+    }
+    pub fn add_spacing(&mut self) {
+        self.headers.push((String::new(), String::new()));
+    }
+
+    fn map_longer_than_headers(&self) -> String {
+        self.grid
+            .iter()
+            .zip(
+                self.headers
+                    .iter()
+                    .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
+                    .chain(std::iter::repeat(String::from("\n"))),
+            )
+            .flat_map(|(row, header)| {
+                row.iter()
+                    .map(|cell| char::from(*cell))
+                    .chain(header.chars().collect::<Vec<char>>())
+            })
+            .collect()
+    }
+
+    fn headers_longer_than_map(&self) -> String {
+        self.headers
+            .iter()
+            .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
+            .zip(
+                self.grid
+                    .iter()
+                    .map(|row| row.iter().map(|cell| char::from(*cell)).collect::<String>())
+                    .chain(repeat(repeat('➖').take(self.width).collect::<String>())),
+            )
+            .map(|(header, row)| format!("{row}{header}"))
+            .collect()
+    }
+
+    fn big_map(&self) -> String {
+        let map: String = self
+            .grid
+            .iter()
+            .flat_map(|row| {
+                row.iter()
+                    .map(|cell| char::from(*cell))
+                    .chain(std::iter::once('\n'))
+            })
+            .collect();
+
+        format!("{map}\n{}", self.headers())
+    }
+
+    fn headers(&self) -> String {
+        self.headers
+            .iter()
+            .map(|(k, v)| format!("{:<10} {}\n", k, v))
+            .collect()
+    }
+
+    pub fn suppress_print(&mut self) {
+        self.print_map = false;
+    }
+}
+
+impl From<Cell> for char {
+    fn from(value: Cell) -> Self {
+        match value {
+            Cell::Open => '⬛',
+            Cell::Wall => '⬜',
+            Cell::Start => '🏁',
+            Cell::Goal => '🏆',
+            Cell::Path => '🟦',
+            Cell::Current => '🟪',
+            Cell::InOpen => '❔',
+            Cell::InLater => '❓',
+            Cell::OldLater => '🚫',
+            Cell::InClosed => '✅',
+            Cell::First => '❕',
+            Cell::Second => '❔',
+            Cell::Third => '❓',
+            Cell::InFrontier => '⭕',
+        }
+    }
 }
 
 impl fmt::Display for Printable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut result = String::new();
-        for y in 0..self.height {
-            for x in 0..self.width {
-                result.push(match self.grid[y][x] {
-                    Cell::Open => '⬛',
-                    Cell::Wall => '⬜',
-                    Cell::Start => '🏁',
-                    Cell::Goal => '🏆',
-                    Cell::Path => '🟦',
-                    Cell::Current => '🟪',
-                    Cell::InOpen => '❔',
-                    Cell::InLater => '❓',
-                    Cell::OldLater => '🚫',
-                    Cell::InClosed => '✅',
-                    Cell::First => '❕',
-                    Cell::Second => '❔',
-                    Cell::Third => '❓',
-                    Cell::InFrontier => '⭕',
-                });
-            }
-            result.push('\n');
+        if !self.print_map {
+            return write!(f, "{}", self.headers());
         }
-        result.pop();
-        writeln!(f, "{}", result)
+        if self.width > 80 {
+            return write!(f, "{}", self.big_map());
+        }
+        if self.grid.len() > self.headers.len() {
+            write!(f, "{}", self.map_longer_than_headers())
+        } else {
+            write!(f, "{}", self.headers_longer_than_map())
+        }
     }
 }

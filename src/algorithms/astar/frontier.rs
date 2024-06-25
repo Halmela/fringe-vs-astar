@@ -49,4 +49,8 @@ impl Frontier {
             v.get(v.len() - 3).copied(),
         )
     }
+
+    pub fn size(&self) -> usize {
+        self.heap.len()
+    }
 }

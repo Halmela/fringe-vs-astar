@@ -70,6 +70,10 @@ impl Cache {
     pub fn iter(&self) -> impl Iterator<Item = &CacheValue> {
         self.cache.iter()
     }
+
+    pub fn get_estimate(&self, node: u32) -> f32 {
+        self[node].estimate
+    }
 }
 
 impl Index<Node> for Cache {

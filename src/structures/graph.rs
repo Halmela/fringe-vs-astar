@@ -2,6 +2,7 @@ use crate::structures::map::*;
 use crate::Node;
 use crate::{xy_to_index, DIAGONAL_COST};
 
+#[derive(Clone)]
 pub struct Graph {
     adjacency_list: Vec<Vec<(Node, f32)>>,
     height: usize,
@@ -41,6 +42,18 @@ impl Graph {
     }
     pub fn get_width(&self) -> usize {
         self.width
+    }
+
+    /// Average branching factor of the graph.
+    /// Only nodes with some neighbors are counted
+    pub fn average_branching(&self) -> f32 {
+        let (total, n) = self
+            .adjacency_list
+            .iter()
+            .filter_map(|v| (!v.is_empty()).then(|| v.len()))
+            .fold((0, 0), |acc, l| (acc.0 + l, acc.1 + 1));
+
+        total as f32 / n as f32
     }
 }
 
