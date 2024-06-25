@@ -128,7 +128,7 @@ impl Solver {
         let mut max_current = 0;
         let mut max_later = 0;
 
-        println!("#\n{printable}");
+        println!("{printable}");
 
         loop {
             iterations += 1;
@@ -147,7 +147,7 @@ impl Solver {
                         print.add_header("Current", "");
                         print.add_header("  cost", fringe.get_cost(node));
                         print.add_header("  estimate", fringe.get_estimate(node));
-                        println!("#\n{print}");
+                        println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
@@ -160,7 +160,7 @@ impl Solver {
                     print.add_header("Max |Now|", max_now);
                     print.add_header("Max |Bucket|", max_current);
                     print.add_header("Max |Later|", max_later);
-                    println!("#\n{print}");
+                    println!("{print}");
                     break;
                 }
                 State::NotFound => {
@@ -178,7 +178,7 @@ impl Solver {
         let mut actions = 0;
         let mut max_open = 0;
 
-        println!("#\n{printable}");
+        println!("{printable}");
 
         loop {
             actions += 1;
@@ -194,7 +194,7 @@ impl Solver {
                         print.add_header("Current", "");
                         print.add_header("  cost", astar.get_cost(node));
                         print.add_header("  estimate", astar.get_estimate(node));
-                        println!("#\n{print}");
+                        println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
@@ -205,7 +205,7 @@ impl Solver {
                     print.add_header("Length", cost);
                     print.add_spacing();
                     print.add_header("Max |Open|", max_open);
-                    println!("#\n{print}");
+                    println!("{print}");
                     break;
                 }
                 State::NotFound => {

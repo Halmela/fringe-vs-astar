@@ -345,12 +345,11 @@ impl Context {
     pub fn print_problems(&self) {
         for problem in self.problems.iter() {
             println!("{}", self.problem_in_map(problem));
-            println!("{}\n", problem);
         }
     }
 
     fn problem_in_map(&self, problem: &Problem) -> Printable {
-        let mut result = Printable::new(&self.map);
+        let mut result = self.printable.clone();
         result.add_problem(problem);
 
         result

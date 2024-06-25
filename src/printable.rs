@@ -196,7 +196,7 @@ impl From<Cell> for char {
             Cell::Current => '🟪',
             Cell::InOpen => '❔',
             Cell::InLater => '❓',
-            Cell::OldLater => '🚫',
+            Cell::OldLater => '⭕',
             Cell::InClosed => '✅',
             Cell::First => '❕',
             Cell::Second => '❔',
@@ -209,15 +209,15 @@ impl From<Cell> for char {
 impl fmt::Display for Printable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.print_map {
-            return write!(f, "{}", self.headers());
+            return write!(f, "#\n{}", self.headers());
         }
         /* if self.width > 80 {
-            return write!(f, "{}", self.big_map());
+            return write!(f, "#\n{}", self.big_map());
         } */
         if self.grid.len() > self.headers.len() {
-            write!(f, "{}", self.map_longer_than_headers())
+            write!(f, "#\n{}", self.map_longer_than_headers())
         } else {
-            write!(f, "{}", self.headers_longer_than_map())
+            write!(f, "#\n{}", self.headers_longer_than_map())
         }
     }
 }
