@@ -10,7 +10,6 @@ use std::time::Instant;
 
 /// Holds all relevant information of map and problems and handles pathfinders
 pub struct Context {
-    map: Map,
     graph: Graph,
     problems: Problems,
     mode: Mode,
@@ -57,11 +56,10 @@ impl Context {
         if cli.silent <= 2 {
             println!("Map loaded, creating graph");
         }
-        let graph = Graph::new(&map);
+        let graph = Graph::new(map);
         printable.add_header("Branching", graph.average_branching());
 
         Some(Context {
-            map,
             graph,
             problems,
             mode: cli.mode,
@@ -127,13 +125,13 @@ impl Context {
             (0, _) => {
                 self.print_problems();
             }
-            (1, 0) => {
-                println!(
-                    "Map width: {}\n    height: {}",
-                    self.map.get_width(),
-                    self.map.get_height()
-                );
-            }
+            // (1, 0) => {
+            //     println!(
+            //         "Map width: {}\n    height: {}",
+            //         self.map.get_width(),
+            //         self.map.get_height()
+            //     );
+            // }
             (1, _) => {
                 println!("{}", self.problems);
             }
@@ -172,7 +170,7 @@ impl Context {
             _ => Result::Full(printable),
         };
 
-        let solver = Solver::new(algorithm, result, problem, self.graph.clone());
+        let solver = Solver::new(algorithm, result, problem, &self.graph);
         solver.run();
     }
 
@@ -288,11 +286,11 @@ impl Context {
         problem: Problem,
         duration: Option<Duration>,
     ) -> Option<f32> {
-        let path;
+        let _path;
         let path_length;
 
         if let Some((p, l)) = solution {
-            path = p;
+            _path = p;
             path_length = l;
         } else {
             println!("No path found");
@@ -300,11 +298,11 @@ impl Context {
         }
 
         if self.print_level == 0 {
-            let mut printable = Printable::new(&self.map);
-            printable.add_path(path);
-            printable.add_problem(&problem);
-            printable.add_header("Branching", self.graph.average_branching());
-            printable.add_spacing();
+            let mut printable = self.printable.clone();
+            // printable.add_path(path);
+            // printable.add_problem(&problem);
+            // printable.add_header("Branching", self.graph.average_branching());
+            // printable.add_spacing();
 
             if let Some(d) = duration {
                 printable.add_header("Duration", format!("{d:?}"));

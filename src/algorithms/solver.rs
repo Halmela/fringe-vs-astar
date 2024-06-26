@@ -31,17 +31,17 @@ impl Display for Result {
 }
 
 /// Runner for A* and Fringe search. Handles printing according to `Result` value.
-pub struct Solver {
+pub struct Solver<'a> {
     algorithm: Algorithm,
     result: Result,
     problem: Problem,
-    graph: Graph,
+    graph: &'a Graph,
 }
 
-impl Solver {
+impl<'a> Solver<'a> {
     /// Initialize self
     #[must_use]
-    pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
+    pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: &'a Graph) -> Self {
         Solver {
             algorithm,
             result,
@@ -68,7 +68,7 @@ impl Solver {
         let goal = self.problem.goal;
         let now = Instant::now();
 
-        let astar = AStar::new(start, goal, &self.graph);
+        let astar = AStar::new(start, goal, self.graph);
         let solution = astar.solve();
 
         let done = Instant::now();
@@ -91,7 +91,7 @@ impl Solver {
         let goal = self.problem.goal;
         let now = Instant::now();
 
-        let fringe = FringeSearch::new(start, goal, &self.graph);
+        let fringe = FringeSearch::new(start, goal, self.graph);
         let solution = fringe.solve();
 
         let done = Instant::now();
@@ -112,7 +112,7 @@ impl Solver {
     /// Run A* search and collect statistics and inner state.
     /// `full` indicates if every state of solving process should be printed.
     fn full_astar(self, printable: Printable, full: bool) {
-        let mut astar = AStar::new(self.problem.start, self.problem.goal, &self.graph);
+        let mut astar = AStar::new(self.problem.start, self.problem.goal, self.graph);
         let mut actions = 0;
         let mut max_open = 0;
 
@@ -157,11 +157,12 @@ impl Solver {
     /// Run Fringe search and collect statistics and inner state.
     /// `full` indicates if every state of solving process should be printed.
     fn printed_fringe(self, printable: Printable, full: bool) {
-        let mut fringe = FringeSearch::new(self.problem.start, self.problem.goal, &self.graph);
+        let mut fringe = FringeSearch::new(self.problem.start, self.problem.goal, self.graph);
         let mut iterations = 0;
         let mut max_now = 0;
         let mut max_current = 0;
         let mut max_later = 0;
+        let mut closed_hit = 0;
 
         println!("{printable}");
 
@@ -173,6 +174,10 @@ impl Solver {
                     max_current = max(max_current, fringe.bucket_size());
                     max_later = max(max_later, fringe.later_size());
 
+                    if fringe.next_is_closed() {
+                        closed_hit += 1;
+                    }
+
                     if full {
                         let mut print = printable.clone();
                         print.add_header("Iteration", iterations);
@@ -182,6 +187,7 @@ impl Solver {
                         print.add_header("Current", "");
                         print.add_header("  cost", fringe.get_cost(node));
                         print.add_header("  estimate", fringe.get_estimate(node));
+                        print.add_header("closed?", fringe.next_is_closed());
                         println!("{print}");
                     }
                 }
@@ -196,6 +202,7 @@ impl Solver {
                     print.add_header("  |Now|", max_now);
                     print.add_header("  |Bucket|", max_current);
                     print.add_header("  |Later|", max_later);
+                    print.add_header("Closed", closed_hit);
                     println!("{print}");
                     break;
                 }

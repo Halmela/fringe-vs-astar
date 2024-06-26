@@ -198,4 +198,10 @@ impl<'a> FringeSearch<'a> {
     pub fn later_size(&self) -> usize {
         self.fringe.buckets.iter().map(std::vec::Vec::len).sum()
     }
+    pub fn next_is_closed(&self) -> bool {
+        self.fringe
+            .now
+            .last()
+            .is_some_and(|n| self.cache[*n].closed)
+    }
 }

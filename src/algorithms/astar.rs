@@ -23,7 +23,8 @@ pub struct AStar<'a> {
 
 impl<'a> AStar<'a> {
     /// Create solver of a problem for a graph
-    #[must_use] pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
+    #[must_use]
+    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let frontier = Frontier::new(start, size);
 
@@ -40,7 +41,8 @@ impl<'a> AStar<'a> {
     }
 
     /// Try to solve the problem
-    #[must_use] pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
+    #[must_use]
+    pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         while let Some(node) = self.frontier.pop() {
             if node == self.goal {
                 return Some(self.construct_path());
@@ -96,7 +98,8 @@ impl<'a> AStar<'a> {
     }
 
     /// Add current state to Printable
-    #[must_use] pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+    #[must_use]
+    pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         let mut closed = 0;
         self.cache
             .iter()
@@ -108,7 +111,7 @@ impl<'a> AStar<'a> {
             });
 
         self.frontier.iter().for_each(|n| print.add_infrontier(*n));
-        let top3 = self.frontier.top3();
+        /* let top3 = self.frontier.top3();
         if let Some(first) = top3.0 {
             print.add_first(first);
         }
@@ -117,7 +120,7 @@ impl<'a> AStar<'a> {
         }
         if let Some(third) = top3.2 {
             print.add_third(third);
-        }
+        } */
         print.add_header("|Open|", self.frontier.size());
         print.add_header("|Closed|", closed - self.frontier.size());
 
@@ -128,17 +131,20 @@ impl<'a> AStar<'a> {
     }
 
     /// Get current cost of a [`Node`]
-    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_cost(&self, node: Node) -> f32 {
         self.cache.get_cost(node)
     }
 
     /// Get current estimate of a [`Node`]
-    #[must_use] pub fn get_estimate(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_estimate(&self, node: Node) -> f32 {
         self.cache.get_estimate(node)
     }
 
     /// Get size of [`Frontier`]
-    #[must_use] pub fn size(&self) -> usize {
+    #[must_use]
+    pub fn size(&self) -> usize {
         self.frontier.size()
     }
 }

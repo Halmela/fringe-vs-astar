@@ -34,23 +34,26 @@ impl Fringe {
 
     pub fn push(&mut self, (node, bucket): (Node, Bucket)) {
         if bucket == self.current {
-            self.now.push(node);
+            self.push_now(node);
         } else {
-            self[bucket].push(node);
+            self.push_later((node, bucket));
         }
     }
 
     /// Push node to be processed in this iteration
+    #[inline(always)]
     pub fn push_now(&mut self, node: Node) {
         self.now.push(node);
     }
 
     /// Push node to be processed in later iteration
+    #[inline(always)]
     pub fn push_later(&mut self, (node, bucket): (Node, Bucket)) {
         self[bucket].push(node);
     }
 
     /// Try to give a node from now list
+    #[inline(always)]
     pub fn pop_now(&mut self) -> Option<Node> {
         self.now.pop()
     }
