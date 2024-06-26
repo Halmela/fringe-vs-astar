@@ -1,6 +1,8 @@
+use std::vec::Vec;
+
 use crate::structures::map::Map;
 use crate::Node;
-use crate::{xy_to_index, DIAGONAL_COST};
+use crate::DIAGONAL_COST;
 
 /// Adjacency listed representation of a [`Map`].
 #[derive(Clone)]
@@ -11,22 +13,16 @@ pub struct Graph {
 }
 impl Graph {
     /// Constructor
-    #[must_use] pub fn new(map: &Map) -> Graph {
+    #[must_use]
+    pub fn new(map: Map) -> Graph {
         let mut adjacency_list: Vec<Vec<(Node, f32)>> =
-            Vec::with_capacity(map.get_height() * map.get_width());
+            vec![Vec::with_capacity(8); map.get_width() * map.get_height()];
 
-        for y in 0..map.get_height() {
-            for x in 0..map.get_width() {
-                adjacency_list.push(vec![]);
-                let i = xy_to_index(x, y, map.get_width());
-                if let Some(true) = map.get_cell(x, y) {
-                    adjacency_list[i as usize] = generate_neighbors(x, y, map)
-                        .drain(..)
-                        .map(|((x1, y1), f)| (xy_to_index(x1, y1, map.get_width()), f))
-                        .collect();
-                }
-            }
-        }
+        map.iter()
+            .zip(0..)
+            .filter(|(b, _)| **b)
+            .map(|(_, i)| (i, generate_neighbors(i, &map)))
+            .for_each(|(i, v)| adjacency_list[i as usize] = v);
 
         Graph {
             adjacency_list,
@@ -40,22 +36,25 @@ impl Graph {
     }
 
     /// Get height of map
-    #[must_use] pub fn get_height(&self) -> usize {
+    #[must_use]
+    pub fn get_height(&self) -> usize {
         self.height
     }
     /// Get width of map
-    #[must_use] pub fn get_width(&self) -> usize {
+    #[must_use]
+    pub fn get_width(&self) -> usize {
         self.width
     }
 
     /// Average branching factor of the graph.
     /// Only nodes with some neighbors are counted
-    #[must_use] pub fn average_branching(&self) -> f32 {
+    #[must_use]
+    pub fn average_branching(&self) -> f32 {
         let (total, n) = self
             .adjacency_list
             .iter()
             .filter(|v| !v.is_empty())
-            .map(std::vec::Vec::len)
+            .map(Vec::len)
             .fold((0, 0), |acc, l| (acc.0 + l, acc.1 + 1));
 
         total as f32 / n as f32
@@ -64,70 +63,50 @@ impl Graph {
 
 /// Provide a list of neighbors for given cell in a grid.
 /// Makes sure that path does not cut through corners of unpassable cells.
-fn generate_neighbors(x: usize, y: usize, map: &Map) -> Vec<((usize, usize), f32)> {
-    // We are dealing with usize here, so x-1 will always be checked to avoid underflow errors.
-    // Side-effects of this are that the coordinates will be correct and this can be harder to read.
+fn generate_neighbors(node: Node, map: &Map) -> Vec<(Node, f32)> {
+    // node is always true when we get here
+    /*
+       |--|--|--|    |--|--|--|
+       |-4|-3|-2|    | 0| 1| 2|
+       |--|--|--|    |--|--|--|
+       |-1| 0| 1| -> | 3| 4| 5|
+       |--|--|--|    |--|--|--|
+       | 2| 3| 4|    | 6| 7| 8|
+       |--|--|--|    |--|--|--|
 
-    // (x, y-1)
-    let north = y.checked_sub(1).map(|y1| (map.get_cell(x, y1), (x, y1)));
-    // (x+1, y)
-    let east = Some((map.get_cell(x + 1, y), (x + 1, y)));
-    // (x, y+1)
-    let south = Some((map.get_cell(x, y + 1), (x, y + 1)));
-    // (x-1, y)
-    let west = x.checked_sub(1).map(|x1| (map.get_cell(x1, y), (x1, y)));
+    */
+    let n = node as i32;
+    let w = map.get_width() as i32;
+    let mut v: Vec<(i32, f32, bool)> = [
+        n - w - 1, // 0
+        n - w,     // 1
+        n - w + 1, // 2
+        n - 1,     // 3
+        n,         // 4
+        n + 1,     // 5
+        n + w - 1, // 6
+        n + w,     // 7
+        n + w + 1, // 8
+    ]
+    .iter()
+    .map(|i| (*i, 1.0, map.get(*i)))
+    .collect();
 
-    // (x+1, y-1)
-    let mut north_east = y
-        .checked_sub(1)
-        .map(|y1| (map.get_cell(x + 1, y1), (x + 1, y1)));
-    // (x+1, y+1)
-    let mut south_east = Some((map.get_cell(x + 1, y + 1), (x + 1, y + 1)));
-    // (x-1, y+1)
-    let mut south_west = x
-        .checked_sub(1)
-        .map(|x1| (map.get_cell(x1, y + 1), (x1, y + 1)));
-    // (x-1, y-1)
-    let mut north_west = x
-        .checked_sub(1)
-        .and_then(|x1| y.checked_sub(1).map(|y1| (map.get_cell(x1, y1), (x1, y1))));
+    v[3].2 = v[3].2 && v[4].0 % w != 0;
+    v[5].2 = v[5].2 && v[4].0 % w != w - 1;
 
-    match (north, east, north_east) {
-        (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
-        _ => {
-            north_east = None;
-        }
-    }
-    match (south, east, south_east) {
-        (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
-        _ => {
-            south_east = None;
-        }
-    }
-    match (south, west, south_west) {
-        (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
-        _ => {
-            south_west = None;
-        }
-    }
-    match (north, west, north_west) {
-        (Some((Some(true), _)), Some((Some(true), _)), Some((Some(true), _))) => {}
-        _ => {
-            north_west = None;
-        }
-    }
+    v[0].2 = v[0].2 && v[1].2 && v[3].2;
+    v[2].2 = v[2].2 && v[1].2 && v[5].2;
+    v[6].2 = v[6].2 && v[3].2 && v[7].2;
+    v[8].2 = v[8].2 && v[5].2 && v[7].2;
+    v[4].2 = false;
+    v[0].1 = DIAGONAL_COST;
+    v[2].1 = DIAGONAL_COST;
+    v[6].1 = DIAGONAL_COST;
+    v[8].1 = DIAGONAL_COST;
 
-    vec![north, east, south, west]
-        .drain(..)
-        .flatten()
-        .map(|(b, xy)| (b, xy, 1.0))
-        .chain(
-            vec![north_east, south_east, south_west, north_west]
-                .drain(..)
-                .flatten()
-                .map(|(b, xy)| (b, xy, DIAGONAL_COST)),
-        )
-        .filter(|(b, _, _)| b.is_some_and(|b1| b1))
-        .map(|(_, xy, w)| (xy, w))
-        .collect::<Vec<((usize, usize), f32)>>()
+    v.iter()
+        .filter(|(_, _, b)| *b)
+        .map(|(i, c, _)| (TryInto::<Node>::try_into(*i).unwrap(), *c))
+        .collect()
 }

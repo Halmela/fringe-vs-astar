@@ -1,7 +1,9 @@
 use crate::xy_to_index;
+use crate::Node;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::ops::{Index, IndexMut};
 use std::path::PathBuf;
 
 /// Terrainmap stored as a continuous `array[x + y*width]`
@@ -44,6 +46,14 @@ impl Map {
         }
     }
 
+    pub fn get(&self, i: i32) -> bool {
+        if i >= 0 && i < self.map.len() as i32 {
+            self.map[TryInto::<usize>::try_into(i).unwrap()]
+        } else {
+            false
+        }
+    }
+
     /// Get height
     #[must_use]
     pub fn get_height(&self) -> usize {
@@ -60,6 +70,10 @@ impl Map {
     #[must_use]
     pub fn array(&self) -> Vec<bool> {
         self.map.clone()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &bool> {
+        self.map.iter()
     }
 }
 
@@ -103,4 +117,18 @@ fn read(file_path: PathBuf) -> anyhow::Result<(usize, usize, Vec<String>)> {
     let map = contents.map(|s| s.unwrap()).collect();
 
     Ok((height, width, map))
+}
+
+impl Index<Node> for Map {
+    type Output = bool;
+
+    fn index(&self, index: Node) -> &Self::Output {
+        &self.map[index as usize]
+    }
+}
+
+impl IndexMut<Node> for Map {
+    fn index_mut(&mut self, index: Node) -> &mut Self::Output {
+        &mut self.map[index as usize]
+    }
 }
