@@ -9,7 +9,8 @@ pub struct Frontier {
 
 impl Frontier {
     /// Create a heap and "memory" that could contain the whole graph and initialize it with starting node
-    #[must_use] pub fn new(start: Node, size: usize) -> Frontier {
+    #[must_use]
+    pub fn new(start: Node, size: usize) -> Frontier {
         let mut heap: BinaryHeap<WeightedCell> = BinaryHeap::with_capacity(size);
         heap.push(WeightedCell::new(start, 0.0));
 
@@ -34,9 +35,11 @@ impl Frontier {
         self.heap.iter().map(|w| &w.node)
     }
 
-    #[must_use] pub fn top3(&self) -> (Option<Node>, Option<Node>, Option<Node>) {
+    #[must_use]
+    pub fn top3(&self) -> (Option<Node>, Option<Node>, Option<Node>) {
         let v: Vec<Node> = self
-            .heap.clone()
+            .heap
+            .clone()
             .into_sorted_vec()
             .iter()
             .map(|w| w.node)
@@ -49,7 +52,8 @@ impl Frontier {
         )
     }
 
-    #[must_use] pub fn size(&self) -> usize {
+    #[must_use]
+    pub fn size(&self) -> usize {
         self.heap.len()
     }
 }

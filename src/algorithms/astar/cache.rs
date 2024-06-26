@@ -30,7 +30,8 @@ pub struct Cache {
 
 impl Cache {
     /// Initialize with start
-    #[must_use] pub fn new(start: Node, heuristic: Heuristic, size: usize) -> Self {
+    #[must_use]
+    pub fn new(start: Node, heuristic: Heuristic, size: usize) -> Self {
         let mut cache = vec![Value::default(); size];
         cache[start as usize].parent = start;
         cache[start as usize].heuristic = heuristic.calc(start);
@@ -47,7 +48,8 @@ impl Cache {
     }
 
     /// Get cost of a node
-    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_cost(&self, node: Node) -> f32 {
         self[node].cost
     }
 
@@ -72,7 +74,8 @@ impl Cache {
     }
 
     /// Get estimate of a [`Node`]
-    #[must_use] pub fn get_estimate(&self, node: u32) -> f32 {
+    #[must_use]
+    pub fn get_estimate(&self, node: u32) -> f32 {
         self[node].estimate
     }
 }
