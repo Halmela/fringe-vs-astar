@@ -30,7 +30,8 @@ pub struct Printable {
 }
 
 impl Printable {
-    #[must_use] pub fn new(map: &Map) -> Self {
+    #[must_use]
+    pub fn new(map: &Map) -> Self {
         let mut grid = vec![vec!(Cell::Wall; map.get_width()); map.get_height()];
 
         for (y, x) in
@@ -44,7 +45,7 @@ impl Printable {
         Printable {
             grid,
             width: map.get_width(),
-            headers: Default::default(),
+            headers: Vec::default(),
             print_map: true,
         }
     }
@@ -137,9 +138,9 @@ impl Printable {
     }
 
     fn headers(&self) -> String {
-        self.headers.iter().fold(String::new(), |acc, (k, v)| {
-            format!("{acc}{k:<10} {v}\n")
-        })
+        self.headers
+            .iter()
+            .fold(String::new(), |acc, (k, v)| format!("{acc}{k:<10} {v}\n"))
     }
 
     pub fn suppress_print(&mut self) {
@@ -156,14 +157,11 @@ impl From<Cell> for char {
             Cell::Goal => '🏆',
             Cell::Path => '🟦',
             Cell::Current => '🟪',
-            Cell::InOpen => '❔',
-            Cell::InLater => '❓',
-            Cell::OldLater => '⭕',
+            Cell::InOpen | Cell::Second => '❔',
+            Cell::InLater | Cell::Third => '❓',
+            Cell::OldLater | Cell::InFrontier => '⭕',
             Cell::InClosed => '✅',
             Cell::First => '❕',
-            Cell::Second => '❔',
-            Cell::Third => '❓',
-            Cell::InFrontier => '⭕',
         }
     }
 }

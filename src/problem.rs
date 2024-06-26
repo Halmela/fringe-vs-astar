@@ -20,7 +20,8 @@ pub struct Problem {
 
 impl Problem {
     /// Create problem
-    #[must_use] pub fn new(
+    #[must_use]
+    pub fn new(
         map_width: usize,
         start_x: usize,
         start_y: usize,
@@ -31,11 +32,17 @@ impl Problem {
     ) -> Problem {
         let start = xy_to_index(start_x, start_y, map_width);
         let goal = xy_to_index(goal_x, goal_y, map_width);
-        Problem { start, goal, map_width, length, number }
+        Problem {
+            start,
+            goal,
+            map_width,
+            length,
+            number,
+        }
     }
 
     /// Parse `.scenario` row as a problem.
-    pub fn parse(value: String, number: usize) -> anyhow::Result<Problem> {
+    pub fn parse(value: &str, number: usize) -> anyhow::Result<Problem> {
         let fields: Vec<&str> = value.split_ascii_whitespace().collect();
         let wanted = fields.split_at(fields.len() - 7).1;
 
@@ -55,20 +62,23 @@ impl Problem {
         let f = File::open(problem_file)?;
         let mut content = BufReader::new(f).lines();
 
-        Problem::parse(content.nth(problem).unwrap()?, problem)
+        Problem::parse(&content.nth(problem).unwrap()?, problem)
     }
 
     /// Provide start as (x, y) -coordinates
-    #[must_use] pub fn start_xy(&self) -> (usize, usize) {
+    #[must_use]
+    pub fn start_xy(&self) -> (usize, usize) {
         index_to_xy(self.start, self.map_width)
     }
     /// Provide goal as (x, y) -coordinates
-    #[must_use] pub fn goal_xy(&self) -> (usize, usize) {
+    #[must_use]
+    pub fn goal_xy(&self) -> (usize, usize) {
         index_to_xy(self.goal, self.map_width)
     }
 
     /// Pretty printing for coordinates
-    #[must_use] pub fn coordinates(&self) -> String {
+    #[must_use]
+    pub fn coordinates(&self) -> String {
         let (start_x, start_y) = self.start_xy();
         let (goal_x, goal_y) = self.goal_xy();
         format!("({start_x}, {start_y}) -> ({goal_x}, {goal_y})")
@@ -112,6 +122,7 @@ impl Problems {
     }
 
     /// Read the supplied scenario file and parse the problems.
+    /// # Panics
     /// Panics if the scenario file is malformed.
     pub fn from_file(file_path: PathBuf) -> anyhow::Result<Problems> {
         let f = File::open(&file_path)?;
@@ -120,7 +131,7 @@ impl Problems {
         let problems: Vec<Problem> = content
             .flat_map(|(i, row)| {
                 Problem::parse(
-                    row.unwrap_or_else(|_| panic!("Error parsing problem {i}")),
+                    &row.unwrap_or_else(|_| panic!("Error parsing problem {i}")),
                     i,
                 )
             })
@@ -132,17 +143,20 @@ impl Problems {
     }
 
     /// Returns `true` if it contains no [`Problem`]s.
-    #[must_use] pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
         self.problems.is_empty()
     }
 
     /// Get a [`Problem`] number `i` if it exists
-    #[must_use] pub fn get(&self, i: usize) -> Option<&Problem> {
+    #[must_use]
+    pub fn get(&self, i: usize) -> Option<&Problem> {
         self.problems.get(i)
     }
 
     /// Returns the number of [`Problem`]s.
-    #[must_use] pub fn len(&self) -> usize {
+    #[must_use]
+    pub fn len(&self) -> usize {
         self.problems.len()
     }
 
@@ -163,7 +177,8 @@ impl Problems {
 
     /// Try to find scenario file with `.scenario` or `.scen` extension, panic neither is found.
     /// This is used if a separate scenario file is not supplied.
-    #[must_use] pub fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
+    #[must_use]
+    pub fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
         path.set_extension("map.scenario");
         if path.as_path().try_exists().is_ok_and(|b| b) {
             return path;
@@ -186,7 +201,11 @@ impl fmt::Display for Problems {
             self.problems.len(),
             self.file
         ));
-        let problems: String = self.problems.iter().map(std::string::ToString::to_string).collect();
+        let problems: String = self
+            .problems
+            .iter()
+            .map(std::string::ToString::to_string)
+            .collect();
         result.push_str(&problems);
         writeln!(f, "{result}")
     }

@@ -25,9 +25,7 @@ pub enum Result {
 impl Display for Result {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Result::Time(p) => write!(f, "{p}"),
-            Result::EndState(p) => write!(f, "{p}"),
-            Result::Full(p) => write!(f, "{p}"),
+            Result::Time(p) | Result::EndState(p) | Result::Full(p) => write!(f, "{p}"),
         }
     }
 }
@@ -42,7 +40,8 @@ pub struct Solver {
 
 impl Solver {
     /// Initialize self
-    #[must_use] pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
+    #[must_use]
+    pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
         Solver {
             algorithm,
             result,

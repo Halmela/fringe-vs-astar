@@ -51,8 +51,9 @@ pub struct Cache {
 
 impl Cache {
     /// Initialize cache
-    #[must_use] pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
-        let mut cache: Vec<Value> = vec![Default::default(); size];
+    #[must_use]
+    pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
+        let mut cache = vec![Value::default(); size];
         let f_limit = heuristic.calc(start);
         cache[start as usize].cost = 0.0;
         cache[start as usize].heuristic = f_limit;
@@ -107,7 +108,8 @@ impl Cache {
     }
 
     /// Get cost of a node
-    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_cost(&self, node: Node) -> f32 {
         self[node].cost
     }
 
@@ -142,11 +144,11 @@ impl Cache {
     /// Add node to later if it is not already there
     fn later_or_nothing(&mut self, node: Node) -> Action {
         self[node].closed = false;
-        if self[node].later != self.iteration {
+        if self[node].later == self.iteration {
+            Action::Nothing
+        } else {
             self[node].later = self.iteration;
             Action::ToLater((node, self[node].bucket.unwrap())) // Bucket will always be present, when we get here
-        } else {
-            Action::Nothing
         }
     }
 }

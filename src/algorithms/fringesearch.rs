@@ -33,7 +33,8 @@ pub struct FringeSearch<'a> {
 
 impl<'a> FringeSearch<'a> {
     /// Initialize the search with a start, goal and a graph to be acted upon.
-    #[must_use] pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
+    #[must_use]
+    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let heuristic = Heuristic::new(goal, graph.get_width());
         let cache = Cache::new(start, size, heuristic);
@@ -54,7 +55,8 @@ impl<'a> FringeSearch<'a> {
     /// Main idea here is to get a new node from now-queue, process it and maybe return it.
     /// If now is empty, then try to prepare datastructures for next iteration (`f_min` -> `f_limit` and later -> now).
     /// If now is empty and later is empty, then no further search can be conducted and thus a path can be found and `None` is returned.
-    #[must_use] pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
+    #[must_use]
+    pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         loop {
             if let Some(node) = self.fringe.pop_now() {
                 if let Some(_goal) = self.process_node(node) {
@@ -95,7 +97,7 @@ impl<'a> FringeSearch<'a> {
             Action::ToLater(node) => {
                 self.fringe.push_later(node);
             }
-            _ => {}
+            Action::Nothing => {}
         }
         None
     }
@@ -136,7 +138,8 @@ impl<'a> FringeSearch<'a> {
     }
 
     /// Add current state to Printable
-    #[must_use] pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+    #[must_use]
+    pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         self.fringe
             .buckets
             .iter()
@@ -175,19 +178,24 @@ impl<'a> FringeSearch<'a> {
         print
     }
 
-    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_cost(&self, node: Node) -> f32 {
         self.cache.get_cost(node)
     }
-    #[must_use] pub fn get_estimate(&self, node: Node) -> f32 {
+    #[must_use]
+    pub fn get_estimate(&self, node: Node) -> f32 {
         self.cache[node].estimate
     }
-    #[must_use] pub fn now_size(&self) -> usize {
+    #[must_use]
+    pub fn now_size(&self) -> usize {
         self.fringe.now.len()
     }
-    #[must_use] pub fn bucket_size(&self) -> usize {
+    #[must_use]
+    pub fn bucket_size(&self) -> usize {
         self.fringe.current().len()
     }
-    #[must_use] pub fn later_size(&self) -> usize {
+    #[must_use]
+    pub fn later_size(&self) -> usize {
         self.fringe.buckets.iter().map(std::vec::Vec::len).sum()
     }
 }

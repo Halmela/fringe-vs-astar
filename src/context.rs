@@ -23,7 +23,8 @@ impl Context {
     /// `run()` should be used usually.
     /// These are the same, but this does nothing but build automatically
     /// Will not print, but can panic for malformed files
-    #[must_use] pub fn new(cli: Cli) -> Option<Self> {
+    #[must_use]
+    pub fn new(cli: Cli) -> Option<Self> {
         let scenario_file = cli
             .problem_file
             .unwrap_or_else(|| Problems::deduce_problem_file(cli.map_file.clone()));
@@ -70,7 +71,8 @@ impl Context {
     }
 
     /// Strip down everything unnecessary and return [`BareContext`] that is more suitable for benchmarking
-    #[must_use] pub fn bare(self) -> BareContext {
+    #[must_use]
+    pub fn bare(self) -> BareContext {
         let bare_problems = self.problems.iter().map(|p| (p.start, p.goal)).collect();
         BareContext {
             graph: self.graph,
@@ -111,7 +113,7 @@ impl Context {
             panic!("No problems to solve")
         } else if let Some(problem) = self.problems.single_problem() {
             if self.mode == Mode::Compare {
-                self.solve(problem);
+                let _ = self.solve(problem);
             } else {
                 self.use_solver(problem);
             }
@@ -202,7 +204,8 @@ impl Context {
     }
 
     /// Solve currently loaded problem.
-    #[must_use] pub fn solve(&self, problem: Problem) -> Option<f32> {
+    #[must_use]
+    pub fn solve(&self, problem: Problem) -> Option<f32> {
         if self.print_level <= 1 {
             println!("{problem}");
         }
@@ -345,6 +348,7 @@ pub struct BareContext {
 
 impl BareContext {
     /// Solve problems using A* and drop the results
+    #[allow(unused_must_use)]
     pub fn astar(&self) {
         for (start, goal) in &self.bare_problems {
             let astar = AStar::new(*start, *goal, &self.graph);
@@ -354,6 +358,7 @@ impl BareContext {
     }
 
     /// Solve problems using Fringe search and drop the results
+    #[allow(unused_must_use)]
     pub fn fringe(&self) {
         for (start, goal) in &self.bare_problems {
             let fringe = FringeSearch::new(*start, *goal, &self.graph);

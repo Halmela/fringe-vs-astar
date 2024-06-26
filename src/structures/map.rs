@@ -13,10 +13,12 @@ pub struct Map {
 
 impl Map {
     /// Initialize from a file.
-    /// Panics if something goes wrong.
-    #[must_use] pub fn new(file_path: PathBuf) -> Map {
-        let (height, width, map) = read_map(file_path).expect("Malformed map file");
-        let map = simplify_map(map);
+    /// # Panics
+    /// Panics if the supplied map does not follow the formatting standards
+    #[must_use]
+    pub fn new(file_path: PathBuf) -> Map {
+        let (height, width, map) = read(file_path).expect("Malformed map file");
+        let map = simplify(&map);
         Map { height, width, map }
     }
 
@@ -33,7 +35,8 @@ impl Map {
     /// assert_eq!(Some(false), map.get_cell(1, 1));
     /// assert_eq!(None, map.get_cell(3, 3));
     ///```
-    #[must_use] pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
+    #[must_use]
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
             Some(self.map[xy_to_index(x, y, self.width) as usize])
         } else {
@@ -42,17 +45,20 @@ impl Map {
     }
 
     /// Get height
-    #[must_use] pub fn get_height(&self) -> usize {
+    #[must_use]
+    pub fn get_height(&self) -> usize {
         self.height
     }
 
     /// Get width
-    #[must_use] pub fn get_width(&self) -> usize {
+    #[must_use]
+    pub fn get_width(&self) -> usize {
         self.width
     }
 
     /// Access to underlying array
-    #[must_use] pub fn array(&self) -> Vec<bool> {
+    #[must_use]
+    pub fn array(&self) -> Vec<bool> {
         self.map.clone()
     }
 }
@@ -66,14 +72,15 @@ impl Map {
 /// let result = simplify_map(lines);
 /// assert_eq!(expected, result);
 ///```
-#[must_use] pub fn simplify_map(map: Vec<String>) -> Vec<bool> {
+#[must_use]
+pub fn simplify(map: &[String]) -> Vec<bool> {
     map.iter()
         .flat_map(|s| s.chars().map(|c| matches!(c, '.' | 'G')))
         .collect()
 }
 
 /// Read a map from file
-fn read_map(file_path: PathBuf) -> anyhow::Result<(usize, usize, Vec<String>)> {
+fn read(file_path: PathBuf) -> anyhow::Result<(usize, usize, Vec<String>)> {
     let f = File::open(file_path)?;
     let mut contents = BufReader::new(f).lines();
 
