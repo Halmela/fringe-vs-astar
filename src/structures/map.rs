@@ -66,10 +66,10 @@ impl Map {
 /// Simplifies lines to a boolean vector.
 /// `.` and `G` are traversable, others are not.
 ///```
-/// # use fringe_vs_astar::structures::map::simplify_map;
+/// # use fringe_vs_astar::structures::map::simplify;
 /// let lines = vec![".T.".to_string(), "TGT".to_string()];
 /// let expected = vec![true, false, true, false, true, false];
-/// let result = simplify_map(lines);
+/// let result = simplify(&lines);
 /// assert_eq!(expected, result);
 ///```
 #[must_use]
