@@ -1,5 +1,5 @@
-use crate::algorithms::*;
-use crate::cli::*;
+use crate::algorithms::{AStar, Algorithm, FringeSearch, Result, Solver};
+use crate::cli::{Cli, Mode};
 use crate::printable::Printable;
 use crate::problem::{Problem, Problems};
 use crate::structures::{Graph, Map};
@@ -20,10 +20,10 @@ pub struct Context {
 
 impl Context {
     /// This is mainly for testing purposes.
-    /// run() should be used usually.
+    /// `run()` should be used usually.
     /// These are the same, but this does nothing but build automatically
     /// Will not print, but can panic for malformed files
-    pub fn new(cli: Cli) -> Option<Self> {
+    #[must_use] pub fn new(cli: Cli) -> Option<Self> {
         let scenario_file = cli
             .problem_file
             .unwrap_or_else(|| Problems::deduce_problem_file(cli.map_file.clone()));
@@ -36,20 +36,20 @@ impl Context {
 
         // Early exit
         if matches!(cli.mode, Mode::Print) && cli.silent == 1 {
-            println!("{}", problems);
+            println!("{problems}");
             return None;
         }
 
         let map_name = cli.map_file.to_str().unwrap().to_owned();
         if cli.silent <= 2 {
-            println!("Loading map {}", map_name);
+            println!("Loading map {map_name}");
         }
         let map = Map::new(cli.map_file);
         let mut printable = Printable::new(&map);
         printable.add_header("Map", map_name);
 
         if matches!(cli.mode, Mode::PrintMap) {
-            println!("{}", printable);
+            println!("{printable}");
             return None;
         }
 
@@ -70,7 +70,7 @@ impl Context {
     }
 
     /// Strip down everything unnecessary and return [`BareContext`] that is more suitable for benchmarking
-    pub fn bare(self) -> BareContext {
+    #[must_use] pub fn bare(self) -> BareContext {
         let bare_problems = self.problems.iter().map(|p| (p.start, p.goal)).collect();
         BareContext {
             graph: self.graph,
@@ -101,7 +101,7 @@ impl Context {
                     println!("Solving using Fringe search");
                 }
                 Mode::Compare => {
-                    println!("Comparing A* and Fringe search")
+                    println!("Comparing A* and Fringe search");
                 }
                 _ => {}
             }
@@ -170,7 +170,7 @@ impl Context {
             _ => Result::Full(printable),
         };
 
-        let solver = Solver::new(algorithm, result, problem, self.graph.to_owned());
+        let solver = Solver::new(algorithm, result, problem, self.graph.clone());
         solver.run();
     }
 
@@ -186,7 +186,7 @@ impl Context {
         for problem in self.problems.iter() {
             let result = self
                 .solve(*problem)
-                .unwrap_or_else(|| panic!("Could not find solution for:\n{}", problem));
+                .unwrap_or_else(|| panic!("Could not find solution for:\n{problem}"));
             let expected = problem.length;
             count += expected.map_or_else(|| 0.0, |_| 1.0);
             if let Some(expected) = problem.length {
@@ -196,15 +196,15 @@ impl Context {
         }
         let average = error / count;
         if self.print_level <= 2 {
-            println!("Average error: {}", average);
+            println!("Average error: {average}");
         }
         average
     }
 
     /// Solve currently loaded problem.
-    pub fn solve(&self, problem: Problem) -> Option<f32> {
+    #[must_use] pub fn solve(&self, problem: Problem) -> Option<f32> {
         if self.print_level <= 1 {
-            println!("{}", problem);
+            println!("{problem}");
         }
 
         match self.mode {
@@ -233,7 +233,7 @@ impl Context {
                         println!("Fringe search was {:?} faster than A*", a - f);
                     }
                     _ => {
-                        println!("Error in timing")
+                        println!("Error in timing");
                     }
                 }
                 Some((a_solution.unwrap().1 - f_solution.unwrap().1).abs())
@@ -271,7 +271,7 @@ impl Context {
     fn print_timing(&self, duration: Option<Duration>) {
         if self.print_level <= 2 {
             if let Some(d) = duration {
-                println!("Solved in {:?}", d);
+                println!("Solved in {d:?}");
             } else {
                 println!("Error in timing");
             }
@@ -304,16 +304,16 @@ impl Context {
             printable.add_spacing();
 
             if let Some(d) = duration {
-                printable.add_header("Duration", format!("{:?}", d));
+                printable.add_header("Duration", format!("{d:?}"));
             }
             printable.add_header("Length", path_length);
             if let Some(l) = problem.length {
                 printable.add_header("Difference", path_length - l);
             }
 
-            println!("{}\n", printable);
+            println!("{printable}\n");
         } else if self.print_level == 1 {
-            println!("Result:\n\t{}", path_length);
+            println!("Result:\n\t{path_length}");
             if let Some(l) = problem.length {
                 println!("Difference:\n\t{}\n", path_length - l);
             }

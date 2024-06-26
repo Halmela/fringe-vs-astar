@@ -14,7 +14,7 @@ pub struct Map {
 impl Map {
     /// Initialize from a file.
     /// Panics if something goes wrong.
-    pub fn new(file_path: PathBuf) -> Map {
+    #[must_use] pub fn new(file_path: PathBuf) -> Map {
         let (height, width, map) = read_map(file_path).expect("Malformed map file");
         let map = simplify_map(map);
         Map { height, width, map }
@@ -33,7 +33,7 @@ impl Map {
     /// assert_eq!(Some(false), map.get_cell(1, 1));
     /// assert_eq!(None, map.get_cell(3, 3));
     ///```
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
+    #[must_use] pub fn get_cell(&self, x: usize, y: usize) -> Option<bool> {
         if x < self.width && y < self.height {
             Some(self.map[xy_to_index(x, y, self.width) as usize])
         } else {
@@ -42,18 +42,18 @@ impl Map {
     }
 
     /// Get height
-    pub fn get_height(&self) -> usize {
+    #[must_use] pub fn get_height(&self) -> usize {
         self.height
     }
 
     /// Get width
-    pub fn get_width(&self) -> usize {
+    #[must_use] pub fn get_width(&self) -> usize {
         self.width
     }
 
     /// Access to underlying array
-    pub fn array(&self) -> Vec<bool> {
-        self.map.to_vec()
+    #[must_use] pub fn array(&self) -> Vec<bool> {
+        self.map.clone()
     }
 }
 
@@ -66,7 +66,7 @@ impl Map {
 /// let result = simplify_map(lines);
 /// assert_eq!(expected, result);
 ///```
-pub fn simplify_map(map: Vec<String>) -> Vec<bool> {
+#[must_use] pub fn simplify_map(map: Vec<String>) -> Vec<bool> {
     map.iter()
         .flat_map(|s| s.chars().map(|c| matches!(c, '.' | 'G')))
         .collect()

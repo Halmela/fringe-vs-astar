@@ -1,4 +1,4 @@
-use crate::structures::map::*;
+use crate::structures::map::Map;
 use crate::Node;
 use crate::{xy_to_index, DIAGONAL_COST};
 
@@ -11,7 +11,7 @@ pub struct Graph {
 }
 impl Graph {
     /// Constructor
-    pub fn new(map: &Map) -> Graph {
+    #[must_use] pub fn new(map: &Map) -> Graph {
         let mut adjacency_list: Vec<Vec<(Node, f32)>> =
             Vec::with_capacity(map.get_height() * map.get_width());
 
@@ -40,22 +40,22 @@ impl Graph {
     }
 
     /// Get height of map
-    pub fn get_height(&self) -> usize {
+    #[must_use] pub fn get_height(&self) -> usize {
         self.height
     }
     /// Get width of map
-    pub fn get_width(&self) -> usize {
+    #[must_use] pub fn get_width(&self) -> usize {
         self.width
     }
 
     /// Average branching factor of the graph.
     /// Only nodes with some neighbors are counted
-    pub fn average_branching(&self) -> f32 {
+    #[must_use] pub fn average_branching(&self) -> f32 {
         let (total, n) = self
             .adjacency_list
             .iter()
             .filter(|v| !v.is_empty())
-            .map(|v| v.len())
+            .map(std::vec::Vec::len)
             .fold((0, 0), |acc, l| (acc.0 + l, acc.1 + 1));
 
         total as f32 / n as f32

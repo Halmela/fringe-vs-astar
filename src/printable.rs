@@ -30,7 +30,7 @@ pub struct Printable {
 }
 
 impl Printable {
-    pub fn new(map: &Map) -> Self {
+    #[must_use] pub fn new(map: &Map) -> Self {
         let mut grid = vec![vec!(Cell::Wall; map.get_width()); map.get_height()];
 
         for (y, x) in
@@ -138,7 +138,7 @@ impl Printable {
 
     fn headers(&self) -> String {
         self.headers.iter().fold(String::new(), |acc, (k, v)| {
-            format!("{acc}{:<10} {}\n", k, v)
+            format!("{acc}{k:<10} {v}\n")
         })
     }
 
@@ -182,7 +182,7 @@ impl fmt::Display for Printable {
             .zip(
                 self.headers
                     .iter()
-                    .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
+                    .map(|(k, v)| format!("\t{k:<10} {v}\n"))
                     .chain(std::iter::repeat(String::from("\n"))),
             )
             .take_while(|(row, header)| !(row.contains('➖') && header == "\n"))

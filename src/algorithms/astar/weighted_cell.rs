@@ -19,7 +19,7 @@ pub struct WeightedCell {
 
 impl WeightedCell {
     /// Create a new cell
-    pub fn new(node: Node, weight: f32) -> WeightedCell {
+    #[must_use] pub fn new(node: Node, weight: f32) -> WeightedCell {
         WeightedCell { node, weight }
     }
 }

@@ -41,7 +41,7 @@ pub struct Heuristic {
 
 impl Heuristic {
     /// Initialize self with goal and width
-    pub fn new(goal: Node, width: usize) -> Self {
+    #[must_use] pub fn new(goal: Node, width: usize) -> Self {
         Heuristic {
             goal: index_to_xy(goal, width),
             width,
@@ -49,7 +49,7 @@ impl Heuristic {
     }
 
     /// Octile distance between two points
-    pub fn calc(&self, node: Node) -> f32 {
+    #[must_use] pub fn calc(&self, node: Node) -> f32 {
         let start = index_to_xy(node, self.width);
         let x_distance: f32 = ((start.0 as f32) - (self.goal.0 as f32)).abs();
         let y_distance: f32 = ((start.1 as f32) - (self.goal.1 as f32)).abs();

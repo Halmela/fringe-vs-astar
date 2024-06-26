@@ -1,7 +1,7 @@
 use self::action::Action;
 use self::bucket::Bucket;
-use self::cache::*;
-use self::fringe::*;
+use self::cache::{Cache, Value};
+use self::fringe::Fringe;
 use super::Heuristic;
 use super::State;
 
@@ -33,7 +33,7 @@ pub struct FringeSearch<'a> {
 
 impl<'a> FringeSearch<'a> {
     /// Initialize the search with a start, goal and a graph to be acted upon.
-    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
+    #[must_use] pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let heuristic = Heuristic::new(goal, graph.get_width());
         let cache = Cache::new(start, size, heuristic);
@@ -52,9 +52,9 @@ impl<'a> FringeSearch<'a> {
     /// I would like to unroll this main loop at some point to expose the datastructures at different points of search.
     ///
     /// Main idea here is to get a new node from now-queue, process it and maybe return it.
-    /// If now is empty, then try to prepare datastructures for next iteration (f_min -> f_limit and later -> now).
+    /// If now is empty, then try to prepare datastructures for next iteration (`f_min` -> `f_limit` and later -> now).
     /// If now is empty and later is empty, then no further search can be conducted and thus a path can be found and `None` is returned.
-    pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
+    #[must_use] pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         loop {
             if let Some(node) = self.fringe.pop_now() {
                 if let Some(_goal) = self.process_node(node) {
@@ -136,7 +136,7 @@ impl<'a> FringeSearch<'a> {
     }
 
     /// Add current state to Printable
-    pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+    #[must_use] pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         self.fringe
             .buckets
             .iter()
@@ -162,7 +162,7 @@ impl<'a> FringeSearch<'a> {
         print.add_header("|Now|", self.fringe.now.len());
         let current_l = self.fringe.buckets[self.fringe.current as usize].len();
         print.add_header(format!("|{:?}|", self.fringe.current), current_l);
-        let later_total: usize = self.fringe.buckets.iter().map(|b| b.len()).sum();
+        let later_total: usize = self.fringe.buckets.iter().map(std::vec::Vec::len).sum();
         print.add_header("|Later|", later_total);
         if later_total > 0 {
             print.add_header(
@@ -175,19 +175,19 @@ impl<'a> FringeSearch<'a> {
         print
     }
 
-    pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
         self.cache.get_cost(node)
     }
-    pub fn get_estimate(&self, node: Node) -> f32 {
+    #[must_use] pub fn get_estimate(&self, node: Node) -> f32 {
         self.cache[node].estimate
     }
-    pub fn now_size(&self) -> usize {
+    #[must_use] pub fn now_size(&self) -> usize {
         self.fringe.now.len()
     }
-    pub fn bucket_size(&self) -> usize {
+    #[must_use] pub fn bucket_size(&self) -> usize {
         self.fringe.current().len()
     }
-    pub fn later_size(&self) -> usize {
-        self.fringe.buckets.iter().map(|b| b.len()).sum()
+    #[must_use] pub fn later_size(&self) -> usize {
+        self.fringe.buckets.iter().map(std::vec::Vec::len).sum()
     }
 }

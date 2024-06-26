@@ -23,7 +23,7 @@ pub struct AStar<'a> {
 
 impl<'a> AStar<'a> {
     /// Create solver of a problem for a graph
-    pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
+    #[must_use] pub fn new(start: Node, goal: Node, graph: &'a Graph) -> Self {
         let size = graph.get_width() * graph.get_height();
         let frontier = Frontier::new(start, size);
 
@@ -40,7 +40,7 @@ impl<'a> AStar<'a> {
     }
 
     /// Try to solve the problem
-    pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
+    #[must_use] pub fn solve(mut self) -> Option<(Vec<Node>, f32)> {
         while let Some(node) = self.frontier.pop() {
             if node == self.goal {
                 return Some(self.construct_path());
@@ -96,7 +96,7 @@ impl<'a> AStar<'a> {
     }
 
     /// Add current state to Printable
-    pub fn add_to_printable(&self, mut print: Printable) -> Printable {
+    #[must_use] pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         let mut closed = 0;
         self.cache
             .iter()
@@ -104,7 +104,7 @@ impl<'a> AStar<'a> {
             .filter(|(_, n)| n.cost != 0.0)
             .for_each(|(i, _)| {
                 closed += 1;
-                print.add_inclosed(i.try_into().unwrap())
+                print.add_inclosed(i.try_into().unwrap());
             });
 
         self.frontier.iter().for_each(|n| print.add_infrontier(*n));
@@ -128,17 +128,17 @@ impl<'a> AStar<'a> {
     }
 
     /// Get current cost of a [`Node`]
-    pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
         self.cache.get_cost(node)
     }
 
     /// Get current estimate of a [`Node`]
-    pub fn get_estimate(&self, node: Node) -> f32 {
+    #[must_use] pub fn get_estimate(&self, node: Node) -> f32 {
         self.cache.get_estimate(node)
     }
 
     /// Get size of [`Frontier`]
-    pub fn size(&self) -> usize {
+    #[must_use] pub fn size(&self) -> usize {
         self.frontier.size()
     }
 }

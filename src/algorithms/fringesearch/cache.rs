@@ -51,7 +51,7 @@ pub struct Cache {
 
 impl Cache {
     /// Initialize cache
-    pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
+    #[must_use] pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
         let mut cache: Vec<Value> = vec![Default::default(); size];
         let f_limit = heuristic.calc(start);
         cache[start as usize].cost = 0.0;
@@ -107,15 +107,15 @@ impl Cache {
     }
 
     /// Get cost of a node
-    pub fn get_cost(&self, node: Node) -> f32 {
+    #[must_use] pub fn get_cost(&self, node: Node) -> f32 {
         self[node].cost
     }
 
-    /// Update f_limit value and +1 to the iteration count used for counting if a node is in later
+    /// Update `f_limit` value and +1 to the iteration count used for counting if a node is in later
     pub fn refresh_limits(&mut self, lower_limit: u8) {
         // Really uglly haccck for the times when floor(f_limit+lower_limit) was found on earlier iterations
         if lower_limit > 0 {
-            self.f_limit = (self.f_limit + lower_limit as f32).floor();
+            self.f_limit = (self.f_limit + f32::from(lower_limit)).floor();
         }
         // Really funky behavior without this check
         else if self.f_min != f32::MAX {

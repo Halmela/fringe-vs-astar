@@ -42,7 +42,7 @@ pub struct Solver {
 
 impl Solver {
     /// Initialize self
-    pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
+    #[must_use] pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
         Solver {
             algorithm,
             result,
@@ -53,7 +53,7 @@ impl Solver {
 
     /// Run the algorithm with wanted printing mode
     pub fn run(self) {
-        match (self.algorithm, self.result.to_owned()) {
+        match (self.algorithm, self.result.clone()) {
             (Algorithm::AStar, Result::EndState(p)) => self.full_astar(p, false),
             (Algorithm::AStar, Result::Full(p)) => self.full_astar(p, true),
             (Algorithm::AStar, Result::Time(p)) => self.timed_astar(p),
@@ -77,9 +77,7 @@ impl Solver {
 
         printable.add_header(
             "Duration",
-            duration
-                .map(|d| format!("{:?}", d))
-                .unwrap_or_else(|| "Error in timing".to_string()),
+            duration.map_or_else(|| "Error in timing".to_string(), |d| format!("{d:?}")),
         );
         if let Some((path, length)) = solution {
             printable.add_path(path);
@@ -102,9 +100,7 @@ impl Solver {
 
         printable.add_header(
             "Duration",
-            duration
-                .map(|d| format!("{:?}", d))
-                .unwrap_or_else(|| "Error in timing".to_string()),
+            duration.map_or_else(|| "Error in timing".to_string(), |d| format!("{d:?}")),
         );
 
         if let Some((path, length)) = solution {

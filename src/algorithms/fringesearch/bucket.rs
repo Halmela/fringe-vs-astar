@@ -27,7 +27,7 @@ pub enum Bucket {
 
 impl Bucket {
     /// Add 1 to the value, wrap to Zero if it was Seven (just like modulo works)
-    pub fn add(self) -> Bucket {
+    #[must_use] pub fn add(self) -> Bucket {
         match self {
             Bucket::Zero => Bucket::One,
             Bucket::One => Bucket::Two,

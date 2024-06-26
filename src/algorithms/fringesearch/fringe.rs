@@ -14,7 +14,7 @@ pub struct Fringe {
 
 impl Fringe {
     /// Create new Fringe
-    pub fn new(start: Node, size: usize, f_limit: f32) -> Self {
+    #[must_use] pub fn new(start: Node, size: usize, f_limit: f32) -> Self {
         let mut now = Vec::with_capacity(size);
         now.push(start);
 
@@ -26,7 +26,7 @@ impl Fringe {
     }
 
     /// Fast access to current bucket
-    pub fn current(&self) -> &Vec<Node> {
+    #[must_use] pub fn current(&self) -> &Vec<Node> {
         &self[self.current]
     }
 
@@ -45,7 +45,7 @@ impl Fringe {
         self.now.pop()
     }
 
-    /// Rotate later-buckets until a suitable is found, empty it to now and return the amount of rotations for f_limit fixing.
+    /// Rotate later-buckets until a suitable is found, empty it to now and return the amount of rotations for `f_limit` fixing.
     /// Returns `None` if all buckets are empty.
     pub fn later_to_now(&mut self) -> Option<u8> {
         // Rotate buckets until a suitable is found
