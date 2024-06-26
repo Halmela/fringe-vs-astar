@@ -4,17 +4,16 @@ use std::ops::{Index, IndexMut};
 
 /// A* cache value. Holds parent, cost, heuristic (calculated once) and estimate
 #[derive(Clone, Copy)]
-pub struct CacheValue {
+pub struct Value {
     pub parent: Node,
     pub cost: f32,
     heuristic: f32,
     estimate: f32,
 }
 
-impl CacheValue {
-    /// Initialize self
-    pub fn new() -> Self {
-        CacheValue {
+impl Default for Value {
+    fn default() -> Self {
+        Value {
             parent: 0,
             cost: 0.0,
             heuristic: f32::MAX,
@@ -25,13 +24,14 @@ impl CacheValue {
 
 /// A* cache, can be indexed as `cache[node]`.
 pub struct Cache {
-    cache: Vec<CacheValue>,
+    cache: Vec<Value>,
     heuristic: Heuristic,
 }
 
 impl Cache {
+    /// Initialize with start
     pub fn new(start: Node, heuristic: Heuristic, size: usize) -> Self {
-        let mut cache = vec![CacheValue::new(); size];
+        let mut cache = vec![Value::default(); size];
         cache[start as usize].parent = start;
         cache[start as usize].heuristic = heuristic.calc(start);
 
@@ -67,17 +67,18 @@ impl Cache {
     }
 
     /// Ergonomy iterator for own cache
-    pub fn iter(&self) -> impl Iterator<Item = &CacheValue> {
+    pub fn iter(&self) -> impl Iterator<Item = &Value> {
         self.cache.iter()
     }
 
+    /// Get estimate of a [`Node`]
     pub fn get_estimate(&self, node: u32) -> f32 {
         self[node].estimate
     }
 }
 
 impl Index<Node> for Cache {
-    type Output = CacheValue;
+    type Output = Value;
 
     fn index(&self, index: Node) -> &Self::Output {
         &self.cache[index as usize]

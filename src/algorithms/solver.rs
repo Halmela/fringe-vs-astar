@@ -1,21 +1,20 @@
-use crate::algorithms::AStar;
-use crate::algorithms::FringeSearch;
-use crate::algorithms::State;
+use super::{AStar, FringeSearch, State};
 use crate::printable::Printable;
 use crate::problem::Problem;
 use crate::structures::Graph;
-use crate::xy_to_index;
 use std::cmp::max;
 use std::fmt;
 use std::fmt::Display;
 use std::time::Instant;
 
+/// Different algorithms as enums
 #[derive(Clone, Copy)]
 pub enum Algorithm {
     AStar,
     Fringe,
 }
 
+/// Represent what is wanted as the result of a solving process.
 #[derive(Clone)]
 pub enum Result {
     Time(Printable),
@@ -33,31 +32,26 @@ impl Display for Result {
     }
 }
 
+/// Runner for A* and Fringe search. Handles printing according to `Result` value.
 pub struct Solver {
     algorithm: Algorithm,
     result: Result,
     problem: Problem,
     graph: Graph,
-    width: usize,
 }
 
 impl Solver {
-    pub fn new(
-        algorithm: Algorithm,
-        result: Result,
-        problem: Problem,
-        graph: Graph,
-        width: usize,
-    ) -> Self {
+    /// Initialize self
+    pub fn new(algorithm: Algorithm, result: Result, problem: Problem, graph: Graph) -> Self {
         Solver {
             algorithm,
             result,
             problem,
             graph,
-            width,
         }
     }
 
+    /// Run the algorithm with wanted printing mode
     pub fn run(self) {
         match (self.algorithm, self.result.to_owned()) {
             (Algorithm::AStar, Result::EndState(p)) => self.full_astar(p, false),
@@ -69,9 +63,10 @@ impl Solver {
         }
     }
 
+    /// Run A* search and add path and timing to [`Printable`] before printing it.
     fn timed_astar(self, mut printable: Printable) {
-        let start = xy_to_index(self.problem.start_x, self.problem.start_y, self.width);
-        let goal = xy_to_index(self.problem.goal_x, self.problem.goal_y, self.width);
+        let start = self.problem.start;
+        let goal = self.problem.goal;
         let now = Instant::now();
 
         let astar = AStar::new(start, goal, &self.graph);
@@ -93,9 +88,10 @@ impl Solver {
         println!("{printable}");
     }
 
+    /// Run Fringe search and add path and timing to [`Printable`] before printing it.
     fn timed_fringe(self, mut printable: Printable) {
-        let start = xy_to_index(self.problem.start_x, self.problem.start_y, self.width);
-        let goal = xy_to_index(self.problem.goal_x, self.problem.goal_y, self.width);
+        let start = self.problem.start;
+        let goal = self.problem.goal;
         let now = Instant::now();
 
         let fringe = FringeSearch::new(start, goal, &self.graph);
@@ -118,11 +114,55 @@ impl Solver {
         println!("{printable}");
     }
 
-    fn printed_fringe(self, printable: Printable, full: bool) {
-        let start = xy_to_index(self.problem.start_x, self.problem.start_y, self.width);
-        let goal = xy_to_index(self.problem.goal_x, self.problem.goal_y, self.width);
+    /// Run A* search and collect statistics and inner state.
+    /// `full` indicates if every state of solving process should be printed.
+    fn full_astar(self, printable: Printable, full: bool) {
+        let mut astar = AStar::new(self.problem.start, self.problem.goal, &self.graph);
+        let mut actions = 0;
+        let mut max_open = 0;
 
-        let mut fringe = FringeSearch::new(start, goal, &self.graph);
+        println!("{printable}");
+
+        loop {
+            actions += 1;
+            match astar.progress() {
+                State::Processing(node) => {
+                    max_open = max(max_open, astar.size());
+                    if full {
+                        let mut print = printable.clone();
+                        print.add_header("Iteration", actions);
+                        print = astar.add_to_printable(print);
+                        print.add_current(node);
+                        print.add_spacing();
+                        print.add_header("Current", "");
+                        print.add_header("  cost", astar.get_cost(node));
+                        print.add_header("  estimate", astar.get_estimate(node));
+                        println!("{print}");
+                    }
+                }
+                State::Finished((path, cost)) => {
+                    let mut print = printable.clone();
+                    print.add_header("Iteration", actions);
+                    print = astar.add_to_printable(print);
+                    print.add_path(path);
+                    print.add_header("Length", cost);
+                    print.add_spacing();
+                    print.add_header("Max |Open|", max_open);
+                    println!("{print}");
+                    break;
+                }
+                State::NotFound => {
+                    println!("Path not found");
+                    break;
+                }
+            }
+        }
+    }
+
+    /// Run Fringe search and collect statistics and inner state.
+    /// `full` indicates if every state of solving process should be printed.
+    fn printed_fringe(self, printable: Printable, full: bool) {
+        let mut fringe = FringeSearch::new(self.problem.start, self.problem.goal, &self.graph);
         let mut iterations = 0;
         let mut max_now = 0;
         let mut max_current = 0;
@@ -157,54 +197,10 @@ impl Solver {
                     print.add_path(path);
                     print.add_header("Length", cost);
                     print.add_spacing();
-                    print.add_header("Max |Now|", max_now);
-                    print.add_header("Max |Bucket|", max_current);
-                    print.add_header("Max |Later|", max_later);
-                    println!("{print}");
-                    break;
-                }
-                State::NotFound => {
-                    println!("Path not found");
-                    break;
-                }
-            }
-        }
-    }
-    fn full_astar(self, printable: Printable, full: bool) {
-        let start = xy_to_index(self.problem.start_x, self.problem.start_y, self.width);
-        let goal = xy_to_index(self.problem.goal_x, self.problem.goal_y, self.width);
-
-        let mut astar = AStar::new(start, goal, &self.graph);
-        let mut actions = 0;
-        let mut max_open = 0;
-
-        println!("{printable}");
-
-        loop {
-            actions += 1;
-            match astar.progress() {
-                State::Processing(node) => {
-                    max_open = max(max_open, astar.size());
-                    if full {
-                        let mut print = printable.clone();
-                        print.add_header("Iteration", actions);
-                        print = astar.add_to_printable(print);
-                        print.add_current(node);
-                        print.add_spacing();
-                        print.add_header("Current", "");
-                        print.add_header("  cost", astar.get_cost(node));
-                        print.add_header("  estimate", astar.get_estimate(node));
-                        println!("{print}");
-                    }
-                }
-                State::Finished((path, cost)) => {
-                    let mut print = printable.clone();
-                    print.add_header("Iteration", actions);
-                    print = astar.add_to_printable(print);
-                    print.add_path(path);
-                    print.add_header("Length", cost);
-                    print.add_spacing();
-                    print.add_header("Max |Open|", max_open);
+                    print.add_header("Max", "");
+                    print.add_header("  |Now|", max_now);
+                    print.add_header("  |Bucket|", max_current);
+                    print.add_header("  |Later|", max_later);
                     println!("{print}");
                     break;
                 }

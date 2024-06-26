@@ -4,15 +4,17 @@
 pub mod astar;
 pub use crate::algorithms::astar::AStar;
 
-/// Fringe path finder
+/// Fringe search path finder
 pub mod fringesearch;
 pub use crate::algorithms::fringesearch::FringeSearch;
 
+/// Runner for search algorithms
 pub mod solver;
 pub use crate::algorithms::solver::*;
 
 use crate::{index_to_xy, Node, DIAGONAL_COST};
 
+/// Enumerator for representing different stages of pathfinding.
 pub enum State {
     Finished((Vec<Node>, f32)),
     Processing(Node),

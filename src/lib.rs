@@ -44,5 +44,5 @@ pub fn index_to_xy(i: Node, width: usize) -> (usize, usize) {
     ((i as usize) % width, (i as usize) / width)
 }
 
-/// Type alias for Node. This is calculated with [`xy_to_index`].
+/// Type alias for u32. This is calculated with [`xy_to_index`].
 pub type Node = u32;

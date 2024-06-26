@@ -2,6 +2,7 @@ use crate::structures::map::*;
 use crate::Node;
 use crate::{xy_to_index, DIAGONAL_COST};
 
+/// Adjacency listed representation of a [`Map`].
 #[derive(Clone)]
 pub struct Graph {
     adjacency_list: Vec<Vec<(Node, f32)>>,
@@ -33,13 +34,16 @@ impl Graph {
             width: map.get_width(),
         }
     }
+    /// Return neighbors of a `Node`
     pub fn neighbors(&self, i: Node) -> std::slice::Iter<'_, (Node, f32)> {
         self.adjacency_list[i as usize].iter()
     }
 
+    /// Get height of map
     pub fn get_height(&self) -> usize {
         self.height
     }
+    /// Get width of map
     pub fn get_width(&self) -> usize {
         self.width
     }

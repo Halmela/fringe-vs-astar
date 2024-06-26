@@ -4,4 +4,4 @@ pub use crate::structures::graph::Graph;
 
 /// Representation of a file as boolean structure
 pub mod map;
-//pub use crate::structures::map::*;
+pub use crate::structures::map::Map;

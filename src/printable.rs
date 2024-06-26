@@ -59,16 +59,10 @@ impl Printable {
     }
 
     pub fn add_problem(&mut self, problem: &Problem) {
-        self.grid[problem.start_y][problem.start_x] = Cell::Start;
-        self.grid[problem.goal_y][problem.goal_x] = Cell::Goal;
+        self.add_start(problem.start);
+        self.add_goal(problem.goal);
         self.add_header("Problem", format!("{}", problem.number));
-        self.add_header(
-            "",
-            format!(
-                "({}, {}) -> ({}, {})",
-                problem.start_x, problem.start_y, problem.goal_x, problem.goal_y
-            ),
-        );
+        self.add_header("", problem.coordinates());
         if let Some(l) = problem.length {
             self.add_header("Expected", l);
         }
@@ -128,38 +122,6 @@ impl Printable {
         self.headers.push((String::new(), String::new()));
     }
 
-    fn map_longer_than_headers(&self) -> String {
-        self.grid
-            .iter()
-            .zip(
-                self.headers
-                    .iter()
-                    .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
-                    .chain(std::iter::repeat(String::from("\n"))),
-            )
-            .flat_map(|(row, header)| {
-                row.iter()
-                    .map(|cell| char::from(*cell))
-                    .chain(header.chars().collect::<Vec<char>>())
-            })
-            .collect()
-    }
-
-    fn headers_longer_than_map(&self) -> String {
-        self.headers
-            .iter()
-            .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
-            .zip(
-                self.grid
-                    .iter()
-                    .map(|row| row.iter().map(|cell| char::from(*cell)).collect::<String>())
-                    .chain(repeat("➖".repeat(self.width))),
-            )
-            .fold(String::new(), |acc, (header, row)| {
-                format!("{acc}{row}{header}")
-            })
-    }
-
     fn _big_map(&self) -> String {
         let map: String = self
             .grid
@@ -211,13 +173,23 @@ impl fmt::Display for Printable {
         if !self.print_map {
             return write!(f, "#\n{}", self.headers());
         }
-        /* if self.width > 80 {
-            return write!(f, "#\n{}", self.big_map());
-        } */
-        if self.grid.len() > self.headers.len() {
-            write!(f, "#\n{}", self.map_longer_than_headers())
-        } else {
-            write!(f, "#\n{}", self.headers_longer_than_map())
-        }
+
+        let result = self
+            .grid
+            .iter()
+            .map(|row| row.iter().map(|cell| char::from(*cell)).collect())
+            .chain(repeat("➖".repeat(self.width)))
+            .zip(
+                self.headers
+                    .iter()
+                    .map(|(k, v)| format!("\t{:<10} {}\n", k, v))
+                    .chain(std::iter::repeat(String::from("\n"))),
+            )
+            .take_while(|(row, header)| !(row.contains('➖') && header == "\n"))
+            .fold(String::new(), |acc, (row, header)| {
+                format!("{acc}{row}{header}")
+            });
+
+        write!(f, "#\n{result}")
     }
 }

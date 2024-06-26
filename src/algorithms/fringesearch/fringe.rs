@@ -25,6 +25,11 @@ impl Fringe {
         }
     }
 
+    /// Fast access to current bucket
+    pub fn current(&self) -> &Vec<Node> {
+        &self[self.current]
+    }
+
     /// Push node to be processed in this iteration
     pub fn push_now(&mut self, node: Node) {
         self.now.push(node);
@@ -40,7 +45,8 @@ impl Fringe {
         self.now.pop()
     }
 
-    /// Rotate later-buckets until a suitable is found, empty it to now and return the rotation-amount for f_limit fixing
+    /// Rotate later-buckets until a suitable is found, empty it to now and return the amount of rotations for f_limit fixing.
+    /// Returns `None` if all buckets are empty.
     pub fn later_to_now(&mut self) -> Option<u8> {
         // Rotate buckets until a suitable is found
         let mut i = 0;
@@ -48,7 +54,7 @@ impl Fringe {
             if i == 8 {
                 return None;
             }
-            if self[self.current].is_empty() {
+            if self.current().is_empty() {
                 self.current = self.current.add();
                 i += 1;
             } else {
@@ -57,7 +63,7 @@ impl Fringe {
         }
 
         let current = self.current;
-        self.now.append(&mut self[self.current].to_owned());
+        self.now.append(&mut self.current().to_owned());
         self[current].clear();
 
         Some(i)

@@ -4,6 +4,13 @@ use std::fmt;
 
 /// Cell with a weight. IMPORTANT: lower weights are ordered as greater.
 /// This allows us to use binary heap
+/// ```
+/// # use fringe_vs_astar::algorithms::astar::weighted_cell::WeightedCell;
+/// let w1 = WeightedCell::new(0, 1.0);
+/// let w2 = WeightedCell::new(0, 2.0);
+///
+/// assert!(w1 > w2)
+/// ```
 #[derive(Debug, Copy, Clone)]
 pub struct WeightedCell {
     pub node: Node,

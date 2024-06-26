@@ -9,10 +9,14 @@ use crate::printable::Printable;
 use crate::structures::Graph;
 use crate::Node;
 
-mod action;
+/// Enum for representing an action for some [`Node`]
+pub mod action;
+/// Enum for accessing a bucket in [`Fringe`]
 pub mod bucket;
-mod cache;
-mod fringe;
+/// Cached values used in algorithm
+pub mod cache;
+/// Datastructure for holding [`Node`]s to be processed
+pub mod fringe;
 
 /// Fringe search implementation.
 /// Fringe holds now- and later-queues and Cache holds information on nodes.
@@ -149,7 +153,7 @@ impl<'a> FringeSearch<'a> {
             .cache
             .iter()
             .enumerate()
-            .filter(|(_, n): &(usize, &CacheValue)| n.closed)
+            .filter(|(_, n): &(usize, &Value)| n.closed)
             .for_each(|(i, _)| print.add_inclosed(i.try_into().unwrap()));
 
         print.add_start(self.start);
@@ -181,7 +185,7 @@ impl<'a> FringeSearch<'a> {
         self.fringe.now.len()
     }
     pub fn bucket_size(&self) -> usize {
-        self.fringe[self.fringe.current].len()
+        self.fringe.current().len()
     }
     pub fn later_size(&self) -> usize {
         self.fringe.buckets.iter().map(|b| b.len()).sum()

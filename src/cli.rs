@@ -6,10 +6,15 @@ use std::path::{Path, PathBuf};
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// How program is executed.
-    /// print-map prints the map ;
-    /// print prints the map with problems ;
-    /// a-star solves using A* ;
-    /// fringe solves using Fringe Search ;
+    ///
+    /// print-map prints the map
+    ///
+    /// print prints the map with problems
+    ///
+    /// a-star solves using A*
+    ///
+    /// fringe solves using Fringe Search
+    ///
     /// compare compares a-star and fringe
     #[arg(value_enum)]
     pub mode: Mode,
@@ -26,7 +31,18 @@ pub struct Cli {
     #[arg(short = 'n', long, value_name = "PROBLEM NUMBER")]
     pub problem_number: Option<usize>,
 
-    /// Suppress output. First removes printing of maps, second removes printing of problems, third removes printing of everything.
+    /// Different outputting modes, default level is 0
+    ///
+    /// 0 prints map and information before and after solving. Does not time.
+    ///
+    /// 1 prints information before and after solving. Does not time.
+    ///
+    /// 2 prints map and some information after solving. Times execution time.
+    ///
+    /// 3 prints some information after solving. Times execution time.
+    ///
+    /// 4+ prints map and information before and after solving and during each step. Does not time.
+    /// It is recommended to pipe this to less or some other pager or file because this produces a long print.
     #[arg(short, long, default_value_t = 0, action = clap::ArgAction::Count)]
     pub silent: u8,
 }

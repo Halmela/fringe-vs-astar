@@ -7,11 +7,12 @@ use self::cache::Cache;
 use self::frontier::Frontier;
 use self::weighted_cell::WeightedCell;
 
-mod cache;
-mod frontier;
-mod weighted_cell;
+pub mod cache;
+pub mod frontier;
+pub mod weighted_cell;
 
 /// A* pathfinder
+/// Main datastructures are [`Frontier`] and [`Cache`].
 pub struct AStar<'a> {
     frontier: Frontier,
     cache: Cache,
@@ -126,12 +127,17 @@ impl<'a> AStar<'a> {
         print
     }
 
+    /// Get current cost of a [`Node`]
     pub fn get_cost(&self, node: Node) -> f32 {
         self.cache.get_cost(node)
     }
+
+    /// Get current estimate of a [`Node`]
     pub fn get_estimate(&self, node: Node) -> f32 {
         self.cache.get_estimate(node)
     }
+
+    /// Get size of [`Frontier`]
     pub fn size(&self) -> usize {
         self.frontier.size()
     }

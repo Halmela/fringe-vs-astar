@@ -2,12 +2,9 @@ use crate::algorithms::*;
 use crate::cli::*;
 use crate::printable::Printable;
 use crate::problem::{Problem, Problems};
-use crate::structures::graph::Graph;
-use crate::structures::map::Map;
-use crate::xy_to_index;
+use crate::structures::{Graph, Map};
 use crate::Node;
 
-use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -29,7 +26,8 @@ impl Context {
     pub fn new(cli: Cli) -> Option<Self> {
         let scenario_file = cli
             .problem_file
-            .unwrap_or_else(|| deduce_problem_file(cli.map_file.clone()));
+            .unwrap_or_else(|| Problems::deduce_problem_file(cli.map_file.clone()));
+
         if cli.silent <= 2 {
             println!("Using scenario file {}", scenario_file.to_str().unwrap());
         }
@@ -71,17 +69,9 @@ impl Context {
         })
     }
 
+    /// Strip down everything unnecessary and return [`BareContext`] that is more suitable for benchmarking
     pub fn bare(self) -> BareContext {
-        let bare_problems = self
-            .problems
-            .iter()
-            .map(|p| {
-                (
-                    xy_to_index(p.start_x, p.start_y, self.map.get_width()),
-                    xy_to_index(p.goal_x, p.goal_y, self.map.get_width()),
-                )
-            })
-            .collect();
+        let bare_problems = self.problems.iter().map(|p| (p.start, p.goal)).collect();
         BareContext {
             graph: self.graph,
             bare_problems,
@@ -180,13 +170,7 @@ impl Context {
             _ => Result::Full(printable),
         };
 
-        let solver = Solver::new(
-            algorithm,
-            result,
-            problem,
-            self.graph.to_owned(),
-            self.map.get_width(),
-        );
+        let solver = Solver::new(algorithm, result, problem, self.graph.to_owned());
         solver.run();
     }
 
@@ -261,11 +245,9 @@ impl Context {
     }
 
     fn timed_astar(&self, problem: &Problem) -> (Option<(Vec<Node>, f32)>, Option<Duration>) {
-        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
-        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
 
-        let astar = AStar::new(start, goal, &self.graph);
+        let astar = AStar::new(problem.start, problem.goal, &self.graph);
         let solution = astar.solve();
 
         let done = Instant::now();
@@ -275,11 +257,9 @@ impl Context {
     }
 
     fn timed_fringe(&self, problem: &Problem) -> (Option<(Vec<Node>, f32)>, Option<Duration>) {
-        let start = xy_to_index(problem.start_x, problem.start_y, self.map.get_width());
-        let goal = xy_to_index(problem.goal_x, problem.goal_y, self.map.get_width());
         let now = Instant::now();
 
-        let fringe = FringeSearch::new(start, goal, &self.graph);
+        let fringe = FringeSearch::new(problem.start, problem.goal, &self.graph);
         let solution = fringe.solve();
 
         let done = Instant::now();
@@ -356,26 +336,15 @@ impl Context {
     }
 }
 
-fn deduce_problem_file(mut path: PathBuf) -> PathBuf {
-    path.set_extension("map.scenario");
-    if path.as_path().try_exists().is_ok_and(|b| b) {
-        return path;
-    }
-
-    path.set_extension("scen");
-    if path.as_path().try_exists().is_ok_and(|b| b) {
-        return path;
-    }
-
-    panic!("Could not find a default problem file for map with extensions .scenario or .scen");
-}
-
+/// Stripped down version of [`Context`] used only for benchmarking.
+/// Contains only the graph and a list of pre processed problems.
 pub struct BareContext {
     graph: Graph,
     bare_problems: Vec<(Node, Node)>,
 }
 
 impl BareContext {
+    /// Solve problems using A* and drop the results
     pub fn astar(&self) {
         for (start, goal) in &self.bare_problems {
             let astar = AStar::new(*start, *goal, &self.graph);
@@ -384,6 +353,7 @@ impl BareContext {
         }
     }
 
+    /// Solve problems using Fringe search and drop the results
     pub fn fringe(&self) {
         for (start, goal) in &self.bare_problems {
             let fringe = FringeSearch::new(*start, *goal, &self.graph);
