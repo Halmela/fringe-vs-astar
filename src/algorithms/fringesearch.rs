@@ -117,7 +117,7 @@ impl<'a> FringeSearch<'a> {
         self.graph
             .neighbors(node)
             .filter_map(|(child, c)| self.cache.check(*child, node, *c))
-            .for_each(|child| self.fringe.push_now(child));
+            .for_each(|child| self.fringe.push(child));
     }
 
     /// Reconstruct path that was found

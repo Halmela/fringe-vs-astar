@@ -23,11 +23,13 @@ pub enum Bucket {
     Five,
     Six,
     Seven,
+    None,
 }
 
 impl Bucket {
     /// Add 1 to the value, wrap to Zero if it was Seven (just like modulo works)
-    #[must_use] pub fn add(self) -> Bucket {
+    #[must_use]
+    pub fn add(self) -> Bucket {
         match self {
             Bucket::Zero => Bucket::One,
             Bucket::One => Bucket::Two,
@@ -37,6 +39,7 @@ impl Bucket {
             Bucket::Five => Bucket::Six,
             Bucket::Six => Bucket::Seven,
             Bucket::Seven => Bucket::Zero,
+            Bucket::None => Bucket::None,
         }
     }
 }
@@ -67,6 +70,7 @@ impl From<Bucket> for usize {
             Bucket::Five => 5,
             Bucket::Six => 6,
             Bucket::Seven => 7,
+            Bucket::None => usize::MAX, // We want this to fail
         }
     }
 }

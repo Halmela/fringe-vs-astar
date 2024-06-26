@@ -19,7 +19,7 @@ pub struct Value {
     pub estimate: f32,
     pub later: u32,
     pub closed: bool,
-    pub bucket: Option<Bucket>,
+    pub bucket: Bucket,
 }
 
 impl Default for Value {
@@ -31,7 +31,7 @@ impl Default for Value {
             estimate: f32::MAX,
             later: 0,
             closed: false,
-            bucket: None,
+            bucket: Bucket::None,
         }
     }
 }
@@ -75,28 +75,26 @@ impl Cache {
         if self[node].closed {
             return Action::Nothing;
         }
-        match self[node].estimate {
-            e if e <= self.f_limit => {
-                self[node].closed = true;
-                Action::Process(node)
-            }
-            e if e < self.f_min => {
-                self.f_min = e;
-                self.later_or_nothing(node)
-            }
-            _ => self.later_or_nothing(node),
+        if self[node].estimate <= self.f_limit {
+            self[node].closed = true;
+            Action::Process(node)
+        } else {
+            self.later_or_nothing(node)
         }
     }
 
     /// Update value of a node with given `cost` and `parent`
     ///
     /// Also calculates `heuristic`, `estimate` and `bucket` in advance
-    pub fn update(&mut self, node: Node, cost: f32, parent: Node) {
+    pub fn update(&mut self, node: Node, cost: f32, parent: Node) -> Bucket {
         self[node].cost = cost;
         self[node].parent = parent;
         self[node].estimate = cost + self.get_heuristic(node);
         self[node].closed = false;
-        self[node].bucket = Some(Bucket::from(self[node].estimate));
+        let bucket = Bucket::from(self[node].estimate);
+        self[node].bucket = bucket;
+
+        bucket
     }
 
     /// Get heuristic value from cache or calculate it
@@ -130,12 +128,11 @@ impl Cache {
     /// Decide if a child-node should be added to the now-queue.
     /// It's value is updated, if it is added.
     /// This returns `Option<Node` because it allows neat `filter_map` on the call site.
-    pub fn check(&mut self, child: Node, parent: Node, move_cost: f32) -> Option<Node> {
+    pub fn check(&mut self, child: Node, parent: Node, move_cost: f32) -> Option<(Node, Bucket)> {
         let new_cost = self[parent].cost + move_cost;
 
         if new_cost < self[child].cost {
-            self.update(child, new_cost, parent);
-            Some(child)
+            Some((child, self.update(child, new_cost, parent)))
         } else {
             None
         }
@@ -143,12 +140,15 @@ impl Cache {
 
     /// Add node to later if it is not already there
     fn later_or_nothing(&mut self, node: Node) -> Action {
+        if self[node].estimate < self.f_min {
+            self.f_min = self[node].estimate;
+        }
         self[node].closed = false;
         if self[node].later == self.iteration {
             Action::Nothing
         } else {
             self[node].later = self.iteration;
-            Action::ToLater((node, self[node].bucket.unwrap())) // Bucket will always be present, when we get here
+            Action::ToLater((node, self[node].bucket))
         }
     }
 }

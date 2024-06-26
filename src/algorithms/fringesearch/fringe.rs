@@ -14,7 +14,8 @@ pub struct Fringe {
 
 impl Fringe {
     /// Create new Fringe
-    #[must_use] pub fn new(start: Node, size: usize, f_limit: f32) -> Self {
+    #[must_use]
+    pub fn new(start: Node, size: usize, f_limit: f32) -> Self {
         let mut now = Vec::with_capacity(size);
         now.push(start);
 
@@ -26,8 +27,17 @@ impl Fringe {
     }
 
     /// Fast access to current bucket
-    #[must_use] pub fn current(&self) -> &Vec<Node> {
+    #[must_use]
+    pub fn current(&self) -> &Vec<Node> {
         &self[self.current]
+    }
+
+    pub fn push(&mut self, (node, bucket): (Node, Bucket)) {
+        if bucket == self.current {
+            self.now.push(node);
+        } else {
+            self[bucket].push(node);
+        }
     }
 
     /// Push node to be processed in this iteration
