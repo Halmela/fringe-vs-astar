@@ -111,7 +111,7 @@ impl<'a> AStar<'a> {
             });
 
         self.frontier.iter().for_each(|n| print.add_infrontier(*n));
-        /* let top3 = self.frontier.top3();
+        let top3 = self.frontier.top3();
         if let Some(first) = top3.0 {
             print.add_first(first);
         }
@@ -120,7 +120,7 @@ impl<'a> AStar<'a> {
         }
         if let Some(third) = top3.2 {
             print.add_third(third);
-        } */
+        }
         print.add_header("|Open|", self.frontier.size());
         print.add_header("|Closed|", closed - self.frontier.size());
 

@@ -47,8 +47,10 @@ impl Frontier {
 
         (
             v.last().copied(),
-            v.get(v.len() - 2).copied(),
-            v.get(v.len() - 3).copied(),
+            // v.get(v.len() - 2).copied(),
+            // v.get(v.len() - 3).copied(),
+            v.len().checked_sub(2).and_then(|i| v.get(i)).copied(),
+            v.len().checked_sub(3).and_then(|i| v.get(i)).copied(),
         )
     }
 
