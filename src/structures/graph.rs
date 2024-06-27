@@ -15,17 +15,12 @@ impl Graph {
     /// Constructor
     #[must_use]
     pub fn new(map: Map) -> Graph {
-        let mut adjacency_list: Vec<Vec<(Node, f32)>> =
-            vec![Vec::with_capacity(8); map.get_width() * map.get_height()];
-
-        map.iter()
-            .zip(0..)
-            .filter(|(b, _)| **b)
-            .map(|(_, i)| (i, generate_neighbors(i, &map)))
-            .for_each(|(i, v)| adjacency_list[i as usize] = v);
-
         Graph {
-            adjacency_list,
+            adjacency_list: map
+                .iter()
+                .zip(0..)
+                .map(|(b, i)| generate_neighbors(i, b, &map))
+                .collect(),
             height: map.get_height(),
             width: map.get_width(),
         }
@@ -63,8 +58,7 @@ impl Graph {
 
 /// Provide a list of neighbors for given cell in a grid.
 /// Makes sure that path does not cut through corners of unpassable cells.
-fn generate_neighbors(node: Node, map: &Map) -> Vec<(Node, f32)> {
-    // node is always true when we get here
+fn generate_neighbors(node: Node, generate: &bool, map: &Map) -> Vec<(Node, f32)> {
     /*
        |--|--|--|    |--|--|--|
        |-4|-3|-2|    | 0| 1| 2|
@@ -75,6 +69,11 @@ fn generate_neighbors(node: Node, map: &Map) -> Vec<(Node, f32)> {
        |--|--|--|    |--|--|--|
 
     */
+
+    if !generate {
+        return vec![];
+    }
+
     let n = node as i32;
     let w = map.get_width() as i32;
     let mut v: Vec<(i32, f32, bool)> = [
@@ -92,9 +91,11 @@ fn generate_neighbors(node: Node, map: &Map) -> Vec<(Node, f32)> {
     .map(|i| (*i, 1.0, map.get(*i)))
     .collect();
 
+    // Prevent wrapping around when in border of map
     v[3].2 = v[3].2 && v[4].0 % w != 0;
     v[5].2 = v[5].2 && v[4].0 % w != w - 1;
 
+    // Check for passable diagonals
     v[0].2 = v[0].2 && v[1].2 && v[3].2;
     v[2].2 = v[2].2 && v[1].2 && v[5].2;
     v[6].2 = v[6].2 && v[3].2 && v[7].2;
