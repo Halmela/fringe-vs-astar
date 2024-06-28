@@ -18,6 +18,7 @@ use crate::{index_to_xy, Node, DIAGONAL_COST};
 pub enum State {
     Finished((Vec<Node>, f32)),
     Processing(Node),
+    Internal,
     NotFound,
 }
 

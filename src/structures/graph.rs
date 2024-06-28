@@ -40,6 +40,11 @@ impl Graph {
     pub fn get_width(&self) -> usize {
         self.width
     }
+    /// Get size of map
+    #[must_use]
+    pub fn get_size(&self) -> usize {
+        self.width * self.height
+    }
 
     /// Average branching factor of the graph.
     /// Only nodes with some neighbors are counted

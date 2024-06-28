@@ -1,10 +1,12 @@
 use super::Action;
-use super::Bucket;
 use super::Heuristic;
+use crate::Cost;
 use crate::Node;
+use crate::Path;
 
-use std::fmt;
 use std::ops::{Index, IndexMut};
+
+use std::f32::INFINITY;
 
 /// Stored values for a single node in graph as wanted by Fringe Search.
 ///
@@ -13,25 +15,21 @@ use std::ops::{Index, IndexMut};
 /// Bucket indicates where Node is in later-queue.
 #[derive(Clone, Copy, Debug)]
 pub struct Value {
-    pub cost: f32,
-    pub heuristic: f32,
+    pub cost: Cost,
+    pub heuristic: Cost,
+    estimate: Cost,
     pub parent: Node,
-    pub estimate: f32,
-    pub later: u32,
     pub closed: bool,
-    pub bucket: Bucket,
 }
 
 impl Default for Value {
     fn default() -> Self {
         Value {
-            cost: f32::MAX,
-            heuristic: f32::MAX,
+            cost: INFINITY,
+            heuristic: INFINITY,
+            estimate: INFINITY,
             parent: 0,
-            estimate: f32::MAX,
-            later: 0,
             closed: false,
-            bucket: Bucket::None,
         }
     }
 }
@@ -43,27 +41,26 @@ impl Default for Value {
 /// Cache can be indexed with a [`Node`]: `cache[node]` or `self[node]`.
 pub struct Cache {
     pub cache: Vec<Value>,
-    pub f_limit: f32,
-    f_min: f32,
     heuristic: Heuristic,
     pub iteration: u32,
+    pub start: Node,
+    pub goal: Node,
 }
 
 impl Cache {
     /// Initialize cache
     #[must_use]
-    pub fn new(start: Node, size: usize, heuristic: Heuristic) -> Self {
+    pub fn new(start: Node, goal: Node, size: usize, heuristic: Heuristic) -> Self {
         let mut cache = vec![Value::default(); size];
-        let f_limit = heuristic.calc(start);
         cache[start as usize].cost = 0.0;
-        cache[start as usize].heuristic = f_limit;
-        cache[start as usize].estimate = f_limit;
+        cache[start as usize].heuristic = heuristic.calc(start);
+        cache[start as usize].estimate = cache[start as usize].heuristic;
         Cache {
             cache,
             heuristic,
-            f_limit,
-            f_min: f32::MAX,
             iteration: 1,
+            goal,
+            start,
         }
     }
 
@@ -74,32 +71,29 @@ impl Cache {
     pub fn decide_action(&mut self, node: Node) -> Action {
         if self[node].closed {
             return Action::Nothing;
-        }
-        if self[node].estimate <= self.f_limit {
+        } else if node == self.goal {
+            return Action::Finish(self.construct_path());
+        } else {
             self[node].closed = true;
             Action::Process(node)
-        } else {
-            self.later_or_nothing(node)
         }
     }
 
     /// Update value of a node with given `cost` and `parent`
     ///
     /// Also calculates `heuristic`, `estimate` and `bucket` in advance
-    pub fn update(&mut self, node: Node, cost: f32, parent: Node) -> Bucket {
+    pub fn update(&mut self, node: Node, parent: Node, cost: Cost) -> Cost {
         self[node].cost = cost;
         self[node].parent = parent;
-        self[node].estimate = cost + self.get_heuristic(node);
         self[node].closed = false;
-        let bucket = Bucket::from(self[node].estimate);
-        self[node].bucket = bucket;
+        self[node].estimate = self.get_heuristic(node) + cost;
 
-        bucket
+        self[node].estimate
     }
 
     /// Get heuristic value from cache or calculate it
-    pub fn get_heuristic(&mut self, node: Node) -> f32 {
-        if self[node].heuristic == f32::MAX {
+    pub fn get_heuristic(&mut self, node: Node) -> Cost {
+        if self[node].heuristic == INFINITY {
             self[node].heuristic = self.heuristic.calc(node);
         }
         self[node].heuristic
@@ -107,56 +101,44 @@ impl Cache {
 
     /// Get cost of a node
     #[must_use]
-    pub fn get_cost(&self, node: Node) -> f32 {
+    pub fn get_cost(&self, node: Node) -> Cost {
         self[node].cost
     }
 
-    /// Update `f_limit` value and +1 to the iteration count used for counting if a node is in later
-    pub fn refresh_limits(&mut self, lower_limit: u8) {
-        // Really uglly haccck for the times when floor(f_limit+lower_limit) was found on earlier iterations
-        if lower_limit > 0 {
-            self.f_limit = (self.f_limit + f32::from(lower_limit)).floor();
-        }
-        // Really funky behavior without this check
-        else if self.f_min != f32::MAX {
-            self.f_limit = self.f_min;
-        }
-        self.f_min = f32::MAX;
-        self.iteration += 1;
+    /// Get cost of a node
+    #[must_use]
+    pub fn get_estimate(&mut self, node: Node) -> Cost {
+        self[node].estimate
     }
 
     /// Decide if a child-node should be added to the now-queue.
     /// It's value is updated, if it is added.
     /// This returns `Option<Node` because it allows neat `filter_map` on the call site.
-    pub fn check(&mut self, child: Node, parent: Node, move_cost: f32) -> Option<(Node, Bucket)> {
+    pub fn check(&self, child: Node, parent: Node, move_cost: Cost) -> Option<(Node, Node, Cost)> {
         let new_cost = self[parent].cost + move_cost;
 
         if new_cost < self[child].cost {
-            Some((child, self.update(child, new_cost, parent)))
+            Some((child, parent, new_cost))
         } else {
             None
         }
     }
 
-    /// Add node to later if it is not already there
-    fn later_or_nothing(&mut self, node: Node) -> Action {
-        if self[node].estimate < self.f_min {
-            self.f_min = self[node].estimate;
-        }
-        self[node].closed = false;
-        if self[node].later == self.iteration {
-            Action::Nothing
-        } else {
-            self[node].later = self.iteration;
-            Action::ToLater((node, self[node].bucket))
-        }
-    }
+    /// Reconstruct path that was found
+    fn construct_path(&self) -> (Path, Cost) {
+        let mut path = vec![(self.goal)];
+        loop {
+            let node = path[path.len() - 1];
+            let new = self[node].parent;
+            path.push(new);
 
-    pub fn f_limit(&self) -> f32 {
-        self.f_limit
-    }
-    pub fn f_min(&self) -> f32 {
-        self.f_min
+            if self.start == new {
+                break;
+            }
+        }
+        path.reverse();
+
+        (path, self.get_cost(self.goal))
     }
 }
 
@@ -171,15 +153,5 @@ impl Index<Node> for Cache {
 impl IndexMut<Node> for Cache {
     fn index_mut(&mut self, index: Node) -> &mut Self::Output {
         &mut self.cache[index as usize]
-    }
-}
-
-impl fmt::Display for Cache {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "i: {}\tlimit: {}\tmin: {}",
-            self.iteration, self.f_limit, self.f_min
-        )
     }
 }

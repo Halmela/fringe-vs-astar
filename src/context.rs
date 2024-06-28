@@ -167,7 +167,11 @@ impl Context {
                 printable.suppress_print();
                 Result::Time(printable)
             }
-            _ => Result::Full(printable),
+            4 => Result::Full(printable),
+            _ => {
+                printable.suppress_print();
+                Result::Full(printable)
+            }
         };
 
         let solver = Solver::new(algorithm, result, problem, &self.graph);

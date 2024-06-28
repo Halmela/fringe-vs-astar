@@ -115,7 +115,7 @@ impl<'a> Solver<'a> {
         let mut astar = AStar::new(self.problem.start, self.problem.goal, self.graph);
         let mut operations = 0;
         let mut max_open = 0;
-        let mut total_duration = Duration::ZERO;
+        let mut durations = vec![];
 
         println!("{printable}");
 
@@ -125,33 +125,30 @@ impl<'a> Solver<'a> {
             let state = astar.progress();
             let now = Instant::now();
             let duration = now.duration_since(earlier);
-            total_duration += duration;
+            durations.push(duration);
             match state {
                 State::Processing(node) => {
                     max_open = max(max_open, astar.size());
                     if full {
                         let mut print = printable.clone();
-                        print.add_header("Operation", operations);
-                        print.add_header("  Δ", format!("{:?}", duration));
-                        print.add_header("  ΣΔ", format!("{:?}", total_duration));
-                        print.add_header("  μΔ", format!("{:?}", total_duration / operations));
+                        print.add_header("Operations", operations);
                         print = astar.add_to_printable(print);
                         print.add_current(node, astar.get_cost(node), astar.get_estimate(node));
                         print.add_spacing();
+                        print.add_timing(durations.clone());
                         println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
                     let mut print = printable.clone();
                     print.add_header("Operations", operations);
-                    print.add_header("  Δ", format!("{:?}", duration));
-                    print.add_header("  ΣΔ", format!("{:?}", total_duration));
-                    print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                     print = astar.add_to_printable(print);
                     print.add_path(path);
                     print.add_header("Length", cost);
                     print.add_spacing();
                     print.add_header("Max |Open|", max_open);
+                    print.add_spacing();
+                    print.add_final_timing(durations.clone());
                     println!("{print}");
                     break;
                 }
@@ -159,6 +156,7 @@ impl<'a> Solver<'a> {
                     println!("Path not found");
                     break;
                 }
+                State::Internal => todo!(),
             }
         }
     }
@@ -171,8 +169,7 @@ impl<'a> Solver<'a> {
         let mut max_now = 0;
         let mut max_current = 0;
         let mut max_later = 0;
-        let mut total_duration = Duration::ZERO;
-        // let mut closed_hit = 0;
+        let mut durations = vec![];
 
         println!("{printable}");
 
@@ -182,36 +179,26 @@ impl<'a> Solver<'a> {
             let state = fringe.progress();
             let now = Instant::now();
             let duration = now.duration_since(earlier);
-            total_duration += duration;
+            durations.push(duration);
             match state {
                 State::Processing(node) => {
                     max_now = max(max_now, fringe.now_size());
                     max_current = max(max_current, fringe.bucket_size());
                     max_later = max(max_later, fringe.later_size());
 
-                    // if fringe.next_is_closed() {
-                    //     closed_hit += 1;
-                    // }
-
                     if full {
                         let mut print = printable.clone();
-                        print.add_header("Operation", operations);
-                        print.add_header("  Δ", format!("{:?}", duration));
-                        print.add_header("  ΣΔ", format!("{:?}", total_duration));
-                        print.add_header("  μΔ", format!("{:?}", total_duration / operations));
+                        print.add_header("Operations", operations);
                         print = fringe.add_to_printable(print);
                         print.add_current(node, fringe.get_cost(node), fringe.get_estimate(node));
                         print.add_spacing();
-                        // print.add_header("closed?", fringe.next_is_closed());
+                        print.add_timing(durations.clone());
                         println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
                     let mut print = printable.clone();
                     print.add_header("Operations", operations);
-                    print.add_header("  Δ", format!("{:?}", duration));
-                    print.add_header("  ΣΔ", format!("{:?}", total_duration));
-                    print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                     print = fringe.add_to_printable(print);
                     print.add_path(path);
                     print.add_header("Length", cost);
@@ -220,13 +207,28 @@ impl<'a> Solver<'a> {
                     print.add_header("  |Now|", max_now);
                     print.add_header("  |Bucket|", max_current);
                     print.add_header("  |Later|", max_later);
-                    // print.add_header("Closed", closed_hit);
+                    print.add_spacing();
+                    print.add_final_timing(durations.clone());
                     println!("{print}");
                     break;
                 }
                 State::NotFound => {
                     println!("Path not found");
                     break;
+                }
+                State::Internal => {
+                    max_now = max(max_now, fringe.now_size());
+                    max_current = max(max_current, fringe.bucket_size());
+                    max_later = max(max_later, fringe.later_size());
+
+                    if full {
+                        let mut print = printable.clone();
+                        print.add_header("Operations", operations);
+                        print = fringe.add_to_printable(print);
+                        print.add_spacing();
+                        print.add_timing(durations.clone());
+                        println!("{print}");
+                    }
                 }
             }
         }

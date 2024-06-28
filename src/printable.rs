@@ -1,5 +1,7 @@
-use std::fmt;
 use std::iter::repeat;
+use std::{fmt, time::Duration};
+
+use rayon::prelude::*;
 
 use crate::{index_to_xy, problem::Problem, structures::map::Map, Node};
 
@@ -126,6 +128,35 @@ impl Printable {
     }
     pub fn add_spacing(&mut self) {
         self.headers.push((String::new(), String::new()));
+    }
+    pub fn add_timing(&mut self, durations: Vec<Duration>) {
+        let operations = durations.len() as u32;
+        let total_duration: Duration = durations.par_iter().sum();
+        let average = total_duration / operations;
+
+        self.add_header("Timing", "");
+        self.add_header("  Op Δ", format!("{:?}", durations.last().unwrap()));
+        self.add_header("  ΣΔ", format!("{:?}", total_duration));
+        self.add_header("  μΔ", format!("{:?}", average));
+    }
+    pub fn add_final_timing(&mut self, durations: Vec<Duration>) {
+        let operations = durations.len() as u32;
+        let total_duration: Duration = durations.par_iter().sum();
+        let average = total_duration / operations;
+        let variance = durations
+            .par_iter()
+            .map(|d| (d.as_secs_f64() - average.as_secs_f64()))
+            .sum::<f64>()
+            / operations as f64;
+        let standard_deviation = Duration::from_secs_f64(variance.sqrt());
+        let d_min = durations.par_iter().min().unwrap();
+        let d_max = durations.par_iter().max().unwrap();
+
+        self.add_header("Timing", "");
+        self.add_header("  ΣΔ", format!("{:?}", total_duration));
+        self.add_header("  μΔ", format!("{:?}", average));
+        self.add_header("  σΔ", format!("{:?}", standard_deviation));
+        self.add_header("", format!("{:?} .. {:?}", d_min, d_max));
     }
 
     fn _big_map(&self) -> String {
