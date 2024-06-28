@@ -48,3 +48,6 @@ pub fn index_to_xy(i: Node, width: usize) -> (usize, usize) {
 
 /// Type alias for u32. This is calculated with [`xy_to_index`].
 pub type Node = u32;
+
+#[doc(inline)]
+pub use std;

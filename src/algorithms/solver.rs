@@ -5,7 +5,7 @@ use crate::structures::Graph;
 use std::cmp::max;
 use std::fmt;
 use std::fmt::Display;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Different algorithms as enums
 #[derive(Clone, Copy)]
@@ -113,31 +113,40 @@ impl<'a> Solver<'a> {
     /// `full` indicates if every state of solving process should be printed.
     fn full_astar(self, printable: Printable, full: bool) {
         let mut astar = AStar::new(self.problem.start, self.problem.goal, self.graph);
-        let mut actions = 0;
+        let mut operations = 0;
         let mut max_open = 0;
+        let mut total_duration = Duration::ZERO;
 
         println!("{printable}");
 
         loop {
-            actions += 1;
-            match astar.progress() {
+            operations += 1;
+            let earlier = Instant::now();
+            let state = astar.progress();
+            let now = Instant::now();
+            let duration = now.duration_since(earlier);
+            total_duration += duration;
+            match state {
                 State::Processing(node) => {
                     max_open = max(max_open, astar.size());
                     if full {
                         let mut print = printable.clone();
-                        print.add_header("Iteration", actions);
+                        print.add_header("Operation", operations);
+                        print.add_header("  Δ", format!("{:?}", duration));
+                        print.add_header("  ΣΔ", format!("{:?}", total_duration));
+                        print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                         print = astar.add_to_printable(print);
-                        print.add_current(node);
+                        print.add_current(node, astar.get_cost(node), astar.get_estimate(node));
                         print.add_spacing();
-                        print.add_header("Current", "");
-                        print.add_header("  cost", astar.get_cost(node));
-                        print.add_header("  estimate", astar.get_estimate(node));
                         println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
                     let mut print = printable.clone();
-                    print.add_header("Iteration", actions);
+                    print.add_header("Operations", operations);
+                    print.add_header("  Δ", format!("{:?}", duration));
+                    print.add_header("  ΣΔ", format!("{:?}", total_duration));
+                    print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                     print = astar.add_to_printable(print);
                     print.add_path(path);
                     print.add_header("Length", cost);
@@ -158,42 +167,51 @@ impl<'a> Solver<'a> {
     /// `full` indicates if every state of solving process should be printed.
     fn printed_fringe(self, printable: Printable, full: bool) {
         let mut fringe = FringeSearch::new(self.problem.start, self.problem.goal, self.graph);
-        let mut iterations = 0;
+        let mut operations = 0;
         let mut max_now = 0;
         let mut max_current = 0;
         let mut max_later = 0;
-        let mut closed_hit = 0;
+        let mut total_duration = Duration::ZERO;
+        // let mut closed_hit = 0;
 
         println!("{printable}");
 
         loop {
-            iterations += 1;
-            match fringe.progress() {
+            operations += 1;
+            let earlier = Instant::now();
+            let state = fringe.progress();
+            let now = Instant::now();
+            let duration = now.duration_since(earlier);
+            total_duration += duration;
+            match state {
                 State::Processing(node) => {
                     max_now = max(max_now, fringe.now_size());
                     max_current = max(max_current, fringe.bucket_size());
                     max_later = max(max_later, fringe.later_size());
 
-                    if fringe.next_is_closed() {
-                        closed_hit += 1;
-                    }
+                    // if fringe.next_is_closed() {
+                    //     closed_hit += 1;
+                    // }
 
                     if full {
                         let mut print = printable.clone();
-                        print.add_header("Iteration", iterations);
+                        print.add_header("Operation", operations);
+                        print.add_header("  Δ", format!("{:?}", duration));
+                        print.add_header("  ΣΔ", format!("{:?}", total_duration));
+                        print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                         print = fringe.add_to_printable(print);
-                        print.add_current(node);
+                        print.add_current(node, fringe.get_cost(node), fringe.get_estimate(node));
                         print.add_spacing();
-                        print.add_header("Current", "");
-                        print.add_header("  cost", fringe.get_cost(node));
-                        print.add_header("  estimate", fringe.get_estimate(node));
-                        print.add_header("closed?", fringe.next_is_closed());
+                        // print.add_header("closed?", fringe.next_is_closed());
                         println!("{print}");
                     }
                 }
                 State::Finished((path, cost)) => {
                     let mut print = printable.clone();
-                    print.add_header("Iteration", iterations);
+                    print.add_header("Operations", operations);
+                    print.add_header("  Δ", format!("{:?}", duration));
+                    print.add_header("  ΣΔ", format!("{:?}", total_duration));
+                    print.add_header("  μΔ", format!("{:?}", total_duration / operations));
                     print = fringe.add_to_printable(print);
                     print.add_path(path);
                     print.add_header("Length", cost);
@@ -202,7 +220,7 @@ impl<'a> Solver<'a> {
                     print.add_header("  |Now|", max_now);
                     print.add_header("  |Bucket|", max_current);
                     print.add_header("  |Later|", max_later);
-                    print.add_header("Closed", closed_hit);
+                    // print.add_header("Closed", closed_hit);
                     println!("{print}");
                     break;
                 }

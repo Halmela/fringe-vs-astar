@@ -43,9 +43,9 @@ impl Default for Value {
 /// Cache can be indexed with a [`Node`]: `cache[node]` or `self[node]`.
 pub struct Cache {
     pub cache: Vec<Value>,
-    heuristic: Heuristic,
     pub f_limit: f32,
     f_min: f32,
+    heuristic: Heuristic,
     pub iteration: u32,
 }
 
@@ -150,6 +150,13 @@ impl Cache {
             self[node].later = self.iteration;
             Action::ToLater((node, self[node].bucket))
         }
+    }
+
+    pub fn f_limit(&self) -> f32 {
+        self.f_limit
+    }
+    pub fn f_min(&self) -> f32 {
+        self.f_min
     }
 }
 

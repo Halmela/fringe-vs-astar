@@ -146,11 +146,9 @@ impl<'a> FringeSearch<'a> {
             .flatten()
             .for_each(|n| print.add_oldlater(*n));
 
-        self.fringe[self.fringe.current]
-            .iter()
-            .for_each(|n| print.add_inlater(*n));
+        self.fringe.later().for_each(|n| print.add_inlater(*n));
 
-        self.fringe.now.iter().for_each(|n| print.add_inopen(*n));
+        self.fringe.now().for_each(|n| print.add_inopen(*n));
 
         self.cache
             .cache
@@ -162,8 +160,10 @@ impl<'a> FringeSearch<'a> {
         print.add_start(self.start);
         print.add_goal(self.goal);
 
-        print.add_header("|Now|", self.fringe.now.len());
-        let current_l = self.fringe.buckets[self.fringe.current as usize].len();
+        print.add_header("f_limit", self.cache.f_limit());
+        print.add_header("f_min", self.cache.f_min());
+        print.add_header("|Now|", self.fringe.now().count());
+        let current_l = self.fringe.later().count();
         print.add_header(format!("|{:?}|", self.fringe.current), current_l);
         let later_total: usize = self.fringe.buckets.iter().map(std::vec::Vec::len).sum();
         print.add_header("|Later|", later_total);
@@ -201,7 +201,7 @@ impl<'a> FringeSearch<'a> {
     pub fn next_is_closed(&self) -> bool {
         self.fringe
             .now
-            .last()
+            .back()
             .is_some_and(|n| self.cache[*n].closed)
     }
 }
