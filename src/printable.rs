@@ -3,6 +3,7 @@ use std::{fmt, time::Duration};
 
 use rayon::prelude::*;
 
+use crate::Cost;
 use crate::{index_to_xy, problem::Problem, structures::map::Map, Node};
 
 #[derive(Clone, Copy)]
@@ -81,14 +82,21 @@ impl Printable {
             self.grid[y][x] = Cell::Path;
         }
     }
-    pub fn add_current(&mut self, node: Node, cost: f32, estimate: f32) {
-        let (x, y) = index_to_xy(node, self.width);
-        self.grid[y][x] = Cell::Current;
+    pub fn add_current(&mut self, current: Option<(Node, Cost, Cost)>) {
+        if let Some((node, cost, estimate)) = current {
+            let (x, y) = index_to_xy(node, self.width);
+            self.grid[y][x] = Cell::Current;
 
-        self.add_header("Current", "");
-        self.add_header("  node", format!("{node}\t ({x}, {y})"));
-        self.add_header("  cost", cost);
-        self.add_header("  estimate", estimate);
+            self.add_header("Current", "");
+            self.add_header("  node", format!("{node}\t ({x}, {y})"));
+            self.add_header("  cost", cost);
+            self.add_header("  estimate", estimate);
+        } else {
+            self.add_spacing();
+            self.add_spacing();
+            self.add_spacing();
+            self.add_spacing();
+        }
     }
     pub fn add_inopen(&mut self, node: Node) {
         let (x, y) = index_to_xy(node, self.width);

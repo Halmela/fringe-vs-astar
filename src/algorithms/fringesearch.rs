@@ -9,6 +9,7 @@ use crate::printable::Printable;
 use crate::structures::Graph;
 use crate::Cost;
 use crate::Node;
+use crate::Path;
 
 /// Enum for representing an action for some [`Node`]
 pub mod action;
@@ -50,35 +51,44 @@ impl<'a> FringeSearch<'a> {
     /// If now is empty, then try to prepare datastructures for next iteration (`f_min` -> `f_limit` and later -> now).
     /// If now is empty and later is empty, then no further search can be conducted and thus a path can be found and `None` is returned.
     #[must_use]
-    pub fn solve(mut self) -> Option<(Vec<Node>, Cost)> {
-        self.fringe.run()
+    pub fn solve(mut self) -> Option<(Path, Cost)> {
+        // loop {
+        //     match self.progress() {
+        //         State::Finished(path) => return Some(path),
+        //         _ => {}
+        //     }
+        // }
+        //self.fringe.run()
+        self.fringe.new_run()
     }
 
     /// One step of the solving process. This is used for the experimental printing of solution.
     pub fn progress(&mut self) -> State {
-        match self.fringe.pop_now() {
-            Action::Finish(path) => State::Finished(path),
-            Action::Process(node) => {
-                self.fringe.process_neighbors(node);
-                State::Processing(node)
-            }
-            Action::ToLater(node) => {
-                self.fringe.push_later(node);
-                State::Processing(node)
-            }
-            Action::Refresh => {
-                self.fringe.refresh_limit();
-                State::Internal
-            }
-            Action::Rotate => {
-                if self.fringe.change_bucket() {
-                    State::Internal
-                } else {
-                    State::NotFound
-                }
-            }
-            Action::Nothing => State::Internal,
-        }
+        // match self.fringe.pop_now() {
+        //     Action::Finish(path) => State::Finished(path),
+        //     Action::Process(node) => {
+        //         self.fringe.process_neighbors(node);
+        //         State::Processing(node)
+        //     }
+        //     Action::ToLater(node) => {
+        //         self.fringe.push_later(node);
+        //         State::Processing(node)
+        //     }
+        //     Action::Refresh => {
+        //         self.fringe.change_bucket();
+        //         // self.fringe.refresh_limit();
+        //         State::Internal
+        //     }
+        //     Action::Rotate => {
+        //         if self.fringe.change_bucket() {
+        //             State::Internal
+        //         } else {
+        //             State::NotFound
+        //         }
+        //     }
+        //     Action::Nothing => State::Internal,
+        // }
+        self.fringe.act()
     }
 
     /// Add current state to Printable
@@ -86,13 +96,29 @@ impl<'a> FringeSearch<'a> {
     pub fn add_to_printable(&self, mut print: Printable) -> Printable {
         self.fringe
             .buckets
+            .all()
             .iter()
             .flatten()
             .for_each(|n| print.add_oldlater(*n));
 
-        self.fringe.later().for_each(|n| print.add_inlater(*n));
-
-        self.fringe.now().for_each(|n| print.add_inopen(*n));
+        self.fringe
+            .buckets
+            .next_later()
+            .iter()
+            .flatten()
+            .for_each(|n| print.add_inlater(*n));
+        self.fringe
+            .buckets
+            .later()
+            .iter()
+            .flatten()
+            .for_each(|n| print.add_inopen(*n));
+        self.fringe
+            .buckets
+            .now()
+            .iter()
+            .flatten()
+            .for_each(|n| print.add_first(*n));
 
         self.fringe
             .cache
@@ -107,10 +133,13 @@ impl<'a> FringeSearch<'a> {
 
         print.add_header("f_limit", self.fringe.f_limit);
         print.add_header("f_min", self.fringe.f_min);
-        print.add_header("|Now|", self.fringe.now().count());
-        let current_l = self.fringe.later().count();
+        print.add_header(
+            "|Now|",
+            self.fringe.buckets.now().len() + self.fringe.buckets.later().len(),
+        );
+        let current_l = self.fringe.buckets.next_later().len();
         print.add_header(format!("|{:?}|", self.fringe.current), current_l);
-        let later_total: usize = self.fringe.buckets.iter().map(std::vec::Vec::len).sum();
+        let later_total: usize = self.fringe.buckets.all().iter().len();
         print.add_header("|Later|", later_total);
         if later_total > 0 {
             print.add_header(
@@ -119,6 +148,10 @@ impl<'a> FringeSearch<'a> {
             );
             print.add_header(format!("in {:?}", self.fringe.current), "");
         }
+        print.add_header(
+            "|Closed|",
+            self.fringe.cache.cache.iter().filter(|v| v.closed).count(),
+        );
         print.add_spacing();
 
         print
@@ -132,22 +165,22 @@ impl<'a> FringeSearch<'a> {
     pub fn get_estimate(&mut self, node: Node) -> Cost {
         self.fringe.cache.get_estimate(node)
     }
-    #[must_use]
-    pub fn now_size(&self) -> usize {
-        self.fringe.now.len()
-    }
-    #[must_use]
-    pub fn bucket_size(&self) -> usize {
-        self.fringe.later().count()
-    }
-    #[must_use]
-    pub fn later_size(&self) -> usize {
-        self.fringe.buckets.iter().map(std::vec::Vec::len).sum()
-    }
-    pub fn next_is_closed(&self) -> bool {
-        self.fringe
-            .now
-            .back()
-            .is_some_and(|n| self.fringe.cache[*n].closed)
-    }
+    // #[must_use]
+    // pub fn now_size(&self) -> usize {
+    //     self.fringe.buckets.now.len()
+    // }
+    // #[must_use]
+    // pub fn bucket_size(&self) -> usize {
+    //     self.fringe.later().count()
+    // }
+    // #[must_use]
+    // pub fn later_size(&self) -> usize {
+    //     self.fringe.buckets.iter().map(std::vec::Vec::len).sum()
+    // }
+    // pub fn next_is_closed(&self) -> bool {
+    //     self.fringe
+    //         .now
+    //         .last()
+    //         .is_some_and(|n| self.fringe.cache[*n].closed)
+    // }
 }

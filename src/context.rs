@@ -47,6 +47,15 @@ impl Context {
         let map = Map::new(cli.map_file);
         let mut printable = Printable::new(&map);
         printable.add_header("Map", map_name);
+        printable.add_header(
+            "  size",
+            format!(
+                "{} ⨉ {} = {} cells",
+                map.get_width(),
+                map.get_height(),
+                map.get_width() * map.get_height()
+            ),
+        );
 
         if matches!(cli.mode, Mode::PrintMap) {
             println!("{printable}");
@@ -57,6 +66,7 @@ impl Context {
             println!("Map loaded, creating graph");
         }
         let graph = Graph::new(map);
+        printable.add_header("Graph size", graph.size());
         printable.add_header("Branching", graph.average_branching());
 
         Some(Context {

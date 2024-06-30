@@ -17,7 +17,7 @@ use std::f32::INFINITY;
 pub struct Value {
     pub cost: Cost,
     pub heuristic: Cost,
-    estimate: Cost,
+    pub estimate: Cost,
     pub parent: Node,
     pub closed: bool,
 }

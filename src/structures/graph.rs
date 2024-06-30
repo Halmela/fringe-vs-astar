@@ -42,8 +42,13 @@ impl Graph {
     }
     /// Get size of map
     #[must_use]
-    pub fn get_size(&self) -> usize {
+    pub fn map_size(&self) -> usize {
         self.width * self.height
+    }
+
+    /// Get size of graph
+    pub fn size(&self) -> usize {
+        self.adjacency_list.iter().filter(|a| !a.is_empty()).count()
     }
 
     /// Average branching factor of the graph.

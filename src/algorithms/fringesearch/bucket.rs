@@ -29,7 +29,7 @@ pub enum Bucket {
 impl Bucket {
     /// Add 1 to the value, wrap to Zero if it was Seven (just like modulo works)
     #[must_use]
-    pub fn add(self) -> Bucket {
+    pub fn add(&self) -> Bucket {
         match self {
             Bucket::Zero => Bucket::One,
             Bucket::One => Bucket::Two,
@@ -42,6 +42,21 @@ impl Bucket {
             Bucket::None => Bucket::None,
         }
     }
+
+    pub fn sub(&self) -> Bucket {
+        match self {
+            Bucket::Zero => Bucket::Seven,
+            Bucket::One => Bucket::Zero,
+            Bucket::Two => Bucket::One,
+            Bucket::Three => Bucket::Two,
+            Bucket::Four => Bucket::Three,
+            Bucket::Five => Bucket::Four,
+            Bucket::Six => Bucket::Five,
+            Bucket::Seven => Bucket::Six,
+            Bucket::None => Bucket::None,
+        }
+    }
+    pub const SIZE: usize = 8;
 }
 
 impl From<f32> for Bucket {
@@ -54,7 +69,8 @@ impl From<f32> for Bucket {
             4 => Bucket::Four,
             5 => Bucket::Five,
             6 => Bucket::Six,
-            _ => Bucket::Seven,
+            7 => Bucket::Seven,
+            _ => Bucket::None,
         }
     }
 }
@@ -71,6 +87,21 @@ impl From<Bucket> for usize {
             Bucket::Six => 6,
             Bucket::Seven => 7,
             Bucket::None => usize::MAX, // We want this to fail
+        }
+    }
+}
+impl From<usize> for Bucket {
+    fn from(value: usize) -> Self {
+        match value % 8 {
+            0 => Bucket::Zero,
+            1 => Bucket::One,
+            2 => Bucket::Two,
+            3 => Bucket::Three,
+            4 => Bucket::Four,
+            5 => Bucket::Five,
+            6 => Bucket::Six,
+            7 => Bucket::Seven,
+            _ => Bucket::None,
         }
     }
 }
