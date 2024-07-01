@@ -44,15 +44,13 @@ impl<'a> Fringe<'a> {
     }
 
     pub fn estimation_check(&mut self, node: Node) -> Action {
-        let estimate = self.cache.get_estimate(node);
-        // println!("{node} {estimate}");
-        if estimate >= self.f_min {
-            Action::ToLater(node)
-        } else if estimate <= self.f_limit {
-            self.cache.decide_action(node)
-        } else {
-            self.f_min = estimate;
-            Action::ToLater(node)
+        match self.cache.get_estimate(node) {
+            e if e >= self.f_min => Action::ToLater(node),
+            e if e <= self.f_limit => self.cache.decide_action(node),
+            e => {
+                self.f_min = e;
+                Action::ToLater(node)
+            }
         }
     }
 
@@ -122,9 +120,9 @@ impl<'a> Fringe<'a> {
                 }
                 Action::Nothing => {
                     self.buckets.remove_current();
-                    return State::Internal;
+                    return State::Processing(node);
                 }
-                _ => return State::Internal,
+                _ => panic!("what"),
             },
         }
     }

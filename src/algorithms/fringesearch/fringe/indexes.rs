@@ -25,7 +25,7 @@ impl Indexes {
         self[bucket] += 1;
     }
     pub fn sub(&mut self, bucket: Bucket) {
-        self[bucket] -= 1;
+        self[bucket] = self[bucket].saturating_sub(1);
     }
 }
 

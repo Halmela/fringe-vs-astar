@@ -6,7 +6,7 @@ use std::fmt::Display;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone)]
-pub(crate) struct Buckets {
+pub struct Buckets {
     pub(crate) buckets: Vec<Option<Node>>,
     pub(crate) current_bucket: Bucket,
     pub(crate) now_last: usize,
@@ -50,6 +50,10 @@ impl Buckets {
     }
 
     pub(crate) fn pop(&mut self) -> (Option<Node>, bool) {
+        // assert!(match self.buckets[self.now_last..=self.now_last + 1] {
+        //     [None, Some(_)] => false,
+        //     _ => true,
+        // });
         if let Some(node) = self.buckets[self.now_last] {
             self.buckets[self.now_last] = None;
             self.now_last = self.now_last.saturating_sub(1);
@@ -111,7 +115,12 @@ impl Buckets {
     }
 
     pub(crate) fn refresh(&mut self) -> bool {
-        if self.later_last == self.indexes[self.current_bucket]
+        if self.later_last == self.bucket_start(self.current_bucket)
+            && self.later_last == self.indexes[self.current_bucket]
+        {
+            self.rotate()
+        } else if self.later_last == self.later_head
+            && self.later_last + 1 == self.indexes[self.current_bucket]
             && self.later_last == self.bucket_start(self.current_bucket)
         {
             self.rotate()
@@ -122,7 +131,6 @@ impl Buckets {
     }
 
     pub(crate) fn rotate(&mut self) -> bool {
-        // println!("start rotate");
         for _ in 0..8 {
             if self.buckets[self.indexes[self.current_bucket]].is_some() {
                 self.refresh_index();
@@ -141,14 +149,21 @@ impl Buckets {
         self.later_head = self.bucket_start(self.current_bucket);
         if self[self.current_bucket].is_some() {
             self.later_last = self.indexes[self.current_bucket];
+            if self.buckets[self.later_head].is_none() {
+                self.later_head += 1;
+            }
         }
 
         self.indexes[self.current_bucket] = self.later_last + 1;
         /* else if self.later_last > self.bucket_start(self.current_bucket) {
             self.later_last = self.indexes[self.current_bucket] - 1;
         } */
+        if self.buckets[self.later_head].is_none() && self.buckets[self.later_last].is_some() {
+            self.remove_current();
+        }
 
         self.now_last = self.bucket_start(self.current_bucket.sub());
+        println!("{}", self.later().len());
     }
 
     fn bucket(&self, bucket: Bucket) -> &[Option<Node>] {

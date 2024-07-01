@@ -137,8 +137,11 @@ impl<'a> FringeSearch<'a> {
             "|Now|",
             self.fringe.buckets.now().len() + self.fringe.buckets.later().len(),
         );
+        // print.add_header("", format!("{:?}", self.fringe.buckets.now()));
+        // print.add_header("", format!("{:?}", self.fringe.buckets.later()));
         let current_l = self.fringe.buckets.next_later().len();
         print.add_header(format!("|{:?}|", self.fringe.current), current_l);
+        // print.add_header("", format!("{:?}", self.fringe.buckets.next_later()));
         let later_total: usize = self.fringe.buckets.all().iter().len();
         print.add_header("|Later|", later_total);
         if later_total > 0 {
