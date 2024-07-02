@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::iter::repeat;
 use std::{fmt, time::Duration};
 
@@ -134,6 +135,18 @@ impl Printable {
     pub fn add_header<T: ToString, U: ToString>(&mut self, key: T, value: U) {
         self.headers.push((key.to_string(), value.to_string()));
     }
+
+    pub fn add_debug<T: ToString, D: Debug>(&mut self, header: T, debuggable: D) {
+        self.add_header(header, format!("{:?}", debuggable));
+    }
+
+    pub fn add_iterator<T: ToString, I: Iterator>(&mut self, header: T, iterator: I)
+    where
+        <I as Iterator>::Item: Debug,
+    {
+        self.add_debug(header, iterator.collect::<Vec<_>>())
+    }
+
     pub fn add_spacing(&mut self) {
         self.headers.push((String::new(), String::new()));
     }
@@ -143,9 +156,9 @@ impl Printable {
         let average = total_duration / operations;
 
         self.add_header("Timing", "");
-        self.add_header("  Op Δ", format!("{:?}", durations.last().unwrap()));
-        self.add_header("  ΣΔ", format!("{:?}", total_duration));
-        self.add_header("  μΔ", format!("{:?}", average));
+        self.add_header("  Op", format!("{:?}", durations.last().unwrap()));
+        self.add_header("  Σ", format!("{:?}", total_duration));
+        self.add_header("  μ", format!("{:?}", average));
     }
     pub fn add_final_timing(&mut self, durations: Vec<Duration>) {
         let operations = durations.len() as u32;
@@ -161,9 +174,9 @@ impl Printable {
         let d_max = durations.par_iter().max().unwrap();
 
         self.add_header("Timing", "");
-        self.add_header("  ΣΔ", format!("{:?}", total_duration));
-        self.add_header("  μΔ", format!("{:?}", average));
-        self.add_header("  σΔ", format!("{:?}", standard_deviation));
+        self.add_header("  Σ", format!("{:?}", total_duration));
+        self.add_header("  μ", format!("{:?}", average));
+        self.add_header("  σ", format!("{:?}", standard_deviation));
         self.add_header("", format!("{:?} .. {:?}", d_min, d_max));
     }
 
