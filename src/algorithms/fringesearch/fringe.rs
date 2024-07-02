@@ -43,6 +43,8 @@ impl<'a> Fringe<'a> {
         }
     }
 
+    /// Check if estimation of length is smaller than current limits and decide if anything should be done with the node.
+    /// Updates f_min if needed.
     pub fn estimation_check(&mut self, node: Node) -> Action {
         match self.cache.get_estimate(node) {
             e if e >= self.f_min => Action::ToLater(node),
@@ -54,6 +56,8 @@ impl<'a> Fringe<'a> {
         }
     }
 
+    /// Update f_limit and f_min, if a lower estimate was found this iteration.
+    /// If this is the first passthrough of a bucket, it probably was not found.
     pub fn refresh_limit(&mut self) {
         if self.f_min < INFINITY {
             self.f_limit = self.f_min;
@@ -61,7 +65,8 @@ impl<'a> Fringe<'a> {
         }
     }
 
-    fn new_process(&mut self, node: Node) {
+    /// Add node's neighbors to either Now-list or their corresponding bucket according to estimated length to goal.
+    fn process_node(&mut self, node: Node) {
         for (child, cost) in self.graph.neighbors(node) {
             if let Some((child, parent, cost)) = self.cache.check(*child, node, *cost) {
                 let estimate = self.cache.update(child, parent, cost);
@@ -75,7 +80,8 @@ impl<'a> Fringe<'a> {
         }
     }
 
-    pub fn new_run(&mut self) -> Option<(Path, Cost)> {
+    /// Run through the whole solving process. Internally this works the same as [`act`], but does not reveal internal state.
+    pub fn run(&mut self) -> Option<(Path, Cost)> {
         loop {
             match self.buckets.pop() {
                 (None, true) => self.refresh_limit(),
@@ -84,20 +90,26 @@ impl<'a> Fringe<'a> {
                     Action::Finish(path) => return Some(path),
                     Action::Process(node) => {
                         if !from_now {
-                            self.buckets.remove_current();
+                            self.buckets.remove_later_head();
                         }
-                        self.new_process(node);
+                        self.process_node(node);
                     }
                     Action::ToLater(_) => {
                         self.buckets.keep_current();
                     }
-                    Action::Nothing => self.buckets.remove_current(),
+                    Action::Nothing => self.buckets.remove_later_head(),
                     _ => {}
                 },
             }
         }
     }
 
+    /// Do one step of the solving process and return what was done.
+    ///
+    /// One step is taking a node out of [`Buckets`] and adding its neighbors if it was a valid node.
+    /// Otherwise it is inserted to the right bucket.
+    /// If the node is has cost smaller than f_limit and it is the goal node, a full path is returned instead.
+    /// If no node was found and refreshing buckets failed, then no path can be found.
     pub fn act(&mut self) -> State {
         match self.buckets.pop() {
             (None, true) => {
@@ -109,9 +121,9 @@ impl<'a> Fringe<'a> {
                 Action::Finish(path) => return State::Finished(path),
                 Action::Process(node) => {
                     if !from_now {
-                        self.buckets.remove_current();
+                        self.buckets.remove_later_head();
                     }
-                    self.new_process(node);
+                    self.process_node(node);
                     return State::Processing(node);
                 }
                 Action::ToLater(_) => {
@@ -119,7 +131,7 @@ impl<'a> Fringe<'a> {
                     return State::Processing(node);
                 }
                 Action::Nothing => {
-                    self.buckets.remove_current();
+                    self.buckets.remove_later_head();
                     return State::Processing(node);
                 }
                 _ => panic!("what"),
@@ -143,4 +155,4 @@ impl<'a> IndexMut<Bucket> for Fringe<'a> {
 
 mod buckets;
 
-mod indexes;
+pub mod indexes;

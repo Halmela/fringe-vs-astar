@@ -52,42 +52,11 @@ impl<'a> FringeSearch<'a> {
     /// If now is empty and later is empty, then no further search can be conducted and thus a path can be found and `None` is returned.
     #[must_use]
     pub fn solve(mut self) -> Option<(Path, Cost)> {
-        // loop {
-        //     match self.progress() {
-        //         State::Finished(path) => return Some(path),
-        //         _ => {}
-        //     }
-        // }
-        //self.fringe.run()
-        self.fringe.new_run()
+        self.fringe.run()
     }
 
     /// One step of the solving process. This is used for the experimental printing of solution.
     pub fn progress(&mut self) -> State {
-        // match self.fringe.pop_now() {
-        //     Action::Finish(path) => State::Finished(path),
-        //     Action::Process(node) => {
-        //         self.fringe.process_neighbors(node);
-        //         State::Processing(node)
-        //     }
-        //     Action::ToLater(node) => {
-        //         self.fringe.push_later(node);
-        //         State::Processing(node)
-        //     }
-        //     Action::Refresh => {
-        //         self.fringe.change_bucket();
-        //         // self.fringe.refresh_limit();
-        //         State::Internal
-        //     }
-        //     Action::Rotate => {
-        //         if self.fringe.change_bucket() {
-        //             State::Internal
-        //         } else {
-        //             State::NotFound
-        //         }
-        //     }
-        //     Action::Nothing => State::Internal,
-        // }
         self.fringe.act()
     }
 
@@ -137,11 +106,8 @@ impl<'a> FringeSearch<'a> {
             "|Now|",
             self.fringe.buckets.now().len() + self.fringe.buckets.later().len(),
         );
-        // print.add_header("", format!("{:?}", self.fringe.buckets.now()));
-        // print.add_header("", format!("{:?}", self.fringe.buckets.later()));
         let current_l = self.fringe.buckets.next_later().len();
         print.add_header(format!("|{:?}|", self.fringe.current), current_l);
-        // print.add_header("", format!("{:?}", self.fringe.buckets.next_later()));
         let later_total: usize = self.fringe.buckets.all().iter().len();
         print.add_header("|Later|", later_total);
         if later_total > 0 {
