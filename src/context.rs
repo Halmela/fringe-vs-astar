@@ -349,6 +349,10 @@ impl Context {
 
         result
     }
+
+    pub fn problems(&self) -> impl Iterator<Item = &Problem> {
+        self.problems.iter()
+    }
 }
 
 /// Stripped down version of [`Context`] used only for benchmarking.
