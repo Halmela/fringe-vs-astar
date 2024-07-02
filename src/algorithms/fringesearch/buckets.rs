@@ -1,5 +1,5 @@
-use super::super::Bucket;
-use super::indexes::Indexes;
+use super::Bucket;
+use super::Indexes;
 use crate::Cost;
 use crate::Node;
 use std::fmt::Display;

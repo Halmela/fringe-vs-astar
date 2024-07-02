@@ -1,8 +1,6 @@
-use std::ops::IndexMut;
-
+use super::Bucket;
 use std::ops::Index;
-
-use super::super::Bucket;
+use std::ops::IndexMut;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Indexes([usize; Bucket::SIZE]);
@@ -10,7 +8,7 @@ pub struct Indexes([usize; Bucket::SIZE]);
 impl Indexes {
     /// Array of indexes for accessing different buckets in Fringe
     /// ```
-    /// # use fringe_vs_astar::algorithms::fringesearch::fringe::indexes::Indexes;
+    /// # use fringe_vs_astar::algorithms::fringesearch::indexes::Indexes;
     /// # use fringe_vs_astar::algorithms::fringesearch::bucket::Bucket;
     /// let indexes = Indexes::new(4);
     /// assert_eq!(0, indexes[Bucket::Zero]);
@@ -37,7 +35,7 @@ impl Indexes {
 
     /// +1 to a bucket's index
     /// ```
-    /// # use fringe_vs_astar::algorithms::fringesearch::fringe::indexes::Indexes;
+    /// # use fringe_vs_astar::algorithms::fringesearch::indexes::Indexes;
     /// # use fringe_vs_astar::algorithms::fringesearch::bucket::Bucket;
     /// let mut indexes = Indexes::new(4);
     /// indexes.add(Bucket::Zero);
@@ -48,7 +46,7 @@ impl Indexes {
 
     /// -1 to a bucket's index. Will stop at 0
     /// ```
-    /// # use fringe_vs_astar::algorithms::fringesearch::fringe::indexes::Indexes;
+    /// # use fringe_vs_astar::algorithms::fringesearch::indexes::Indexes;
     /// # use fringe_vs_astar::algorithms::fringesearch::bucket::Bucket;
     /// let mut indexes = Indexes::new(4);
     /// indexes.add(Bucket::Zero);

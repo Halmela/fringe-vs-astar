@@ -170,11 +170,7 @@ impl<'a> Solver<'a> {
     fn printed_fringe(self, printable: Printable, full: bool) {
         let mut fringe = FringeSearch::new(self.problem.start, self.problem.goal, self.graph);
         let mut operations = 0;
-        let mut max_now = 0;
-        let mut max_current = 0;
-        let mut max_later = 0;
         let mut durations = vec![];
-        let mut max_total = 0;
 
         println!("{printable}");
 
@@ -185,11 +181,7 @@ impl<'a> Solver<'a> {
             let now = Instant::now();
             let duration = now.duration_since(earlier);
             durations.push(duration);
-            /* max_now = max(max_now, fringe.now_size());
 
-            max_current = max(max_current, fringe.bucket_size());
-            max_later = max(max_later, fringe.later_size());
-            max_total = max(max_total, fringe.now_size() + fringe.later_size()); */
             match state {
                 State::Processing(node) => {
                     if full {
@@ -213,11 +205,6 @@ impl<'a> Solver<'a> {
                     print.add_path(path);
                     print.add_header("Length", cost);
                     print.add_spacing();
-                    /* print.add_header("Max", "");
-                    print.add_header("  |Now|", max_now);
-                    print.add_header("  |Bucket|", max_current);
-                    print.add_header("  |Later|", max_later);
-                    print.add_header("  |Total|", max_total); */
                     print.add_spacing();
                     print.add_final_timing(durations.clone());
                     println!("{print}");

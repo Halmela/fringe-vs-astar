@@ -1,14 +1,11 @@
-use self::buckets::Buckets;
-use self::indexes::Indexes;
 use super::action::Action;
 use super::cache::Cache;
 use super::Bucket;
+use super::Buckets;
 use crate::algorithms::{Heuristic, State};
 use crate::structures::Graph;
 use crate::{Cost, Node, Path};
 use std::f32::INFINITY;
-use std::fmt::Display;
-use std::ops::{Index, IndexMut};
 
 /// Datastructure used for storing nodes in Fringe search.
 /// Does not hold any data on existence of a node in fringe
@@ -139,20 +136,3 @@ impl<'a> Fringe<'a> {
         }
     }
 }
-
-/* impl<'a> Index<Bucket> for Fringe<'a> {
-    type Output = Vec<Node>;
-
-    fn index(&self, index: Bucket) -> &Self::Output {
-        &self.buckets[Into::<usize>::into(index)]
-    }
-}
-impl<'a> IndexMut<Bucket> for Fringe<'a> {
-    fn index_mut(&mut self, index: Bucket) -> &mut Self::Output {
-        &mut self.buckets[Into::<usize>::into(index)]
-    }
-} */
-
-mod buckets;
-
-pub mod indexes;

@@ -80,6 +80,7 @@ fn generate_neighbors(node: Node, generate: &bool, map: &Map) -> Vec<(Node, f32)
 
     */
 
+    // No need to generate neighbors for walls
     if !generate {
         return vec![];
     }
@@ -106,10 +107,10 @@ fn generate_neighbors(node: Node, generate: &bool, map: &Map) -> Vec<(Node, f32)
     v[5].2 = v[5].2 && v[4].0 % w != w - 1;
 
     // Check for passable diagonals
-    v[0].2 = v[0].2 && v[1].2 && v[3].2;
-    v[2].2 = v[2].2 && v[1].2 && v[5].2;
-    v[6].2 = v[6].2 && v[3].2 && v[7].2;
-    v[8].2 = v[8].2 && v[5].2 && v[7].2;
+    v[0].2 &= v[1].2 && v[3].2;
+    v[2].2 &= v[1].2 && v[5].2;
+    v[6].2 &= v[3].2 && v[7].2;
+    v[8].2 &= v[5].2 && v[7].2;
     v[4].2 = false;
     v[0].1 = DIAGONAL_COST;
     v[2].1 = DIAGONAL_COST;
