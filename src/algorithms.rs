@@ -12,11 +12,11 @@ pub use crate::algorithms::fringesearch::FringeSearch;
 pub mod solver;
 pub use crate::algorithms::solver::*;
 
-use crate::{index_to_xy, Node, DIAGONAL_COST};
+use crate::{index_to_xy, Cost, Node, DIAGONAL_COST};
 
 /// Enumerator for representing different stages of pathfinding.
 pub enum State {
-    Finished((Vec<Node>, f32)),
+    Finished((Vec<Node>, Cost)),
     Processing(Node),
     Internal,
     NotFound,
@@ -52,15 +52,16 @@ impl Heuristic {
 
     /// Octile distance between two points
     #[must_use]
-    pub fn calc(&self, node: Node) -> f32 {
+    pub fn calc(&self, node: Node) -> Cost {
         let start = index_to_xy(node, self.width);
-        let x_distance: f32 = ((start.0 as f32) - (self.goal.0 as f32)).abs();
-        let y_distance: f32 = ((start.1 as f32) - (self.goal.1 as f32)).abs();
+        let x_distance: Cost = ((start.0 as Cost) - (self.goal.0 as Cost)).abs();
+        let y_distance: Cost = ((start.1 as Cost) - (self.goal.1 as Cost)).abs();
+        let distance: Cost = (x_distance - y_distance).abs();
 
         if x_distance > y_distance {
-            (x_distance - y_distance) + DIAGONAL_COST * y_distance
+            distance + DIAGONAL_COST * y_distance
         } else {
-            (y_distance - x_distance) + DIAGONAL_COST * x_distance
+            distance + DIAGONAL_COST * x_distance
         }
     }
 }

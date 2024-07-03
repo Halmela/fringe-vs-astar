@@ -106,7 +106,6 @@ impl Cache {
     }
 
     /// Get cost of a node
-    #[must_use]
     pub fn get_estimate(&mut self, node: Node) -> Cost {
         self[node].estimate
     }

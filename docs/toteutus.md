@@ -17,70 +17,133 @@ Kontekstilla on viisi tilaa, joihin sen ajo voi mennä:
 - compare
   - Ratkaise ongelma tai ongelmia Verkosta molempia hakuja käyttäen ja vertaile niiden aikoja keskenään.
 
-Verkon luomisen jälkeen yksittäisiä solmuja käsitellään `usize`-tyyppinä, joka on etumerkitön kokonaisluku, 
-joka soveltuu myös indeksointiin.
-Sen koon määrittää, kuinka monta tavua tarvitaan viittaamaan mihin tahansa kohtaan muistissa 
-(64-bittisissä järjetelmissä se on 8 tavua).
+
+Verkon luomisen jälkeen yksittäisiä solmuja käsitellään `u32`-tyyppinä, joka on 32-bittinen etumerkitön kokonaisluku. 
+Olen antanut sille aliaksen `Node`.
 Apufunktioilla saa muutettua solmun kartan koordinaatiksi ja takaisin.
-> Olen tällä hetkellä siirtymässä käyttämään 32-bittistä kokonaislukua, mutta vain Fringe tukee sitä tällä hetkellä.
 
 Hakemisto ja moduulirakenne on hieman sekava tällä hetkellä, mutta pääpiirteittäin näin:
 - [src](src) sisältää itse sovelluksen toimintaan tarvittavat kilkkeet
-- [src/algorithms](src/algorithms) sisältää fringen ja A*:n sekä muuta algoritmien toimintaan liittyvää
-- [src/structures](src/structures) sisältää käytetyt tietorakenteet (pl. fringen käyttämä cache, joka löytyy [src/algorithms/fringe](src/algorithms/fringe) 
+- [src/algorithms](src/algorithms) sisältää Fringen ja A*:n sekä muuta algoritmien toimintaan liittyvää. Molemmille hauille on omat moduulit, jotka sisältävät niille spesifejä rakenteita
+- [src/structures](src/structures) sisältää yleiset tietorakenteet
 - [tests](tests) sisältää testit
 - [benches](benches) sisältää benchmarkkaukset
 - [maps](maps) sisältää kartat
 
 ## Saavutetut aika- ja tilavaativuudet (esim. O-analyysit pseudokoodista)
 Fringe-haulle ei löydy O-analyysia kirjallisuudesta, mutta uskoisin sen olevan sama kuin A*:n, 
-eli  $O(b^d)$, missä $b$ on solmun haarautuvuus (ruudukossa se on $max 7$)
+eli  $O(b^d)$, missä $b$ on solmun haarautuvuus (ruudukossa se on $max 8$)
 ja $d$ on ratkaisun syvyys (lyhimmän reitin pituus).
 
 ### A*
 A*:n [päätietorakenne](src/structures/frontier.rs) on Rustin standardikirjastoista löytyvä binäärikeko, 
 jonka työntö on $O(~1)$ ja pienimmän otto on $O(log n)$.
-Sitä avustamassa on lista pienimmistä löydetyistä arvoista kullekin solmulle.
+Sitä avustamassa on taulukko, josta löytyy jokaisesta solmusta löydettyjä arvoja.
+
+Isoin optimointi varmaankin on, että kun solmu lisätään kekoon, se merkitään avonaiseksi, ja kun se otetaan pois, se merkitään suljetuksi.
+Jo suljettuja solmuja ei enää käsitellä uudestaan.
+Tämä on reilusti nopeampaa kuin solmun hakeminen keosta ja sen jälkeen poistaminen, vaikka tämä kasvattaakin kekoa.
+
 
 ### Fringe
+Tämän tietorakenteen (`Fringe`) toteutus on elänyt paljon, joten selitän vaiheet pääpiirteittäin, jotta lukija voisi ymmärtää nykyistä tilannetta.
+Vakiona on pysynyt itse algoritmi, ja löydettyjen solmujen eri arvojen tallentaminen muistiin (`Cache`).
+
 Fringen päätietorakenteena on kaksi jonoa, joiden päistä otetaan tai laitetaan $O(1)$ ajassa.
 Näitä operaatioita kuitenkin tapahtuu reilusti, varmaan useamman $n$:n verran, alati kasvavan määrän.
-Rakenteen optimointi keskittyy käsiteltävien solmujen määrän vähentämiseen.
+
+[Kirjallisuudessa](https://webdocs.cs.ualberta.ca/~holte/Publications/fringe.pdf) tämä toteutettiin kahteen suuntaan linkitettynä listana, 
+mutta kieleni valinnasta johtuen en halunnut toteuttaa sitä kyseisellä tavalla. Raakojen osoittimien pyörittely on asia, jota Rustissa nimenomaan pyritään välttämään,
+ja standardikirjastosta löytyvästä [LinkedList](https://doc.rust-lang.org/std/collections/struct.LinkedList.html)-rakenteesta ei löytynyt valmiiksi tehokkaita funktioita solmujen poistamiseen listan keskeltä 
+(tätä kirjoittaessa ymmärrän, miten tämän voisi saavuttaa, mutta en koe sitä silti sen arvoisena), 
+joten päädyin käyttämään kahta [VecDeque](https://doc.rust-lang.org/std/collections/struct.VecDeque.html)-rakennetta, joka toimivat samaan aikaan pinona ja jonona.
+Yhdellä läpikäynnillä mennään koko now läpi, uudet löydetyt solmut lisätään kärkeen, liian kalliit solmut menevät lateriin ja kierroksen lopuksi later muutetaan now'ksi.
+
+Seuraavaksi keksin tallentaa, onko solmu juuri sillä hetkellä käsiteltävänä. Tämän ansiosta ei tarvitse poistaa solmuja, voi vain jättää ne käsittelemättä.
+Alkion poistaminen oli aiemmin $O(n)$-operaatio.
+
+Tästä seuraava versio oli muuttaa molemmat listat [Vec](https://doc.rust-lang.org/std/vec/struct.Vec.html)-listoiksi, joka toimii myös pinona.
+Jossain vaiheessa ymmärsin, ettei kumpaankaan käsiteltävään listaan oikeasti edes lisätä solmuja molempiin päihin ja siksi jonomaisuus oli turhaa.
+> Myöhemmin palasin `VecDeque`en, koska keksin tavan käsitellä molempia listoja samassa rakenteessa, mutta se ei ollut elegantti ja jäi vain lyhytaikaiseksi kokeiluksi
+
+Tässä vaiheessa jokainen operaatio oli erittäin nopea, mutta niiden määrä oli massiivinen.
+Yhden iteraation aikana käsitellään jokainen later-listan solmu, mutta pahimmillaan vain yksi niistä laajennetaan.
+Jokaisen haun tilan printtaaminen selkeytti tämän ymmärtämistä, koska siinä _selkeästi_ näkyi, että turhiakin solmuja käydään läpi uudestaan ja uudestaan.
+
+#### Ämpärit
+
+Algoritmin esitelleessä paperissa mainittiin ohimennen
+> Fringe Search could be modified to traverse the fringe in a different order, for example, by using buckets to partially sort the fringe.
+
+Tein pari dokumentoimatonta apufunktiota[^1], joiden avulla tarkastelin millaisia g-arvojakaumia fringestä löytyy eri hetkinä.
+Havaitsin, että:
+1. Samaan aikaan fringessä on maksimissaan kokonaislukuosaltaan neljää erilaista arvoa (ainakin tällä heuristiikalla)
+2. Kokonaislukuarvo on monotonisesti kasvava
+3. Jotkut kokonaisluvut skipataan (mutta ne eivät myöskään myöhemmin ilmesty)
+
+Näiden pohjalta päädyin käyttämään 8 eri ämpäriä, koska se on seuraava 2:n potenssi ja siten sille voi tehdä tehokasta jakojäännöslaskentaa.
+Tein auttavan `Bucket`-enumin, jolla on tasan 8 arvoa, ja jonka voi luoda g-arvon pohjalta ja jota voi käyttää indeksinä.
+Sen jälkeen korvasin later-listan 8 ämpärillä, joista vain nykyinen tyhjennetään now-listaksi kierroksen päättyessä.
+Iso kasa solmuista käydään vieläkin monta kertaa turhaan läpi, mutta ainakaan kaikkia ei käydä. Sain tällä muistaakseni aika mielyttävän nopeutuksen.
+
+Olin jo lopettamassa rakenteen kehittelyä, mutta sitten seuraavat faktat iskivät mieleeni:
+1. Iso osa ämpäreistä on tyhjinä 
+2. Now-lista on vielä erillinen rakenne
+3. Ämpäreitä kopioidaan ympäriinsä ja se on yleensä hidasta
+4. Later-listan ei tarvitse olla lajiteltu millään tavalla (paperissa annettu ainoa ehto oli, että ensimmäistä kertaa löydetyt solmut on käsiteltävä mahdollisimman pian)
+
+Jotenkin tämä ajoi minut yhdistämään kaikki ämpärit yhdeksi pitkäksi vektoriksi (`Buckets`) ja tauluksi, jossa ylläpidetään jokaisen ämpärin senhetkistä indeksiä (`Indexes`).
+`Buckets` allokoi muistin kerran ja täyttää sen `None`-arvolla, koko on tarpeeksi iso pitämään ainakin Verkon jokaisen solmun sisällään.
+Now-lista tallennetaan aiemman kierroksen varmasti tyhjään ämpäriin, kierroksen loputtua nykyinen ämpäri muuttuu pseudo-now-listaksi, jonka perään rakennetaan uusi ämpärilista.
+Pseudo-now'sta poistaminen tapahtuu vaihtamalla alkion paikkaa ensin pseudo-now'n viimeisen solmun kanssa ja sen jälkeen uudelleen ämpärin viimeisen solmun kanssa, 
+tyhjentämällä se ja päivittämällä indeksit.
+
+```
+  [a,b,c|d,e,f] -> [c,b,a|d,e,f] -> [c,b,f|d,e,a] -> [c,b,f|d,e,_] -> [c,b|f,d,e,_]
+```
+Kahden alkion paikan vaihtaminen on $O(1)$ operaatio, ja tämä ei jätä yhtäkään listojen sisäistä alkiota tyhjäksi.
+
+Tämä indeksikikkailu on erittäin hauras, mutta se toimii.
+
+
+Yhdessä vaiheessa kokeilin jonojen pitämistä aina järjestettynä ja f_limitin aggressiivista nostamista, mutta en saanut sillä suurempia tuloksia.
+Ehkä jos sen yhdistäisi nykyiseen implementaatioon ja sallisi tyhjien alkioiden sisällytyksen listoissa.
+
 
 ## Suorituskyky- ja O-analyysivertailu (mikäli sopii työn aiheeseen)
-Toistaiseksi A* on nopeampi kuin Fringe.
-Tarkat speksit ilmestyvät joskus, mutta esim. koneellani suurimman kartan viimeisen reitin vertailu on tällainen: 
+Pienemmillä kartoilla Fringe on ihan vähän nopeampi kuin A*, mutta A* alkaa voittaa isommilla kartoilla, joskin nykyään vähemmän kuin ennen (ks. tämän tiedoston versiohistoria).
+Isoimman kartan pisin testi:
 ```bash
-$ cargo build --release
-$ target/release/fringe-vs-astar compare -s -n 2000 maps/scene_sp_sax_04.map
- Loading map maps/scene_sp_sax_04.map
+$ cargo run --release -- compare -n 2000 maps/scene_sp_sax_04.map
+
+Loading map maps/scene_sp_sax_04.map
 Map loaded, creating graph
-Using scenario file maps/scene_sp_sax_04.map.scen
-Loading problem number 2000
 Comparing A* and Fringe search
 Problem 2000:
-	(3411, 4166) -> (3381, 533)	7712.59278044
+	(3411, 4166) -> (3381, 533)	7712.593
+
 Solving using A*
-Solved in 2.077095669s
+Solved in 1.469222516s
 Solving using Fringe search
-Solved in 27.26211631s
-A* was 25.185020641s faster than Fringe search
+Solved in 5.794926648s
+A* was 4.325704132s faster than Fringe search
 ```
 
-Alkuvaiheissa molemmilla rakenteilla kesti 2+ minuuttia ratkoa tämä.
-A*:n ensimmäinen toteutus köhi jo Berlin256:ssa, joten pitkälle on tultu.
+Kannattaa ajella eri kokoisten karttojen viimeisiä testejä (`cargo run -- print [kartta] | tail`), jotta saa näppituntumaa tähän.
+
 
 A*:n varmaan voisi pistää johonkin $O(n log n)$-kategoriaan, koska siinä ajetaan iso kasa $O(log n)$-operaatioita,
-joskaan ei ihan koko kartan koolla.
-Fringen kompleksisuutta en tältä istumalta saa arvioitua, koska yksikään löydetty solmu ei "katoa" mistään listasta,
-vaan niitä käydään läpi uudelleen ja uudelleen, edes tarkistaen että voisiko tällä kerralla jatkaa etenemistä.
+joskaan ei ihan koko kartan koolla. Virallisesti se on kai $O(d^b)$.
+
+Fringestä en ihan tiedä, varsinkaan omien säätöjeni kanssa. Se ei yhdelläkään kierroksella mene jokaista solmua läpi, mutta samoja ämpäreitä kuitenkin junnataan monta kertaa.
+Kaipa se on sama kuin A*.
 
 
 ## Työn mahdolliset puutteet ja parannusehdotukset
 CLI:n voisi jatkaa TUI:ksi.
-Printit ovat ihan nättejä, mutta niiden selailu isommilla kartoilla vaatii erillisiä komentorivityökaluja.
-Tietorakenteen tilan tulostaminen haun tietyssä pisteessä olisi myös nättiä.
-
+Printit ovat ihan nättejä, mutta niiden selailu isommilla kartoilla vaatii erillisiä komentorivityökaluja, samoin "animaatioiden".
+Teknistä velkaa on varsinkin kontekstiin ja solveriin liittyen.
+CLI ei myöskään ole kauhean intuitiivinen eri -s -lippuineen.
 
 ## Laajojen kielimallien (ChatGPT yms.) käyttö. Mainitse mitä mallia on käytetty ja miten. Mainitse myös mikäli et ole käyttänyt. Tämä on tärkeää!
 
@@ -144,3 +207,5 @@ Fringe Search offers a balance between time efficiency and memory usage, making 
 
 ## Viitteet
 https://doc.rust-lang.org/std/collections/struct.BinaryHeap.html#time-complexity
+
+[^1]: (https://github.com/Halmela/fringe-vs-astar/blob/cd1d4726e56ccd508d225d421d5cc27325211817/src/algorithms/fringe.rs#L105-L130)

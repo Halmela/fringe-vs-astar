@@ -5,6 +5,7 @@ use crate::structures::Graph;
 use std::cmp::max;
 use std::fmt;
 use std::fmt::Display;
+use std::mem::{size_of, size_of_val};
 use std::time::Instant;
 
 /// Different algorithms as enums
@@ -207,6 +208,10 @@ impl<'a> Solver<'a> {
                     print.add_spacing();
                     print.add_spacing();
                     print.add_final_timing(durations.clone());
+                    print.add_header(
+                        "Memory:",
+                        format!("{} bytes", size_of_val(&fringe.fringe().cache)),
+                    );
                     println!("{print}");
                     break;
                 }

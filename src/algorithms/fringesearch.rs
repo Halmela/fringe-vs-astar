@@ -116,4 +116,8 @@ impl<'a> FringeSearch<'a> {
     pub fn get_estimate(&mut self, node: Node) -> Cost {
         self.fringe.cache.get_estimate(node)
     }
+
+    pub fn fringe(&self) -> &Fringe {
+        &self.fringe
+    }
 }
