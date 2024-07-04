@@ -67,6 +67,7 @@ $ cargo bench
 - [Viikko 4](/docs/viikkoraportit/Viikkoraportti%204.md)
 - [Viikko 5](/docs/viikkoraportit/Viikkoraportti%205.md)
 - [Viikko 6](/docs/viikkoraportit/Viikkoraportti%206.md)
+- [Viikko 7](/docs/viikkoraportit/Viikkoraportti%207.md)
 
 ### Sisäinen dokumentaatio
 ```bash
